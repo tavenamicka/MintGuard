@@ -32,7 +32,6 @@
     "today_window": "Aujourd'hui : accès autorisé de {0} à {1}",
     "no_rule_today": "Accès libre aujourd'hui",
     "no_children": "Aucun enfant configuré. Relancez l'assistant de configuration.",
-    "reports_soon": "Bientôt disponible (Semaine 5)",
     "restriction_app_blocked": "Application bloquée : {0}",
     "restriction_time_limit_hit": "Limite de temps atteinte"
   },
@@ -55,7 +54,11 @@
     "category_social": "Réseaux sociaux",
     "category_entertainment": "Divertissement",
     "category_gaming": "Jeux en ligne",
-    "saved_confirmation": "Sauvegardé ✓"
+    "saved_confirmation": "Sauvegardé ✓",
+    "suggested_apps": "Applications suggérées",
+    "custom_apps": "Applications personnalisées",
+    "add_app_placeholder": "ex: telegram-desktop",
+    "invalid_app_error": "Nom d'application invalide (pas d'espaces)"
   },
   "time": {
     "monday": "Lundi",
@@ -79,7 +82,9 @@
     "why_pin_title": "Pourquoi un code de sécurité ?",
     "why_pin_explanation": "Ce code empêche votre enfant de modifier les réglages sans votre accord. Vous pourrez le changer plus tard dans les Paramètres.",
     "what_is_time_limit": "Qu'est-ce que la limite de temps ?",
-    "time_limit_explanation": "En dehors des heures autorisées, la session de votre enfant se ferme automatiquement. Vous pouvez changer ces heures à tout moment."
+    "time_limit_explanation": "En dehors des heures autorisées, la session de votre enfant se ferme automatiquement. Vous pouvez changer ces heures à tout moment.",
+    "what_is_app_blocking": "Qu'est-ce que bloquer une application ?",
+    "app_blocking_explanation": "Si vous bloquez une application, votre enfant ne pourra plus l'ouvrir. Si elle est déjà lancée, elle se ferme automatiquement."
   },
   "messages": {
     "protection_enabled": "Protection activée ✓",
@@ -92,8 +97,7 @@
   },
   "app_shell": {
     "menu_help": "Aide",
-    "menu_quit": "Quitter",
-    "dashboard_placeholder": "Tableau de bord (bientôt disponible)"
+    "menu_quit": "Quitter"
   },
   "onboarding": {
     "step_indicator": "Étape {0} sur {1}",
@@ -136,5 +140,14 @@
       "subtitle": "La protection est active pour {0}",
       "cta": "Aller au tableau de bord"
     }
+  },
+  "reports": {
+    "title": "Rapports",
+    "period_week": "7 derniers jours",
+    "blocked_apps_title": "Applications bloquées",
+    "no_blocks": "Aucun blocage cette semaine ✅",
+    "time_limit_hits": "Limite de temps atteinte {0} fois",
+    "no_time_limit_hits": "Aucune limite de temps atteinte cette semaine ✅",
+    "occurrences": "{0} fois"
   }
 }

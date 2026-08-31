@@ -23,8 +23,8 @@ from PyQt6.QtWidgets import QApplication  # noqa: E402
 
 from mintguard.backend.site_categories import SOCIAL_MEDIA_DOMAINS  # noqa: E402
 from mintguard.db.database import get_session, init_db  # noqa: E402
-from mintguard.db.models import BlockedSite, Child, TimeRule  # noqa: E402
-from mintguard.gui.settings import SettingsWindow, SitesTab, TimeTab  # noqa: E402
+from mintguard.db.models import BlockedApp, BlockedSite, Child, TimeRule  # noqa: E402
+from mintguard.gui.settings import AppsTab, SettingsWindow, SitesTab, TimeTab  # noqa: E402
 from mintguard.locales.loader import I18nLoader  # noqa: E402
 
 
@@ -180,11 +180,81 @@ def test_sites_tab_remove_custom_site():
     assert tab.custom_list.count() == 0
 
 
+# -- AppsTab --------------------------------------------------------------
+
+
+def test_apps_tab_toggle_predefined_app_creates_row():
+    tab = AppsTab(I18nLoader("fr"))
+    tab._app_checkboxes["firefox"].setChecked(True)
+
+    session = get_session()
+    try:
+        app = session.query(BlockedApp).filter_by(app_name="firefox").first()
+    finally:
+        session.close()
+    assert app is not None
+    assert app.enabled is True
+
+
+def test_apps_tab_untoggle_predefined_app_removes_row():
+    tab = AppsTab(I18nLoader("fr"))
+    tab._app_checkboxes["firefox"].setChecked(True)
+    tab._app_checkboxes["firefox"].setChecked(False)
+
+    session = get_session()
+    try:
+        assert session.query(BlockedApp).filter_by(app_name="firefox").first() is None
+    finally:
+        session.close()
+
+
+def test_apps_tab_add_valid_custom_app():
+    tab = AppsTab(I18nLoader("fr"))
+    tab.add_input.setText("telegram-desktop")
+    tab._add_custom_app()
+
+    session = get_session()
+    try:
+        app = session.query(BlockedApp).filter_by(app_name="telegram-desktop").first()
+    finally:
+        session.close()
+    assert app is not None
+    assert tab.custom_list.count() == 1
+
+
+def test_apps_tab_rejects_name_with_spaces():
+    tab = AppsTab(I18nLoader("fr"))
+    tab.add_input.setText("not a process")
+    tab._add_custom_app()
+
+    assert tab.error_label.isHidden() is False
+    session = get_session()
+    try:
+        assert session.query(BlockedApp).count() == 0
+    finally:
+        session.close()
+
+
+def test_apps_tab_remove_custom_app():
+    tab = AppsTab(I18nLoader("fr"))
+    tab.add_input.setText("telegram-desktop")
+    tab._add_custom_app()
+    tab.custom_list.setCurrentRow(0)
+    tab._remove_selected_app()
+
+    session = get_session()
+    try:
+        assert session.query(BlockedApp).filter_by(app_name="telegram-desktop").first() is None
+    finally:
+        session.close()
+    assert tab.custom_list.count() == 0
+
+
 # -- SettingsWindow ---------------------------------------------------------
 
 
-def test_settings_window_has_two_tabs():
+def test_settings_window_has_three_tabs():
     child_id = make_child()
     window = SettingsWindow(I18nLoader("fr"), child_id)
-    assert window.tabs.count() == 2
+    assert window.tabs.count() == 3
     window.close()

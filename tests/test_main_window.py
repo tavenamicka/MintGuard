@@ -40,6 +40,8 @@ def qapp():
 def test_shows_onboarding_when_not_completed():
     window = MainWindow()
     assert isinstance(window.stack.currentWidget(), OnboardingWizard)
+    assert window.settings_action.isEnabled() is False
+    assert window.reports_action.isEnabled() is False
     window.close()
 
 
@@ -53,6 +55,8 @@ def test_shows_dashboard_when_onboarding_already_done():
 
     window = MainWindow()
     assert isinstance(window.stack.currentWidget(), DashboardScreen)
+    assert window.settings_action.isEnabled() is True
+    assert window.reports_action.isEnabled() is True
     window.close()
 
 
@@ -64,4 +68,38 @@ def test_finishing_onboarding_switches_to_dashboard():
     wizard.finished.emit()
 
     assert isinstance(window.stack.currentWidget(), DashboardScreen)
+    assert window.settings_action.isEnabled() is True
+    assert window.reports_action.isEnabled() is True
+    window.close()
+
+
+def test_menu_settings_action_opens_dashboard_settings(monkeypatch):
+    session = get_session()
+    try:
+        session.add(ParentConfig(key="onboarding_complete", value="1"))
+        session.commit()
+    finally:
+        session.close()
+
+    window = MainWindow()
+    calls = []
+    monkeypatch.setattr(window.dashboard, "open_settings", lambda: calls.append("settings"))
+    window.settings_action.trigger()
+    assert calls == ["settings"]
+    window.close()
+
+
+def test_menu_reports_action_opens_dashboard_reports(monkeypatch):
+    session = get_session()
+    try:
+        session.add(ParentConfig(key="onboarding_complete", value="1"))
+        session.commit()
+    finally:
+        session.close()
+
+    window = MainWindow()
+    calls = []
+    monkeypatch.setattr(window.dashboard, "open_reports", lambda: calls.append("reports"))
+    window.reports_action.trigger()
+    assert calls == ["reports"]
     window.close()

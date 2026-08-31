@@ -32,7 +32,6 @@
     "today_window": "Hoy: acceso permitido de {0} a {1}",
     "no_rule_today": "Acceso libre hoy",
     "no_children": "Ningún hijo/a configurado. Vuelva a ejecutar el asistente de configuración.",
-    "reports_soon": "Disponible próximamente (Semana 5)",
     "restriction_app_blocked": "Aplicación bloqueada: {0}",
     "restriction_time_limit_hit": "Límite de tiempo alcanzado"
   },
@@ -55,7 +54,11 @@
     "category_social": "Redes sociales",
     "category_entertainment": "Entretenimiento",
     "category_gaming": "Juegos en línea",
-    "saved_confirmation": "Guardado ✓"
+    "saved_confirmation": "Guardado ✓",
+    "suggested_apps": "Aplicaciones sugeridas",
+    "custom_apps": "Aplicaciones personalizadas",
+    "add_app_placeholder": "ej: telegram-desktop",
+    "invalid_app_error": "Nombre de aplicación no válido (sin espacios)"
   },
   "time": {
     "monday": "Lunes",
@@ -79,7 +82,9 @@
     "why_pin_title": "¿Por qué un código de seguridad?",
     "why_pin_explanation": "Este código evita que su hijo/a cambie los ajustes sin su permiso. Podrá cambiarlo más tarde en Ajustes.",
     "what_is_time_limit": "¿Qué es el límite de tiempo?",
-    "time_limit_explanation": "Fuera de las horas permitidas, la sesión de su hijo/a se cierra automáticamente. Puede cambiar estas horas en cualquier momento."
+    "time_limit_explanation": "Fuera de las horas permitidas, la sesión de su hijo/a se cierra automáticamente. Puede cambiar estas horas en cualquier momento.",
+    "what_is_app_blocking": "¿Qué significa bloquear una aplicación?",
+    "app_blocking_explanation": "Si bloquea una aplicación, su hijo/a no podrá abrirla. Si ya está abierta, se cerrará automáticamente."
   },
   "messages": {
     "protection_enabled": "Protección activada ✓",
@@ -92,8 +97,7 @@
   },
   "app_shell": {
     "menu_help": "Ayuda",
-    "menu_quit": "Salir",
-    "dashboard_placeholder": "Panel (disponible próximamente)"
+    "menu_quit": "Salir"
   },
   "onboarding": {
     "step_indicator": "Paso {0} de {1}",
@@ -136,5 +140,14 @@
       "subtitle": "La protección está activa para {0}",
       "cta": "Ir al panel"
     }
+  },
+  "reports": {
+    "title": "Informes",
+    "period_week": "Últimos 7 días",
+    "blocked_apps_title": "Aplicaciones bloqueadas",
+    "no_blocks": "Sin bloqueos esta semana ✅",
+    "time_limit_hits": "Límite de tiempo alcanzado {0} veces",
+    "no_time_limit_hits": "Ningún límite de tiempo alcanzado esta semana ✅",
+    "occurrences": "{0} veces"
   }
 }

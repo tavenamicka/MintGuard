@@ -30,9 +30,10 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from mintguard.backend.app_presets import PREDEFINED_APPS
 from mintguard.backend.site_categories import CATEGORIES
 from mintguard.db.database import get_session
-from mintguard.db.models import BlockedSite, TimeRule
+from mintguard.db.models import BlockedApp, BlockedSite, TimeRule
 from mintguard.gui.widgets import HelpButton, heading, small_label
 from mintguard.locales.loader import I18nLoader
 from mintguard.utils.formatters import weekday_key
@@ -246,8 +247,122 @@ class SitesTab(QWidget):
         self._load()
 
 
+class AppsTab(QWidget):
+    """Onglet 'Applications à Bloquer' — apps suggérées + liste personnalisée, cf. 'Écran 3'."""
+
+    def __init__(self, i18n: I18nLoader, parent=None):
+        super().__init__(parent)
+        self.i18n = i18n
+        self._app_checkboxes: dict[str, QCheckBox] = {}
+
+        layout = QVBoxLayout(self)
+
+        title_row = QHBoxLayout()
+        title_row.addWidget(heading(self.i18n("settings.blocked_apps"), "h2"))
+        title_row.addWidget(
+            HelpButton(self.i18n("help.what_is_app_blocking"), self.i18n("help.app_blocking_explanation"))
+        )
+        title_row.addStretch(1)
+        layout.addLayout(title_row)
+
+        layout.addWidget(small_label(self.i18n("settings.suggested_apps")))
+        for process_name, label in PREDEFINED_APPS:
+            checkbox = QCheckBox(label)
+            checkbox.toggled.connect(lambda checked, p=process_name: self._toggle_app(p, checked))
+            layout.addWidget(checkbox)
+            self._app_checkboxes[process_name] = checkbox
+
+        layout.addWidget(small_label(self.i18n("settings.custom_apps")))
+        self.custom_list = QListWidget()
+        layout.addWidget(self.custom_list)
+
+        add_row = QHBoxLayout()
+        self.add_input = QLineEdit()
+        self.add_input.setPlaceholderText(self.i18n("settings.add_app_placeholder"))
+        add_row.addWidget(self.add_input)
+        add_button = QPushButton(self.i18n("settings.add_site_button"))
+        add_button.clicked.connect(self._add_custom_app)
+        add_row.addWidget(add_button)
+        layout.addLayout(add_row)
+
+        remove_button = QPushButton(self.i18n("settings.remove_site_button"))
+        remove_button.setObjectName("secondary")
+        remove_button.clicked.connect(self._remove_selected_app)
+        layout.addWidget(remove_button)
+
+        self.error_label = small_label("")
+        self.error_label.setObjectName("danger")
+        self.error_label.hide()
+        layout.addWidget(self.error_label)
+
+        layout.addStretch(1)
+        self._load()
+
+    def _load(self) -> None:
+        session = get_session()
+        try:
+            blocked_names = {a.app_name for a in session.query(BlockedApp).filter_by(enabled=True).all()}
+        finally:
+            session.close()
+
+        for process_name, checkbox in self._app_checkboxes.items():
+            checkbox.blockSignals(True)
+            checkbox.setChecked(process_name in blocked_names)
+            checkbox.blockSignals(False)
+
+        predefined_names = {p for p, _ in PREDEFINED_APPS}
+        self.custom_list.clear()
+        for name in sorted(blocked_names - predefined_names):
+            self.custom_list.addItem(name)
+
+    def _toggle_app(self, process_name: str, checked: bool) -> None:
+        session = get_session()
+        try:
+            existing = session.query(BlockedApp).filter_by(app_name=process_name).first()
+            if checked and existing is None:
+                session.add(BlockedApp(app_name=process_name, enabled=True))
+            elif not checked and existing is not None:
+                session.delete(existing)
+            session.commit()
+        finally:
+            session.close()
+
+    def _add_custom_app(self) -> None:
+        name = self.add_input.text().strip().lower()
+        if not name or " " in name:
+            self.error_label.setText(self.i18n("settings.invalid_app_error"))
+            self.error_label.show()
+            return
+        self.error_label.hide()
+
+        session = get_session()
+        try:
+            if session.query(BlockedApp).filter_by(app_name=name).first() is None:
+                session.add(BlockedApp(app_name=name, enabled=True))
+                session.commit()
+        finally:
+            session.close()
+
+        self.add_input.clear()
+        self._load()
+
+    def _remove_selected_app(self) -> None:
+        item = self.custom_list.currentItem()
+        if item is None:
+            return
+        session = get_session()
+        try:
+            existing = session.query(BlockedApp).filter_by(app_name=item.text()).first()
+            if existing is not None:
+                session.delete(existing)
+                session.commit()
+        finally:
+            session.close()
+        self._load()
+
+
 class SettingsWindow(QDialog):
-    """Fenêtre Paramètres (Écran 2) — onglets Temps et Sites (Applications : Semaine 5)."""
+    """Fenêtre Paramètres (Écran 2) — onglets Temps, Sites et Applications."""
 
     def __init__(self, i18n: I18nLoader, child_id: int | None, parent=None):
         super().__init__(parent)
@@ -264,6 +379,9 @@ class SettingsWindow(QDialog):
 
         self.sites_tab = SitesTab(i18n)
         self.tabs.addTab(self.sites_tab, self.i18n("settings.blocked_sites"))
+
+        self.apps_tab = AppsTab(i18n)
+        self.tabs.addTab(self.apps_tab, self.i18n("settings.blocked_apps"))
 
         close_button = QPushButton(self.i18n("common.close"))
         close_button.setObjectName("secondary")

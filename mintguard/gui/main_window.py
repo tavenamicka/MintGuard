@@ -33,6 +33,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         lang = get_config().get("app.language", "auto")
         self.i18n = get_i18n(None if lang == "auto" else lang)
+        self.dashboard: DashboardScreen | None = None
 
         self.setWindowTitle(self.i18n("app.name"))
         self.setMinimumSize(480, 640)
@@ -51,6 +52,18 @@ class MainWindow(QMainWindow):
     def _build_menu(self) -> None:
         menu = self.menuBar().addMenu(self.i18n("app.name"))
 
+        self.settings_action = QAction(self.i18n("common.settings"), self)
+        self.settings_action.triggered.connect(self.open_settings)
+        self.settings_action.setEnabled(False)
+        menu.addAction(self.settings_action)
+
+        self.reports_action = QAction(self.i18n("common.reports"), self)
+        self.reports_action.triggered.connect(self.open_reports)
+        self.reports_action.setEnabled(False)
+        menu.addAction(self.reports_action)
+
+        menu.addSeparator()
+
         help_action = QAction(self.i18n("app_shell.menu_help"), self)
         help_action.triggered.connect(self._show_help)
         menu.addAction(help_action)
@@ -64,6 +77,14 @@ class MainWindow(QMainWindow):
 
         dialog = HelpDialog(self.i18n("help.how_it_works"), self.i18n("help.how_it_works_explanation"), self)
         dialog.exec()
+
+    def open_settings(self) -> None:
+        if self.dashboard is not None:
+            self.dashboard.open_settings()
+
+    def open_reports(self) -> None:
+        if self.dashboard is not None:
+            self.dashboard.open_reports()
 
     def _needs_onboarding(self) -> bool:
         session = get_session()
@@ -83,6 +104,8 @@ class MainWindow(QMainWindow):
         self._show_dashboard()
 
     def _show_dashboard(self) -> None:
-        dashboard = DashboardScreen(self.i18n)
-        self.stack.addWidget(dashboard)
-        self.stack.setCurrentWidget(dashboard)
+        self.dashboard = DashboardScreen(self.i18n)
+        self.stack.addWidget(self.dashboard)
+        self.stack.setCurrentWidget(self.dashboard)
+        self.settings_action.setEnabled(True)
+        self.reports_action.setEnabled(True)

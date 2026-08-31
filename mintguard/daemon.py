@@ -26,6 +26,34 @@ from mintguard.logger import setup_logging
 logger = setup_logging("mintguard-daemon")
 
 
+def run_cycle(
+    process_monitor: ProcessMonitor,
+    scheduler: Scheduler,
+    dns_controller: DNSController,
+    state: dict,
+    now: float,
+    session_interval: float,
+    dns_refresh_interval: float,
+) -> None:
+    """Un tour de boucle du daemon. Isolé de `main()` pour être testable sans horloge réelle.
+
+    Pas de bus D-Bus/IPC pour propager les changements Réglages -> daemon (voir SUIVI.md pour la
+    justification) : le daemon relit périodiquement la BD partagée, comme ProcessMonitor et
+    Scheduler le font déjà à chaque cycle. `dns_refresh_interval` évite de relancer
+    `systemctl reload dnsmasq` à chaque cycle process (par défaut 5s) alors que rien n'a changé.
+    """
+    process_monitor.check_and_kill()
+
+    if now - state["last_session_check"] >= session_interval:
+        scheduler.check_all_children()
+        state["last_session_check"] = now
+
+    if now - state["last_dns_refresh"] >= dns_refresh_interval:
+        dns_controller.generate_blocklist()
+        dns_controller.reload_dnsmasq()
+        state["last_dns_refresh"] = now
+
+
 def main() -> None:
     logger.info("MintGuard Daemon démarré")
     init_db()
@@ -33,23 +61,26 @@ def main() -> None:
     config = get_config()
     process_interval = config.get("monitoring.process_check_interval", 5)
     session_interval = config.get("monitoring.session_check_interval", 60)
+    dns_refresh_interval = config.get("dns.refresh_interval", 30)
 
     process_monitor = ProcessMonitor()
     scheduler = Scheduler()
     dns_controller = DNSController()
 
     dns_controller.generate_blocklist()
+    state = {"last_session_check": 0.0, "last_dns_refresh": time.monotonic()}
 
-    last_session_check = 0.0
     try:
         while True:
-            process_monitor.check_and_kill()
-
-            now = time.monotonic()
-            if now - last_session_check >= session_interval:
-                scheduler.check_all_children()
-                last_session_check = now
-
+            run_cycle(
+                process_monitor,
+                scheduler,
+                dns_controller,
+                state,
+                time.monotonic(),
+                session_interval,
+                dns_refresh_interval,
+            )
             time.sleep(process_interval)
     except KeyboardInterrupt:
         logger.info("MintGuard Daemon arrêté")

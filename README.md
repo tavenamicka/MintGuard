@@ -4,7 +4,7 @@
 
 Application de contrôle parental pour Linux Mint — simple et accessible pour des parents non-techniques, avec limitation du temps d'écran, blocage de sites et d'applications, multilingue (FR/EN/DE/ES).
 
-> Statut : Phase 2 (Interface GUI) en cours — Semaine 4 terminée (Dashboard + Settings Temps/Sites). Voir [SUIVI.md](SUIVI.md) pour le journal d'avancement, [PROJECT_BRIEF.md](PROJECT_BRIEF.md) pour les spécifications complètes et [CLAUDE_CODE_BRIEFING.md](CLAUDE_CODE_BRIEFING.md) pour le plan d'implémentation par phases.
+> Statut : Phase 2 (Interface GUI) terminée — Dashboard, Settings (Temps/Sites/Applications), Rapports, menu principal. Voir [SUIVI.md](SUIVI.md) pour le journal d'avancement, [PROJECT_BRIEF.md](PROJECT_BRIEF.md) pour les spécifications complètes et [CLAUDE_CODE_BRIEFING.md](CLAUDE_CODE_BRIEFING.md) pour le plan d'implémentation par phases.
 
 ## Architecture
 

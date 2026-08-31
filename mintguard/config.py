@@ -32,6 +32,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "enabled": True,
         "listen_port": 5353,
         "blocklist_path": "/var/lib/mintguard/blocklist.hosts",
+        "refresh_interval": 30,
     },
     "monitoring": {
         "process_check_interval": 5,

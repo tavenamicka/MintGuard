@@ -32,7 +32,6 @@
     "today_window": "Heute: Zugang erlaubt von {0} bis {1}",
     "no_rule_today": "Heute freier Zugang",
     "no_children": "Kein Kind konfiguriert. Bitte den Einrichtungsassistenten erneut starten.",
-    "reports_soon": "Demnächst verfügbar (Woche 5)",
     "restriction_app_blocked": "Anwendung gesperrt: {0}",
     "restriction_time_limit_hit": "Zeitlimit erreicht"
   },
@@ -55,7 +54,11 @@
     "category_social": "Soziale Netzwerke",
     "category_entertainment": "Unterhaltung",
     "category_gaming": "Online-Spiele",
-    "saved_confirmation": "Gespeichert ✓"
+    "saved_confirmation": "Gespeichert ✓",
+    "suggested_apps": "Vorgeschlagene Anwendungen",
+    "custom_apps": "Eigene Anwendungen",
+    "add_app_placeholder": "z.B. telegram-desktop",
+    "invalid_app_error": "Ungültiger Anwendungsname (keine Leerzeichen)"
   },
   "time": {
     "monday": "Montag",
@@ -79,7 +82,9 @@
     "why_pin_title": "Warum ein Sicherheitscode?",
     "why_pin_explanation": "Dieser Code verhindert, dass Ihr Kind die Einstellungen ohne Ihre Zustimmung ändert. Sie können ihn später in den Einstellungen ändern.",
     "what_is_time_limit": "Was ist das Zeitlimit?",
-    "time_limit_explanation": "Außerhalb der erlaubten Zeiten wird die Sitzung Ihres Kindes automatisch beendet. Sie können diese Zeiten jederzeit ändern."
+    "time_limit_explanation": "Außerhalb der erlaubten Zeiten wird die Sitzung Ihres Kindes automatisch beendet. Sie können diese Zeiten jederzeit ändern.",
+    "what_is_app_blocking": "Was bedeutet eine Anwendung zu sperren?",
+    "app_blocking_explanation": "Wenn Sie eine Anwendung sperren, kann Ihr Kind sie nicht mehr öffnen. Falls sie bereits läuft, wird sie automatisch geschlossen."
   },
   "messages": {
     "protection_enabled": "Schutz aktiviert ✓",
@@ -92,8 +97,7 @@
   },
   "app_shell": {
     "menu_help": "Hilfe",
-    "menu_quit": "Beenden",
-    "dashboard_placeholder": "Übersicht (demnächst verfügbar)"
+    "menu_quit": "Beenden"
   },
   "onboarding": {
     "step_indicator": "Schritt {0} von {1}",
@@ -136,5 +140,14 @@
       "subtitle": "Der Schutz ist jetzt aktiv für {0}",
       "cta": "Zur Übersicht"
     }
+  },
+  "reports": {
+    "title": "Berichte",
+    "period_week": "Letzte 7 Tage",
+    "blocked_apps_title": "Gesperrte Anwendungen",
+    "no_blocks": "Diese Woche keine Sperrungen ✅",
+    "time_limit_hits": "Zeitlimit {0} Mal erreicht",
+    "no_time_limit_hits": "Diese Woche kein Zeitlimit erreicht ✅",
+    "occurrences": "{0} Mal"
   }
 }

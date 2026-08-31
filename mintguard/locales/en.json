@@ -32,7 +32,6 @@
     "today_window": "Today: allowed access from {0} to {1}",
     "no_rule_today": "Free access today",
     "no_children": "No child configured. Please re-run the setup wizard.",
-    "reports_soon": "Coming soon (Week 5)",
     "restriction_app_blocked": "Application blocked: {0}",
     "restriction_time_limit_hit": "Time limit reached"
   },
@@ -55,7 +54,11 @@
     "category_social": "Social media",
     "category_entertainment": "Entertainment",
     "category_gaming": "Online games",
-    "saved_confirmation": "Saved ✓"
+    "saved_confirmation": "Saved ✓",
+    "suggested_apps": "Suggested applications",
+    "custom_apps": "Custom applications",
+    "add_app_placeholder": "e.g. telegram-desktop",
+    "invalid_app_error": "Invalid application name (no spaces)"
   },
   "time": {
     "monday": "Monday",
@@ -79,7 +82,9 @@
     "why_pin_title": "Why a security code?",
     "why_pin_explanation": "This code prevents your child from changing the settings without your consent. You can change it later in Settings.",
     "what_is_time_limit": "What is the time limit?",
-    "time_limit_explanation": "Outside allowed hours, your child's session closes automatically. You can change these hours at any time."
+    "time_limit_explanation": "Outside allowed hours, your child's session closes automatically. You can change these hours at any time.",
+    "what_is_app_blocking": "What does blocking an application mean?",
+    "app_blocking_explanation": "If you block an application, your child won't be able to open it. If it's already running, it closes automatically."
   },
   "messages": {
     "protection_enabled": "Protection enabled ✓",
@@ -92,8 +97,7 @@
   },
   "app_shell": {
     "menu_help": "Help",
-    "menu_quit": "Quit",
-    "dashboard_placeholder": "Dashboard (coming soon)"
+    "menu_quit": "Quit"
   },
   "onboarding": {
     "step_indicator": "Step {0} of {1}",
@@ -136,5 +140,14 @@
       "subtitle": "Protection is now active for {0}",
       "cta": "Go to dashboard"
     }
+  },
+  "reports": {
+    "title": "Reports",
+    "period_week": "Last 7 days",
+    "blocked_apps_title": "Blocked applications",
+    "no_blocks": "No blocks this week ✅",
+    "time_limit_hits": "Time limit reached {0} times",
+    "no_time_limit_hits": "No time limit reached this week ✅",
+    "occurrences": "{0} times"
   }
 }

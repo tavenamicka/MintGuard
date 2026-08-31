@@ -70,13 +70,12 @@ class DashboardScreen(QWidget):
 
         actions_row = QHBoxLayout()
         self.settings_button = QPushButton(self.i18n("common.settings"))
-        self.settings_button.clicked.connect(self._open_settings)
+        self.settings_button.clicked.connect(self.open_settings)
         actions_row.addWidget(self.settings_button)
 
         self.reports_button = QPushButton(self.i18n("common.reports"))
         self.reports_button.setObjectName("secondary")
-        self.reports_button.setEnabled(False)
-        self.reports_button.setToolTip(self.i18n("dashboard.reports_soon"))
+        self.reports_button.clicked.connect(self.open_reports)
         actions_row.addWidget(self.reports_button)
         layout.addLayout(actions_row)
 
@@ -116,9 +115,11 @@ class DashboardScreen(QWidget):
             self.window_label.setText("")
             self.restriction_value.setText("")
             self.settings_button.setEnabled(False)
+            self.reports_button.setEnabled(False)
             return
 
         self.settings_button.setEnabled(True)
+        self.reports_button.setEnabled(True)
         active = self._is_protection_active(child_id)
         self.status_label.setText(
             self.i18n("dashboard.protection_active" if active else "dashboard.protection_inactive")
@@ -186,9 +187,15 @@ class DashboardScreen(QWidget):
 
     # -- Actions ------------------------------------------------------------
 
-    def _open_settings(self) -> None:
+    def open_settings(self) -> None:
         from mintguard.gui.settings import SettingsWindow
 
         dialog = SettingsWindow(self.i18n, self.selected_child_id, self)
         dialog.exec()
         self.reload()
+
+    def open_reports(self) -> None:
+        from mintguard.gui.reports import ReportsWindow
+
+        dialog = ReportsWindow(self.i18n, self.selected_child_id, self)
+        dialog.exec()

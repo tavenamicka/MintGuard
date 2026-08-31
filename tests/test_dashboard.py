@@ -55,6 +55,13 @@ def test_no_children_shows_message():
     assert screen.selected_child_id is None
     assert screen.status_label.text() == "Aucun enfant configuré. Relancez l'assistant de configuration."
     assert screen.settings_button.isEnabled() is False
+    assert screen.reports_button.isEnabled() is False
+
+
+def test_reports_button_enabled_with_child():
+    make_child()
+    screen = DashboardScreen(I18nLoader("fr"))
+    assert screen.reports_button.isEnabled() is True
 
 
 def test_child_combo_populated():
