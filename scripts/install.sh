@@ -26,10 +26,27 @@ fi
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 VENV_DIR=/opt/mintguard/venv
+ADMIN_GROUP=mintguard-admin
+
+echo "== Groupe parent =="
+# La GUI tourne en utilisateur normal (pas root), mais doit pouvoir lire/
+# ecrire la meme BD SQLite que le daemon (root). 700 root:root bloquerait
+# aussi le parent, pas seulement l'enfant. Un groupe dedie limite l'acces
+# au(x) compte(s) parent explicitement ajoute(s), l'enfant (pas dans ce
+# groupe) reste sans acces.
+groupadd -f "$ADMIN_GROUP"
+if [ -n "${SUDO_USER:-}" ] && [ "$SUDO_USER" != "root" ]; then
+  usermod -aG "$ADMIN_GROUP" "$SUDO_USER"
+  echo "Utilisateur '$SUDO_USER' ajoute au groupe $ADMIN_GROUP (deconnexion/reconnexion necessaire pour que ca prenne effet)"
+else
+  echo "Aucun utilisateur parent detecte (lance en root direct ?) - ajoutez-le manuellement :"
+  echo "  sudo usermod -aG $ADMIN_GROUP <votre_compte>"
+fi
 
 echo "== Repertoires de donnees =="
 install -d -m 755 /etc/mintguard
-install -d -m 700 -o root -g root /var/lib/mintguard
+install -d -o root -g "$ADMIN_GROUP" /var/lib/mintguard
+chmod 2770 /var/lib/mintguard   # setgid : les nouveaux fichiers heritent du groupe mintguard-admin
 install -d -m 700 -o root -g root /var/log/mintguard
 
 echo "== Configuration =="
@@ -75,7 +92,7 @@ systemctl daemon-reload
 systemctl enable mintguard-daemon.service
 echo "Service installe et active au demarrage (PAS lance maintenant)"
 
-cat <<'EOF'
+cat <<EOF
 
 == Installation terminee ==
 
@@ -86,4 +103,8 @@ Le daemon n'est PAS encore lance. Pour le demarrer explicitement :
 
 Pour l'interface graphique parent (compte utilisateur normal, pas root) :
     /opt/mintguard/venv/bin/mintguard
+
+IMPORTANT si vous venez d'etre ajoute au groupe $ADMIN_GROUP a l'instant :
+deconnexion/reconnexion necessaire (ou 'newgrp $ADMIN_GROUP' dans le shell
+courant) pour que la GUI ait acces en lecture/ecriture a la BD partagee.
 EOF

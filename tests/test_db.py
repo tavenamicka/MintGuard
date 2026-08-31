@@ -14,11 +14,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import os
 from datetime import time as dt_time
 
+import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
+from mintguard.db.database import init_db
 from mintguard.db.models import ActivityLog, Base, BlockedApp, BlockedSite, Child, ParentConfig, TimeRule
 
 
@@ -111,3 +114,14 @@ def test_parent_config_key_value(tmp_path):
 
     fetched = session.query(ParentConfig).filter_by(key="pin_hash").one()
     assert fetched.value == "abc123"
+
+
+@pytest.mark.skipif(os.name == "nt", reason="chmod n'a pas d'effet POSIX sous Windows")
+def test_init_db_makes_file_group_writable(tmp_path):
+    # Le daemon (root) et la GUI (utilisateur normal, groupe mintguard-admin)
+    # partagent ce fichier - sans ce chmod explicite, l'umask du process qui
+    # cree le fichier en premier peut retirer le droit d'ecriture du groupe.
+    db_path = tmp_path / "test.db"
+    init_db(db_path)
+    mode = db_path.stat().st_mode & 0o777
+    assert mode == 0o660

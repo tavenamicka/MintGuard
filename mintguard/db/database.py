@@ -39,6 +39,17 @@ def init_db(db_path: Path | None = None) -> Engine:
     _engine = create_engine(f"sqlite:///{path}")
     Base.metadata.create_all(_engine)
     _SessionLocal = sessionmaker(bind=_engine)
+
+    # Le daemon (root) et la GUI (utilisateur normal, groupe mintguard-admin)
+    # partagent ce fichier. Selon lequel le crée en premier, l'umask peut
+    # retirer le droit d'écriture du groupe (ex: 644 au lieu de 660) — on
+    # le force explicitement. Le dossier parent (setgid, cf. install.sh)
+    # gère déjà l'héritage du groupe ; sans effet réel hors POSIX (dev Windows).
+    try:
+        path.chmod(0o660)
+    except OSError:
+        pass
+
     return _engine
 
 
