@@ -12,15 +12,19 @@ pytest tests/ -v
 
 Les contrôleurs backend qui dépendent d'outils Linux (`iptables`, `loginctl`, `apparmor_parser`) échouent proprement hors Linux — c'est attendu en dev (voir `mintguard/backend/*.py`, méthode `test()`).
 
-## Installation cible (Linux Mint, Phase 3+)
+## Installation cible (Linux Mint)
 
-Nécessite les privilèges root pour :
-- Installer le service systemd (`etc/systemd/mintguard-daemon.service`)
-- Configurer dnsmasq (`etc/dnsmasq.d/mintguard.conf`)
-- Charger le profil AppArmor (`etc/apparmor/mintguard-restrict-child`)
-- Installer les règles sudoers (`etc/sudoers.d/mintguard`)
+```bash
+sudo bash scripts/install.sh
+```
 
-Ces étapes seront scriptées dans `scripts/install.sh` (Phase 3).
+Installe : venv dédié (`/opt/mintguard/venv`), config (`/etc/mintguard/config.json`), BD/logs (`/var/lib/mintguard`, `/var/log/mintguard`, permissions restrictives 700), service systemd (`/etc/systemd/system/mintguard-daemon.service`, activé au démarrage), config dnsmasq (`/etc/dnsmasq.d/mintguard.conf`).
+
+Le service n'est **pas démarré automatiquement** — le script affiche la commande à lancer explicitement (`sudo systemctl start mintguard-daemon`).
+
+**Pas de profil AppArmor ni de règles sudoers** : voir `SUIVI.md` (entrée Phase 3) pour la justification — le confinement par utilisateur via AppArmor est écarté du MVP (risque disproportionné vs. bénéfice, `ProcessMonitor` couvre déjà le blocage d'applications), et le daemon tournant déjà en root via systemd, aucune délégation sudo n'est nécessaire pour la GUI (elle n'écrit qu'en SQLite).
+
+Désinstallation : `sudo bash scripts/uninstall.sh` (ajouter `--purge` pour aussi supprimer BD/logs/config).
 
 ## Variables d'environnement utiles (dev)
 

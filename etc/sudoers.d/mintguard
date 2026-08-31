@@ -1,5 +1,0 @@
-# Permet à l'application de faire des actions root sans mot de passe
-%mintguard-admin ALL=(ALL) NOPASSWD: /usr/local/bin/mintguard-apply-rules.sh
-%mintguard-admin ALL=(ALL) NOPASSWD: /usr/sbin/iptables
-%mintguard-admin ALL=(ALL) NOPASSWD: /usr/sbin/dnsmasq
-%mintguard-admin ALL=(ALL) NOPASSWD: /bin/loginctl

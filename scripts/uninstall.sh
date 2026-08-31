@@ -1,6 +1,40 @@
 #!/usr/bin/env bash
-# Désinstallation système MintGuard (Linux Mint, root requis).
-# TODO Phase 3: arrêter/désactiver le service, retirer les fichiers etc/, purger la BD sur demande.
+# Desinstallation systeme MintGuard (Linux Mint, root requis).
+# Par defaut, conserve la BD/logs/config (retrait applicatif uniquement).
+# Usage : sudo bash scripts/uninstall.sh [--purge]
 set -euo pipefail
-echo "uninstall.sh: pas encore implémenté (prévu Phase 3 - Sécurité & Intégration)."
-exit 1
+
+if [ "$EUID" -ne 0 ]; then
+  echo "Ce script doit etre lance avec sudo." >&2
+  exit 1
+fi
+
+PURGE=0
+if [ "${1:-}" = "--purge" ]; then
+  PURGE=1
+fi
+
+echo "== Service systemd =="
+if systemctl is-active --quiet mintguard-daemon 2>/dev/null; then
+  systemctl stop mintguard-daemon
+fi
+systemctl disable mintguard-daemon 2>/dev/null || true
+rm -f /etc/systemd/system/mintguard-daemon.service
+systemctl daemon-reload
+
+echo "== dnsmasq =="
+rm -f /etc/dnsmasq.d/mintguard.conf
+
+echo "== Environnement Python =="
+rm -rf /opt/mintguard
+
+if [ "$PURGE" -eq 1 ]; then
+  echo "== Purge des donnees (--purge) =="
+  rm -rf /var/lib/mintguard /var/log/mintguard /etc/mintguard
+  echo "BD, logs et config supprimes."
+else
+  echo "BD/logs/config conserves dans /var/lib/mintguard, /var/log/mintguard, /etc/mintguard."
+  echo "Relancer avec --purge pour tout supprimer."
+fi
+
+echo "== Termine =="

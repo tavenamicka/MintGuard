@@ -6,7 +6,7 @@ Requires=dnsmasq.service
 [Service]
 Type=simple
 User=root
-ExecStart=/usr/bin/python3 /usr/local/lib/mintguard/daemon.py
+ExecStart=/opt/mintguard/venv/bin/mintguard-daemon
 Restart=always
 RestartSec=10
 StandardOutput=journal
