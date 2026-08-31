@@ -18,10 +18,11 @@ import pytest
 
 pytest.importorskip("PyQt6")
 
-from PyQt6.QtWidgets import QApplication, QLabel  # noqa: E402
+from PyQt6.QtWidgets import QApplication  # noqa: E402
 
 from mintguard.db.database import get_session, init_db  # noqa: E402
 from mintguard.db.models import ParentConfig  # noqa: E402
+from mintguard.gui.dashboard import DashboardScreen  # noqa: E402
 from mintguard.gui.main_window import MainWindow  # noqa: E402
 from mintguard.gui.onboarding import OnboardingWizard  # noqa: E402
 
@@ -42,7 +43,7 @@ def test_shows_onboarding_when_not_completed():
     window.close()
 
 
-def test_shows_dashboard_placeholder_when_onboarding_already_done():
+def test_shows_dashboard_when_onboarding_already_done():
     session = get_session()
     try:
         session.add(ParentConfig(key="onboarding_complete", value="1"))
@@ -51,16 +52,16 @@ def test_shows_dashboard_placeholder_when_onboarding_already_done():
         session.close()
 
     window = MainWindow()
-    assert isinstance(window.stack.currentWidget(), QLabel)
+    assert isinstance(window.stack.currentWidget(), DashboardScreen)
     window.close()
 
 
-def test_finishing_onboarding_switches_to_dashboard_placeholder():
+def test_finishing_onboarding_switches_to_dashboard():
     window = MainWindow()
     wizard = window.stack.currentWidget()
     assert isinstance(wizard, OnboardingWizard)
 
     wizard.finished.emit()
 
-    assert isinstance(window.stack.currentWidget(), QLabel)
+    assert isinstance(window.stack.currentWidget(), DashboardScreen)
     window.close()

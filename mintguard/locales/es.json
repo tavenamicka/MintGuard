@@ -28,7 +28,13 @@
     "time_today": "Tiempo hoy",
     "time_limit": "máximo",
     "last_restriction": "Última restricción",
-    "no_restrictions": "Sin restricciones hoy"
+    "no_restrictions": "Sin restricciones hoy",
+    "today_window": "Hoy: acceso permitido de {0} a {1}",
+    "no_rule_today": "Acceso libre hoy",
+    "no_children": "Ningún hijo/a configurado. Vuelva a ejecutar el asistente de configuración.",
+    "reports_soon": "Disponible próximamente (Semana 5)",
+    "restriction_app_blocked": "Aplicación bloqueada: {0}",
+    "restriction_time_limit_hit": "Límite de tiempo alcanzado"
   },
   "settings": {
     "title": "Ajustes",
@@ -36,7 +42,20 @@
     "blocked_sites": "Sitios Bloqueados",
     "blocked_apps": "Aplicaciones Bloqueadas",
     "security": "Seguridad",
-    "language": "Idioma"
+    "language": "Idioma",
+    "select_child": "Hijo/a",
+    "day_active": "Día activo",
+    "start_label": "Inicio",
+    "end_label": "Fin",
+    "custom_sites": "Sitios personalizados",
+    "add_site_placeholder": "ej: tiktok.com",
+    "add_site_button": "Añadir",
+    "remove_site_button": "Eliminar",
+    "invalid_domain_error": "Dominio no válido",
+    "category_social": "Redes sociales",
+    "category_entertainment": "Entretenimiento",
+    "category_gaming": "Juegos en línea",
+    "saved_confirmation": "Guardado ✓"
   },
   "time": {
     "monday": "Lunes",
@@ -58,7 +77,9 @@
     "what_is_category": "¿Qué es una categoría?",
     "category_explanation": "Una categoría agrupa sitios similares. Por ejemplo, 'Redes sociales' incluye Facebook, Instagram, TikTok, etc.",
     "why_pin_title": "¿Por qué un código de seguridad?",
-    "why_pin_explanation": "Este código evita que su hijo/a cambie los ajustes sin su permiso. Podrá cambiarlo más tarde en Ajustes."
+    "why_pin_explanation": "Este código evita que su hijo/a cambie los ajustes sin su permiso. Podrá cambiarlo más tarde en Ajustes.",
+    "what_is_time_limit": "¿Qué es el límite de tiempo?",
+    "time_limit_explanation": "Fuera de las horas permitidas, la sesión de su hijo/a se cierra automáticamente. Puede cambiar estas horas en cualquier momento."
   },
   "messages": {
     "protection_enabled": "Protección activada ✓",

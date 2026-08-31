@@ -28,7 +28,13 @@
     "time_today": "Time today",
     "time_limit": "maximum",
     "last_restriction": "Last restriction",
-    "no_restrictions": "No restrictions today"
+    "no_restrictions": "No restrictions today",
+    "today_window": "Today: allowed access from {0} to {1}",
+    "no_rule_today": "Free access today",
+    "no_children": "No child configured. Please re-run the setup wizard.",
+    "reports_soon": "Coming soon (Week 5)",
+    "restriction_app_blocked": "Application blocked: {0}",
+    "restriction_time_limit_hit": "Time limit reached"
   },
   "settings": {
     "title": "Settings",
@@ -36,7 +42,20 @@
     "blocked_sites": "Blocked Sites",
     "blocked_apps": "Blocked Apps",
     "security": "Security",
-    "language": "Language"
+    "language": "Language",
+    "select_child": "Child",
+    "day_active": "Active day",
+    "start_label": "Start",
+    "end_label": "End",
+    "custom_sites": "Custom sites",
+    "add_site_placeholder": "e.g. tiktok.com",
+    "add_site_button": "Add",
+    "remove_site_button": "Remove",
+    "invalid_domain_error": "Invalid domain",
+    "category_social": "Social media",
+    "category_entertainment": "Entertainment",
+    "category_gaming": "Online games",
+    "saved_confirmation": "Saved ✓"
   },
   "time": {
     "monday": "Monday",
@@ -58,7 +77,9 @@
     "what_is_category": "What is a category?",
     "category_explanation": "A category groups similar websites together. For example, 'Social Media' includes Facebook, Instagram, TikTok, etc.",
     "why_pin_title": "Why a security code?",
-    "why_pin_explanation": "This code prevents your child from changing the settings without your consent. You can change it later in Settings."
+    "why_pin_explanation": "This code prevents your child from changing the settings without your consent. You can change it later in Settings.",
+    "what_is_time_limit": "What is the time limit?",
+    "time_limit_explanation": "Outside allowed hours, your child's session closes automatically. You can change these hours at any time."
   },
   "messages": {
     "protection_enabled": "Protection enabled ✓",

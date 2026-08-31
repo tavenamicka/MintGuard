@@ -16,6 +16,13 @@
 
 from datetime import timedelta
 
+DAY_KEYS = ("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday")
+
+
+def weekday_key(day_index: int) -> str:
+    """Clé i18n 'time.<jour>' pour un index de jour SQLAlchemy/datetime.weekday() (0=lundi)."""
+    return DAY_KEYS[day_index]
+
 
 def format_duration(seconds: int) -> str:
     """Formate une durée en secondes en 'Xh YYmin' (ex: 1h 45min)."""

@@ -14,18 +14,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QAction
-from PyQt6.QtWidgets import QLabel, QMainWindow, QStackedWidget
+from PyQt6.QtWidgets import QMainWindow, QStackedWidget
 
 from mintguard.config import get_config
 from mintguard.db.database import get_session
 from mintguard.db.models import ParentConfig
+from mintguard.gui.dashboard import DashboardScreen
 from mintguard.gui.onboarding import OnboardingWizard
 from mintguard.gui.styles import build_stylesheet
 from mintguard.locales.loader import get_i18n
-
-DASHBOARD_PAGE_INDEX = "dashboard"
 
 
 class MainWindow(QMainWindow):
@@ -48,7 +46,7 @@ class MainWindow(QMainWindow):
         if self._needs_onboarding():
             self._show_onboarding()
         else:
-            self._show_dashboard_placeholder()
+            self._show_dashboard()
 
     def _build_menu(self) -> None:
         menu = self.menuBar().addMenu(self.i18n("app.name"))
@@ -82,12 +80,9 @@ class MainWindow(QMainWindow):
         self.stack.setCurrentWidget(wizard)
 
     def _on_onboarding_finished(self) -> None:
-        self._show_dashboard_placeholder()
+        self._show_dashboard()
 
-    def _show_dashboard_placeholder(self) -> None:
-        # Le vrai Dashboard arrive en Phase 2 Semaine 4 (voir SUIVI.md).
-        label = QLabel(self.i18n("app_shell.dashboard_placeholder"))
-        label.setObjectName("h2")
-        label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.stack.addWidget(label)
-        self.stack.setCurrentWidget(label)
+    def _show_dashboard(self) -> None:
+        dashboard = DashboardScreen(self.i18n)
+        self.stack.addWidget(dashboard)
+        self.stack.setCurrentWidget(dashboard)

@@ -28,7 +28,13 @@
     "time_today": "Zeit heute",
     "time_limit": "Maximum",
     "last_restriction": "Letzte Einschränkung",
-    "no_restrictions": "Heute keine Einschränkungen"
+    "no_restrictions": "Heute keine Einschränkungen",
+    "today_window": "Heute: Zugang erlaubt von {0} bis {1}",
+    "no_rule_today": "Heute freier Zugang",
+    "no_children": "Kein Kind konfiguriert. Bitte den Einrichtungsassistenten erneut starten.",
+    "reports_soon": "Demnächst verfügbar (Woche 5)",
+    "restriction_app_blocked": "Anwendung gesperrt: {0}",
+    "restriction_time_limit_hit": "Zeitlimit erreicht"
   },
   "settings": {
     "title": "Einstellungen",
@@ -36,7 +42,20 @@
     "blocked_sites": "Gesperrte Webseiten",
     "blocked_apps": "Gesperrte Anwendungen",
     "security": "Sicherheit",
-    "language": "Sprache"
+    "language": "Sprache",
+    "select_child": "Kind",
+    "day_active": "Tag aktiv",
+    "start_label": "Beginn",
+    "end_label": "Ende",
+    "custom_sites": "Eigene Webseiten",
+    "add_site_placeholder": "z.B. tiktok.com",
+    "add_site_button": "Hinzufügen",
+    "remove_site_button": "Entfernen",
+    "invalid_domain_error": "Ungültige Domain",
+    "category_social": "Soziale Netzwerke",
+    "category_entertainment": "Unterhaltung",
+    "category_gaming": "Online-Spiele",
+    "saved_confirmation": "Gespeichert ✓"
   },
   "time": {
     "monday": "Montag",
@@ -58,7 +77,9 @@
     "what_is_category": "Was ist eine Kategorie?",
     "category_explanation": "Eine Kategorie fasst ähnliche Webseiten zusammen. Zum Beispiel umfasst 'Soziale Netzwerke' Facebook, Instagram, TikTok usw.",
     "why_pin_title": "Warum ein Sicherheitscode?",
-    "why_pin_explanation": "Dieser Code verhindert, dass Ihr Kind die Einstellungen ohne Ihre Zustimmung ändert. Sie können ihn später in den Einstellungen ändern."
+    "why_pin_explanation": "Dieser Code verhindert, dass Ihr Kind die Einstellungen ohne Ihre Zustimmung ändert. Sie können ihn später in den Einstellungen ändern.",
+    "what_is_time_limit": "Was ist das Zeitlimit?",
+    "time_limit_explanation": "Außerhalb der erlaubten Zeiten wird die Sitzung Ihres Kindes automatisch beendet. Sie können diese Zeiten jederzeit ändern."
   },
   "messages": {
     "protection_enabled": "Schutz aktiviert ✓",

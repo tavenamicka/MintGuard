@@ -28,7 +28,13 @@
     "time_today": "Temps aujourd'hui",
     "time_limit": "maximum",
     "last_restriction": "Dernière restriction",
-    "no_restrictions": "Aucune restriction ce jour"
+    "no_restrictions": "Aucune restriction ce jour",
+    "today_window": "Aujourd'hui : accès autorisé de {0} à {1}",
+    "no_rule_today": "Accès libre aujourd'hui",
+    "no_children": "Aucun enfant configuré. Relancez l'assistant de configuration.",
+    "reports_soon": "Bientôt disponible (Semaine 5)",
+    "restriction_app_blocked": "Application bloquée : {0}",
+    "restriction_time_limit_hit": "Limite de temps atteinte"
   },
   "settings": {
     "title": "Paramètres",
@@ -36,7 +42,20 @@
     "blocked_sites": "Sites à Bloquer",
     "blocked_apps": "Applications à Bloquer",
     "security": "Sécurité",
-    "language": "Langue"
+    "language": "Langue",
+    "select_child": "Enfant",
+    "day_active": "Jour actif",
+    "start_label": "Début",
+    "end_label": "Fin",
+    "custom_sites": "Sites personnalisés",
+    "add_site_placeholder": "ex: tiktok.com",
+    "add_site_button": "Ajouter",
+    "remove_site_button": "Supprimer",
+    "invalid_domain_error": "Domaine invalide",
+    "category_social": "Réseaux sociaux",
+    "category_entertainment": "Divertissement",
+    "category_gaming": "Jeux en ligne",
+    "saved_confirmation": "Sauvegardé ✓"
   },
   "time": {
     "monday": "Lundi",
@@ -58,7 +77,9 @@
     "what_is_category": "Qu'est-ce qu'une catégorie?",
     "category_explanation": "Une catégorie regroupe plusieurs sites similaires. Par exemple, 'Réseaux sociaux' inclut Facebook, Instagram, TikTok, etc.",
     "why_pin_title": "Pourquoi un code de sécurité ?",
-    "why_pin_explanation": "Ce code empêche votre enfant de modifier les réglages sans votre accord. Vous pourrez le changer plus tard dans les Paramètres."
+    "why_pin_explanation": "Ce code empêche votre enfant de modifier les réglages sans votre accord. Vous pourrez le changer plus tard dans les Paramètres.",
+    "what_is_time_limit": "Qu'est-ce que la limite de temps ?",
+    "time_limit_explanation": "En dehors des heures autorisées, la session de votre enfant se ferme automatiquement. Vous pouvez changer ces heures à tout moment."
   },
   "messages": {
     "protection_enabled": "Protection activée ✓",

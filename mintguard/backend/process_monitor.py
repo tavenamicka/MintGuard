@@ -19,7 +19,7 @@ import logging
 import psutil
 
 from mintguard.db.database import get_session
-from mintguard.db.models import ActivityLog, BlockedApp
+from mintguard.db.models import ActivityLog, BlockedApp, Child
 
 logger = logging.getLogger("mintguard.backend.process_monitor")
 
@@ -42,21 +42,35 @@ class ProcessMonitor:
             return []
 
         killed = []
-        for proc in psutil.process_iter(["pid", "name"]):
+        for proc in psutil.process_iter(["pid", "name", "username"]):
             proc_name = (proc.info.get("name") or "").lower()
             if proc_name in blocked_names:
                 try:
                     proc.kill()
                     killed.append(proc_name)
-                    self._log_action("app_blocked", f"Killed blocked app: {proc_name}")
+                    child_id = self._child_id_for_username(proc.info.get("username"))
+                    self._log_action(child_id, "app_blocked", proc_name)
                 except psutil.Error as e:
                     logger.warning("Impossible de terminer %s: %s", proc_name, e)
         return killed
 
-    def _log_action(self, action: str, details: str) -> None:
+    def _child_id_for_username(self, username: str | None) -> int | None:
+        """Associe le processus tué à l'enfant propriétaire de la session (pour le Dashboard)."""
+        if not username:
+            return None
+        # psutil renvoie "DOMAINE\\utilisateur" sous Windows ; sans effet sous Linux (cible réelle).
+        plain_username = username.rsplit("\\", 1)[-1]
         session = get_session()
         try:
-            session.add(ActivityLog(action=action, details=details))
+            child = session.query(Child).filter_by(username=plain_username).first()
+            return child.id if child else None
+        finally:
+            session.close()
+
+    def _log_action(self, child_id: int | None, action: str, details: str) -> None:
+        session = get_session()
+        try:
+            session.add(ActivityLog(child_id=child_id, action=action, details=details))
             session.commit()
         finally:
             session.close()
