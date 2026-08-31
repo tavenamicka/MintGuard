@@ -14,19 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import sys
+import os
 
-from PyQt6.QtWidgets import QApplication
-
-from mintguard.gui.main_window import MainWindow
-
-
-def main() -> None:
-    app = QApplication(sys.argv)
-    window = MainWindow()
-    window.show()
-    sys.exit(app.exec())
-
-
-if __name__ == "__main__":
-    main()
+# Les tests GUI (PyQt6) tournent sans display (CI, dev headless) : offscreen
+# doit être positionné avant tout import de PyQt6.QtWidgets.
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")

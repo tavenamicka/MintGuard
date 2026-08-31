@@ -14,19 +14,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import sys
-
-from PyQt6.QtWidgets import QApplication
-
-from mintguard.gui.main_window import MainWindow
+from mintguard.gui.styles import COLORS, build_stylesheet
 
 
-def main() -> None:
-    app = QApplication(sys.argv)
-    window = MainWindow()
-    window.show()
-    sys.exit(app.exec())
+def test_stylesheet_contains_primary_color():
+    css = build_stylesheet()
+    assert COLORS["primary"] in css
 
 
-if __name__ == "__main__":
-    main()
+def test_stylesheet_defines_heading_classes():
+    css = build_stylesheet()
+    for selector in ("QLabel#h1", "QLabel#h2", "QLabel#h3", "QPushButton", "QProgressBar"):
+        assert selector in css

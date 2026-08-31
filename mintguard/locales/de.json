@@ -14,7 +14,11 @@
     "close": "Schließen",
     "settings": "Einstellungen",
     "dashboard": "Übersicht",
-    "reports": "Berichte"
+    "reports": "Berichte",
+    "next": "Weiter",
+    "back": "Zurück",
+    "finish": "Fertigstellen",
+    "start": "Loslegen"
   },
   "dashboard": {
     "title": "Übersicht",
@@ -52,7 +56,9 @@
     "how_it_works": "Wie funktioniert das?",
     "how_it_works_explanation": "MintGuard erkennt, welche Webseiten und Anwendungen Ihr Kind nutzt, und wendet die von Ihnen festgelegten Einschränkungen an.",
     "what_is_category": "Was ist eine Kategorie?",
-    "category_explanation": "Eine Kategorie fasst ähnliche Webseiten zusammen. Zum Beispiel umfasst 'Soziale Netzwerke' Facebook, Instagram, TikTok usw."
+    "category_explanation": "Eine Kategorie fasst ähnliche Webseiten zusammen. Zum Beispiel umfasst 'Soziale Netzwerke' Facebook, Instagram, TikTok usw.",
+    "why_pin_title": "Warum ein Sicherheitscode?",
+    "why_pin_explanation": "Dieser Code verhindert, dass Ihr Kind die Einstellungen ohne Ihre Zustimmung ändert. Sie können ihn später in den Einstellungen ändern."
   },
   "messages": {
     "protection_enabled": "Schutz aktiviert ✓",
@@ -62,5 +68,52 @@
     "settings_saved": "Einstellungen gespeichert ✓",
     "error": "Fehler",
     "warning": "Warnung"
+  },
+  "app_shell": {
+    "menu_help": "Hilfe",
+    "menu_quit": "Beenden",
+    "dashboard_placeholder": "Übersicht (demnächst verfügbar)"
+  },
+  "onboarding": {
+    "step_indicator": "Schritt {0} von {1}",
+    "welcome": {
+      "title": "Ihr Kind schützen",
+      "subtitle": "Helfen Sie Ihrem Kind, das Internet sicher zu entdecken"
+    },
+    "child": {
+      "title": "Welches Kind möchten Sie schützen?",
+      "name_label": "Vorname",
+      "username_label": "Benutzername (Linux-Sitzung)",
+      "age_label": "Alter",
+      "error_required": "Bitte Vorname und Benutzername ausfüllen"
+    },
+    "quick_config": {
+      "title": "Schnellkonfiguration",
+      "subtitle": "Altersgerechte Voreinstellungen. Sie können später alles ändern.",
+      "profile_young": "6-12 Jahre",
+      "profile_young_desc": "2 Std./Tag, soziale Netzwerke und Online-Spiele gesperrt",
+      "profile_teen": "13-18 Jahre",
+      "profile_teen_desc": "3 Std./Tag, einige soziale Netzwerke gesperrt"
+    },
+    "pin": {
+      "title": "Ihre Einstellungen schützen",
+      "subtitle": "Damit Ihr Kind die Regeln nicht ändern kann",
+      "pin_label": "4-stelliger Code",
+      "confirm_label": "Code bestätigen",
+      "error_mismatch": "Die beiden Codes stimmen nicht überein",
+      "error_invalid": "Der Code muss 4 bis 8 Ziffern enthalten"
+    },
+    "how_it_works": {
+      "title": "Wie funktioniert das?",
+      "step1": "Ihr Kind nutzt den Computer",
+      "step2": "MintGuard erkennt, welche Seiten und Apps genutzt werden",
+      "step3": "Nicht erlaubte Inhalte werden gesperrt",
+      "step4": "Sie erhalten eine Zusammenfassung in den Berichten"
+    },
+    "success": {
+      "title": "Fertig!",
+      "subtitle": "Der Schutz ist jetzt aktiv für {0}",
+      "cta": "Zur Übersicht"
+    }
   }
 }

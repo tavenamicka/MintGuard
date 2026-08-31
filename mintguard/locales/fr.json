@@ -14,7 +14,11 @@
     "close": "Fermer",
     "settings": "Paramètres",
     "dashboard": "Tableau de Bord",
-    "reports": "Rapports"
+    "reports": "Rapports",
+    "next": "Suivant",
+    "back": "Précédent",
+    "finish": "Terminer",
+    "start": "Commencer"
   },
   "dashboard": {
     "title": "Tableau de Bord",
@@ -52,7 +56,9 @@
     "how_it_works": "Comment ça marche?",
     "how_it_works_explanation": "L'application MintGuard voit quels sites et applications votre enfant utilise, puis applique les restrictions que vous avez configurées.",
     "what_is_category": "Qu'est-ce qu'une catégorie?",
-    "category_explanation": "Une catégorie regroupe plusieurs sites similaires. Par exemple, 'Réseaux sociaux' inclut Facebook, Instagram, TikTok, etc."
+    "category_explanation": "Une catégorie regroupe plusieurs sites similaires. Par exemple, 'Réseaux sociaux' inclut Facebook, Instagram, TikTok, etc.",
+    "why_pin_title": "Pourquoi un code de sécurité ?",
+    "why_pin_explanation": "Ce code empêche votre enfant de modifier les réglages sans votre accord. Vous pourrez le changer plus tard dans les Paramètres."
   },
   "messages": {
     "protection_enabled": "Protection activée ✓",
@@ -62,5 +68,52 @@
     "settings_saved": "Paramètres sauvegardés ✓",
     "error": "Erreur",
     "warning": "Attention"
+  },
+  "app_shell": {
+    "menu_help": "Aide",
+    "menu_quit": "Quitter",
+    "dashboard_placeholder": "Tableau de bord (bientôt disponible)"
+  },
+  "onboarding": {
+    "step_indicator": "Étape {0} sur {1}",
+    "welcome": {
+      "title": "Protéger votre enfant",
+      "subtitle": "Aidez votre enfant à explorer Internet en toute sécurité"
+    },
+    "child": {
+      "title": "Quel enfant voulez-vous protéger ?",
+      "name_label": "Prénom",
+      "username_label": "Nom d'utilisateur (session Linux)",
+      "age_label": "Âge",
+      "error_required": "Merci de remplir le prénom et le nom d'utilisateur"
+    },
+    "quick_config": {
+      "title": "Configuration rapide",
+      "subtitle": "Réglages adaptés à l'âge. Vous pourrez tout modifier plus tard.",
+      "profile_young": "6-12 ans",
+      "profile_young_desc": "2h par jour, réseaux sociaux et jeux en ligne bloqués",
+      "profile_teen": "13-18 ans",
+      "profile_teen_desc": "3h par jour, réseaux sociaux limités"
+    },
+    "pin": {
+      "title": "Protéger vos paramètres",
+      "subtitle": "Pour que votre enfant ne change pas les règles",
+      "pin_label": "Code à 4 chiffres",
+      "confirm_label": "Confirmer le code",
+      "error_mismatch": "Les deux codes ne correspondent pas",
+      "error_invalid": "Le code doit contenir entre 4 et 8 chiffres"
+    },
+    "how_it_works": {
+      "title": "Comment ça marche ?",
+      "step1": "Votre enfant utilise l'ordinateur",
+      "step2": "MintGuard voit les sites et applications utilisés",
+      "step3": "Le contenu non autorisé est bloqué",
+      "step4": "Vous retrouvez un résumé dans les rapports"
+    },
+    "success": {
+      "title": "C'est prêt !",
+      "subtitle": "La protection est active pour {0}",
+      "cta": "Aller au tableau de bord"
+    }
   }
 }

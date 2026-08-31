@@ -14,13 +14,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import os
-
 import pytest
 
-os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
-
 pytest.importorskip("PyQt6")
+
+from mintguard.db.database import init_db  # noqa: E402
+
+
+@pytest.fixture(autouse=True)
+def db(tmp_path):
+    """MainWindow lit la BD (onboarding_complete) dès sa construction : BD jetable obligatoire."""
+    init_db(tmp_path / "test.db")
 
 
 def test_main_window_creates_and_shows_title():

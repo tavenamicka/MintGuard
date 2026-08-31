@@ -14,7 +14,11 @@
     "close": "Close",
     "settings": "Settings",
     "dashboard": "Dashboard",
-    "reports": "Reports"
+    "reports": "Reports",
+    "next": "Next",
+    "back": "Back",
+    "finish": "Finish",
+    "start": "Get started"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -52,7 +56,9 @@
     "how_it_works": "How does it work?",
     "how_it_works_explanation": "MintGuard monitors which websites and applications your child uses, then applies the restrictions you configured.",
     "what_is_category": "What is a category?",
-    "category_explanation": "A category groups similar websites together. For example, 'Social Media' includes Facebook, Instagram, TikTok, etc."
+    "category_explanation": "A category groups similar websites together. For example, 'Social Media' includes Facebook, Instagram, TikTok, etc.",
+    "why_pin_title": "Why a security code?",
+    "why_pin_explanation": "This code prevents your child from changing the settings without your consent. You can change it later in Settings."
   },
   "messages": {
     "protection_enabled": "Protection enabled ✓",
@@ -62,5 +68,52 @@
     "settings_saved": "Settings saved ✓",
     "error": "Error",
     "warning": "Warning"
+  },
+  "app_shell": {
+    "menu_help": "Help",
+    "menu_quit": "Quit",
+    "dashboard_placeholder": "Dashboard (coming soon)"
+  },
+  "onboarding": {
+    "step_indicator": "Step {0} of {1}",
+    "welcome": {
+      "title": "Protect your child",
+      "subtitle": "Help your child explore the internet safely"
+    },
+    "child": {
+      "title": "Which child do you want to protect?",
+      "name_label": "First name",
+      "username_label": "Username (Linux session)",
+      "age_label": "Age",
+      "error_required": "Please fill in the first name and username"
+    },
+    "quick_config": {
+      "title": "Quick setup",
+      "subtitle": "Age-appropriate defaults. You can change everything later.",
+      "profile_young": "6-12 years old",
+      "profile_young_desc": "2h a day, social media and online games blocked",
+      "profile_teen": "13-18 years old",
+      "profile_teen_desc": "3h a day, some social media blocked"
+    },
+    "pin": {
+      "title": "Protect your settings",
+      "subtitle": "So your child can't change the rules",
+      "pin_label": "4-digit code",
+      "confirm_label": "Confirm code",
+      "error_mismatch": "The two codes don't match",
+      "error_invalid": "The code must contain 4 to 8 digits"
+    },
+    "how_it_works": {
+      "title": "How does it work?",
+      "step1": "Your child uses the computer",
+      "step2": "MintGuard sees which sites and apps are used",
+      "step3": "Unauthorized content is blocked",
+      "step4": "You get a summary in the reports"
+    },
+    "success": {
+      "title": "All set!",
+      "subtitle": "Protection is now active for {0}",
+      "cta": "Go to dashboard"
+    }
   }
 }

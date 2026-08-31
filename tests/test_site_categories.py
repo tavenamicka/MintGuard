@@ -14,19 +14,25 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import sys
-
-from PyQt6.QtWidgets import QApplication
-
-from mintguard.gui.main_window import MainWindow
+from mintguard.backend.site_categories import AGE_PRESETS, CATEGORIES, category_for_domain
 
 
-def main() -> None:
-    app = QApplication(sys.argv)
-    window = MainWindow()
-    window.show()
-    sys.exit(app.exec())
+def test_category_for_known_domain():
+    assert category_for_domain("tiktok.com") == "social"
+    assert category_for_domain("steampowered.com") == "gaming"
 
 
-if __name__ == "__main__":
-    main()
+def test_category_for_unknown_domain():
+    assert category_for_domain("example.com") == "custom"
+
+
+def test_age_presets_have_expected_shape():
+    for bracket in ("young", "teen"):
+        assert "daily_hours" in AGE_PRESETS[bracket]
+        assert "blocked_domains" in AGE_PRESETS[bracket]
+        assert len(AGE_PRESETS[bracket]["blocked_domains"]) > 0
+
+
+def test_categories_are_non_empty():
+    for domains in CATEGORIES.values():
+        assert len(domains) > 0

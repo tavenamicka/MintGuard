@@ -14,7 +14,11 @@
     "close": "Cerrar",
     "settings": "Ajustes",
     "dashboard": "Panel",
-    "reports": "Informes"
+    "reports": "Informes",
+    "next": "Siguiente",
+    "back": "Atrás",
+    "finish": "Finalizar",
+    "start": "Empezar"
   },
   "dashboard": {
     "title": "Panel",
@@ -52,7 +56,9 @@
     "how_it_works": "¿Cómo funciona?",
     "how_it_works_explanation": "MintGuard detecta qué sitios y aplicaciones usa su hijo/a, y aplica las restricciones que usted configuró.",
     "what_is_category": "¿Qué es una categoría?",
-    "category_explanation": "Una categoría agrupa sitios similares. Por ejemplo, 'Redes sociales' incluye Facebook, Instagram, TikTok, etc."
+    "category_explanation": "Una categoría agrupa sitios similares. Por ejemplo, 'Redes sociales' incluye Facebook, Instagram, TikTok, etc.",
+    "why_pin_title": "¿Por qué un código de seguridad?",
+    "why_pin_explanation": "Este código evita que su hijo/a cambie los ajustes sin su permiso. Podrá cambiarlo más tarde en Ajustes."
   },
   "messages": {
     "protection_enabled": "Protección activada ✓",
@@ -62,5 +68,52 @@
     "settings_saved": "Ajustes guardados ✓",
     "error": "Error",
     "warning": "Advertencia"
+  },
+  "app_shell": {
+    "menu_help": "Ayuda",
+    "menu_quit": "Salir",
+    "dashboard_placeholder": "Panel (disponible próximamente)"
+  },
+  "onboarding": {
+    "step_indicator": "Paso {0} de {1}",
+    "welcome": {
+      "title": "Proteger a su hijo/a",
+      "subtitle": "Ayude a su hijo/a a explorar Internet con seguridad"
+    },
+    "child": {
+      "title": "¿A qué hijo/a quiere proteger?",
+      "name_label": "Nombre",
+      "username_label": "Nombre de usuario (sesión Linux)",
+      "age_label": "Edad",
+      "error_required": "Complete el nombre y el nombre de usuario"
+    },
+    "quick_config": {
+      "title": "Configuración rápida",
+      "subtitle": "Ajustes según la edad. Podrá cambiarlo todo más tarde.",
+      "profile_young": "6-12 años",
+      "profile_young_desc": "2h al día, redes sociales y juegos en línea bloqueados",
+      "profile_teen": "13-18 años",
+      "profile_teen_desc": "3h al día, algunas redes sociales bloqueadas"
+    },
+    "pin": {
+      "title": "Proteger sus ajustes",
+      "subtitle": "Para que su hijo/a no cambie las reglas",
+      "pin_label": "Código de 4 dígitos",
+      "confirm_label": "Confirmar código",
+      "error_mismatch": "Los dos códigos no coinciden",
+      "error_invalid": "El código debe tener entre 4 y 8 dígitos"
+    },
+    "how_it_works": {
+      "title": "¿Cómo funciona?",
+      "step1": "Su hijo/a usa el ordenador",
+      "step2": "MintGuard detecta qué sitios y aplicaciones se usan",
+      "step3": "El contenido no autorizado se bloquea",
+      "step4": "Usted recibe un resumen en los informes"
+    },
+    "success": {
+      "title": "¡Todo listo!",
+      "subtitle": "La protección está activa para {0}",
+      "cta": "Ir al panel"
+    }
   }
 }
