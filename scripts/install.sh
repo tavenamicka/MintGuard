@@ -50,10 +50,21 @@ fi
 echo "Paquet installe (editable -> $REPO_ROOT)"
 
 echo "== dnsmasq =="
-if ! command -v dnsmasq >/dev/null 2>&1; then
-  echo "dnsmasq absent, installation..."
-  apt-get update -qq && apt-get install -y -qq dnsmasq
+if [ ! -d /etc/dnsmasq.d ]; then
+  # dnsmasq-base (le binaire seul) peut deja etre present sans le paquet
+  # complet -> /etc/dnsmasq.d absent tant que "dnsmasq" (pas juste
+  # "dnsmasq-base") n'est pas installe.
+  echo "Paquet dnsmasq (config complete) absent, installation..."
+  apt-get update -qq
+  DEBIAN_FRONTEND=noninteractive apt-get install -y -qq dnsmasq
 fi
+# Le paquet dnsmasq demarre parfois son service avec la conf par defaut
+# (port 53) au moment de l'installation -> conflit possible avec
+# systemd-resolved. On l'arrete/desactive avant d'installer notre conf
+# (port 5353) ; il sera (re)demarre par la dependance Requires= du
+# service mintguard-daemon quand l'utilisateur le lancera explicitement.
+systemctl stop dnsmasq 2>/dev/null || true
+systemctl disable dnsmasq 2>/dev/null || true
 install -m 644 "$REPO_ROOT/etc/dnsmasq.d/mintguard.conf" /etc/dnsmasq.d/mintguard.conf
 echo "mintguard.conf installe (port 5353 - resolveur systeme non touche, voir SUIVI.md)"
 
