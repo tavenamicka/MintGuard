@@ -30,7 +30,9 @@ DEFAULT_CONFIG: dict[str, Any] = {
     },
     "dns": {
         "enabled": True,
-        "listen_port": 5353,
+        # 5354, PAS 5353 (port mDNS/Avahi standard, deja utilise par
+        # avahi-daemon sur Linux Mint) - voir SUIVI.md Phase 3.
+        "listen_port": 5354,
         "blocklist_path": "/var/lib/mintguard/blocklist.hosts",
         "refresh_interval": 30,
     },

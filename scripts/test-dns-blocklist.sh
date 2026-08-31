@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Test isole du blocage DNS : instance dnsmasq temporaire sur le port 5353,
+# Test isole du blocage DNS : instance dnsmasq temporaire sur le port 5354,
 # NE TOUCHE PAS au resolveur systeme (systemd-resolved reste actif normalement).
 # Usage : sudo bash scripts/test-dns-blocklist.sh
 set -euo pipefail
@@ -22,8 +22,8 @@ fi
 echo "--- Blocklist de test ---"
 cat "$BLOCKLIST"
 
-echo "--- Demarrage dnsmasq de test (port 5353, PAS le resolveur systeme) ---"
-dnsmasq --no-daemon --listen-address=127.0.0.1 --port=5353 \
+echo "--- Demarrage dnsmasq de test (port 5354, PAS le resolveur systeme) ---"
+dnsmasq --no-daemon --listen-address=127.0.0.1 --port=5354 \
   --addn-hosts="$BLOCKLIST" --pid-file="$PIDFILE" --log-queries \
   > "$LOGFILE" 2>&1 &
 DNSMASQ_PID=$!
@@ -38,10 +38,10 @@ trap cleanup EXIT
 sleep 1
 
 echo "--- Domaine BLOQUE (tiktok.com) : doit renvoyer 0.0.0.0 ---"
-dig @127.0.0.1 -p 5353 tiktok.com +short
+dig @127.0.0.1 -p 5354 tiktok.com +short
 
 echo "--- Domaine NON bloque (example.com) : doit renvoyer une vraie IP ---"
-dig @127.0.0.1 -p 5353 example.com +short
+dig @127.0.0.1 -p 5354 example.com +short
 
 echo "--- Log dnsmasq (requetes recues) ---"
 cat "$LOGFILE"
