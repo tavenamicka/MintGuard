@@ -1,0 +1,66 @@
+{
+  "app": {
+    "name": "MintGuard",
+    "tagline": "Damit Ihre Kinder das Internet sicher entdecken können",
+    "version": "0.1.0"
+  },
+  "common": {
+    "ok": "OK",
+    "cancel": "Abbrechen",
+    "save": "Speichern",
+    "delete": "Löschen",
+    "edit": "Bearbeiten",
+    "help": "Hilfe",
+    "close": "Schließen",
+    "settings": "Einstellungen",
+    "dashboard": "Übersicht",
+    "reports": "Berichte"
+  },
+  "dashboard": {
+    "title": "Übersicht",
+    "protection_active": "Schutz: AKTIV ✓",
+    "protection_inactive": "Schutz: INAKTIV",
+    "child_select": "Kind",
+    "time_today": "Zeit heute",
+    "time_limit": "Maximum",
+    "last_restriction": "Letzte Einschränkung",
+    "no_restrictions": "Heute keine Einschränkungen"
+  },
+  "settings": {
+    "title": "Einstellungen",
+    "time_limits": "Zeitlimit",
+    "blocked_sites": "Gesperrte Webseiten",
+    "blocked_apps": "Gesperrte Anwendungen",
+    "security": "Sicherheit",
+    "language": "Sprache"
+  },
+  "time": {
+    "monday": "Montag",
+    "tuesday": "Dienstag",
+    "wednesday": "Mittwoch",
+    "thursday": "Donnerstag",
+    "friday": "Freitag",
+    "saturday": "Samstag",
+    "sunday": "Sonntag",
+    "enabled": "Aktiviert",
+    "disabled": "Deaktiviert",
+    "access_all_day": "Ganztägiger Zugang"
+  },
+  "help": {
+    "what_is_blocking": "Was bedeutet 'sperren'?",
+    "blocking_explanation": "Wenn Sie eine Webseite sperren, kann Ihr Kind sie nicht besuchen. Es sieht die Meldung: 'Diese Seite ist gesperrt'.",
+    "how_it_works": "Wie funktioniert das?",
+    "how_it_works_explanation": "MintGuard erkennt, welche Webseiten und Anwendungen Ihr Kind nutzt, und wendet die von Ihnen festgelegten Einschränkungen an.",
+    "what_is_category": "Was ist eine Kategorie?",
+    "category_explanation": "Eine Kategorie fasst ähnliche Webseiten zusammen. Zum Beispiel umfasst 'Soziale Netzwerke' Facebook, Instagram, TikTok usw."
+  },
+  "messages": {
+    "protection_enabled": "Schutz aktiviert ✓",
+    "site_blocked": "Diese Webseite ist gesperrt",
+    "app_blocked": "Diese Anwendung kann nicht verwendet werden",
+    "time_limit_exceeded": "Zeitlimit überschritten",
+    "settings_saved": "Einstellungen gespeichert ✓",
+    "error": "Fehler",
+    "warning": "Warnung"
+  }
+}

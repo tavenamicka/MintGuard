@@ -1,0 +1,66 @@
+{
+  "app": {
+    "name": "MintGuard",
+    "tagline": "Para que sus hijos exploren Internet con seguridad",
+    "version": "0.1.0"
+  },
+  "common": {
+    "ok": "OK",
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "help": "Ayuda",
+    "close": "Cerrar",
+    "settings": "Ajustes",
+    "dashboard": "Panel",
+    "reports": "Informes"
+  },
+  "dashboard": {
+    "title": "Panel",
+    "protection_active": "Protección: ACTIVA ✓",
+    "protection_inactive": "Protección: INACTIVA",
+    "child_select": "Hijo/a",
+    "time_today": "Tiempo hoy",
+    "time_limit": "máximo",
+    "last_restriction": "Última restricción",
+    "no_restrictions": "Sin restricciones hoy"
+  },
+  "settings": {
+    "title": "Ajustes",
+    "time_limits": "Límite de Tiempo",
+    "blocked_sites": "Sitios Bloqueados",
+    "blocked_apps": "Aplicaciones Bloqueadas",
+    "security": "Seguridad",
+    "language": "Idioma"
+  },
+  "time": {
+    "monday": "Lunes",
+    "tuesday": "Martes",
+    "wednesday": "Miércoles",
+    "thursday": "Jueves",
+    "friday": "Viernes",
+    "saturday": "Sábado",
+    "sunday": "Domingo",
+    "enabled": "Activado",
+    "disabled": "Desactivado",
+    "access_all_day": "Acceso todo el día"
+  },
+  "help": {
+    "what_is_blocking": "¿Qué significa 'bloquear'?",
+    "blocking_explanation": "Si bloquea un sitio, su hijo/a no podrá visitarlo. Verá un mensaje: 'Esta página está bloqueada'.",
+    "how_it_works": "¿Cómo funciona?",
+    "how_it_works_explanation": "MintGuard detecta qué sitios y aplicaciones usa su hijo/a, y aplica las restricciones que usted configuró.",
+    "what_is_category": "¿Qué es una categoría?",
+    "category_explanation": "Una categoría agrupa sitios similares. Por ejemplo, 'Redes sociales' incluye Facebook, Instagram, TikTok, etc."
+  },
+  "messages": {
+    "protection_enabled": "Protección activada ✓",
+    "site_blocked": "Este sitio está bloqueado",
+    "app_blocked": "Esta aplicación no se puede usar",
+    "time_limit_exceeded": "Límite de tiempo superado",
+    "settings_saved": "Ajustes guardados ✓",
+    "error": "Error",
+    "warning": "Advertencia"
+  }
+}

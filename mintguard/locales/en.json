@@ -1,0 +1,66 @@
+{
+  "app": {
+    "name": "MintGuard",
+    "tagline": "Help your children explore the internet safely",
+    "version": "0.1.0"
+  },
+  "common": {
+    "ok": "OK",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "help": "Help",
+    "close": "Close",
+    "settings": "Settings",
+    "dashboard": "Dashboard",
+    "reports": "Reports"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "protection_active": "Protection: ACTIVE ✓",
+    "protection_inactive": "Protection: INACTIVE",
+    "child_select": "Child",
+    "time_today": "Time today",
+    "time_limit": "maximum",
+    "last_restriction": "Last restriction",
+    "no_restrictions": "No restrictions today"
+  },
+  "settings": {
+    "title": "Settings",
+    "time_limits": "Time Limits",
+    "blocked_sites": "Blocked Sites",
+    "blocked_apps": "Blocked Apps",
+    "security": "Security",
+    "language": "Language"
+  },
+  "time": {
+    "monday": "Monday",
+    "tuesday": "Tuesday",
+    "wednesday": "Wednesday",
+    "thursday": "Thursday",
+    "friday": "Friday",
+    "saturday": "Saturday",
+    "sunday": "Sunday",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "access_all_day": "Access all day"
+  },
+  "help": {
+    "what_is_blocking": "What is 'blocking'?",
+    "blocking_explanation": "If you block a site, your child cannot access it. They will see a message: 'This page is blocked'.",
+    "how_it_works": "How does it work?",
+    "how_it_works_explanation": "MintGuard monitors which websites and applications your child uses, then applies the restrictions you configured.",
+    "what_is_category": "What is a category?",
+    "category_explanation": "A category groups similar websites together. For example, 'Social Media' includes Facebook, Instagram, TikTok, etc."
+  },
+  "messages": {
+    "protection_enabled": "Protection enabled ✓",
+    "site_blocked": "This site is blocked",
+    "app_blocked": "This application cannot be used",
+    "time_limit_exceeded": "Time limit exceeded",
+    "settings_saved": "Settings saved ✓",
+    "error": "Error",
+    "warning": "Warning"
+  }
+}

@@ -1,0 +1,1092 @@
+<title>Stratégie UX/UI - Contrôle Parental Accessible</title>
+<style>
+  :root {
+    --primary: #0ea5e9;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --gray-50: #f9fafb;
+    --gray-100: #f3f4f6;
+    --gray-200: #e5e7eb;
+    --gray-600: #4b5563;
+    --gray-700: #374151;
+    --gray-900: #111827;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --gray-50: #1f2937;
+      --gray-100: #374151;
+      --gray-200: #4b5563;
+      --gray-600: #d1d5db;
+      --gray-700: #e5e7eb;
+      --gray-900: #f9fafb;
+    }
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    line-height: 1.7;
+    color: var(--gray-900);
+    background: var(--gray-50);
+    font-size: 16px;
+  }
+
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+
+  h1 {
+    color: var(--primary);
+    border-bottom: 4px solid var(--primary);
+    padding-bottom: 0.75rem;
+    margin-top: 0;
+  }
+
+  h2 {
+    color: var(--primary);
+    margin-top: 2.5rem;
+    font-size: 1.75rem;
+  }
+
+  h3 {
+    color: var(--gray-700);
+    margin-top: 1.75rem;
+    font-size: 1.3rem;
+  }
+
+  .section {
+    background: white;
+    padding: 2rem;
+    margin: 2rem 0;
+    border-radius: 12px;
+    border-left: 5px solid var(--primary);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .section {
+      background: #1f2937;
+      border-left-color: var(--primary);
+    }
+  }
+
+  .callout {
+    background: linear-gradient(135deg, #dbeafe 0%, #e0f2fe 100%);
+    border-left: 5px solid var(--primary);
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin: 1.5rem 0;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .callout {
+      background: linear-gradient(135deg, #0c2340 0%, #1e3a5f 100%);
+    }
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin: 2rem 0;
+  }
+
+  .card {
+    background: var(--gray-100);
+    padding: 1.5rem;
+    border-radius: 10px;
+    border: 2px solid var(--gray-200);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .card {
+      background: #111827;
+      border-color: #374151;
+    }
+  }
+
+  .card h4 {
+    margin: 0 0 1rem 0;
+    color: var(--primary);
+    font-size: 1.1rem;
+  }
+
+  .card p {
+    margin: 0.5rem 0;
+    line-height: 1.6;
+  }
+
+  .icon {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .feature-list {
+    list-style: none;
+    padding: 0;
+  }
+
+  .feature-list li {
+    padding: 0.75rem 0;
+    padding-left: 2rem;
+    position: relative;
+  }
+
+  .feature-list li:before {
+    content: "✓";
+    position: absolute;
+    left: 0;
+    color: var(--success);
+    font-weight: bold;
+    font-size: 1.2rem;
+  }
+
+  .warning-list li:before {
+    content: "⚠";
+    color: var(--warning);
+  }
+
+  .wireframe {
+    background: linear-gradient(135deg, #f0f9ff 0%, #f0f4ff 100%);
+    border: 2px dashed var(--primary);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+    font-family: monospace;
+    font-size: 0.9rem;
+    line-height: 2;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .wireframe {
+      background: linear-gradient(135deg, #0c2340 0%, #1e3a5f 100%);
+      border-color: var(--primary);
+    }
+  }
+
+  .lang-badge {
+    display: inline-block;
+    background: var(--primary);
+    color: white;
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    margin: 0.25rem;
+    font-weight: 500;
+  }
+
+  .accessibility-note {
+    background: #f0fdf4;
+    border-left: 4px solid var(--success);
+    padding: 1rem;
+    margin: 1rem 0;
+    border-radius: 4px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .accessibility-note {
+      background: #064e3b;
+    }
+  }
+
+  .mockup-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin: 1.5rem 0;
+  }
+
+  @media (max-width: 768px) {
+    .mockup-container {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .mockup-frame {
+    border: 2px solid var(--gray-200);
+    border-radius: 12px;
+    padding: 1rem;
+    background: var(--gray-100);
+    aspect-ratio: 9 / 16;
+    display: flex;
+    flex-direction: column;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .mockup-frame {
+      border-color: #374151;
+      background: #111827;
+    }
+  }
+
+  .mockup-header {
+    background: var(--primary);
+    color: white;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    font-weight: bold;
+    text-align: center;
+  }
+
+  .mockup-content {
+    flex: 1;
+    padding: 1rem 0;
+  }
+
+  .mockup-item {
+    background: white;
+    padding: 1rem;
+    margin: 0.75rem 0;
+    border-radius: 6px;
+    border-left: 4px solid var(--primary);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .mockup-item {
+      background: #1f2937;
+      border-left-color: var(--primary);
+    }
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+  }
+
+  th, td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--gray-200);
+  }
+
+  th {
+    background: var(--gray-200);
+    font-weight: 600;
+    color: var(--gray-900);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    th {
+      background: #374151;
+      color: var(--gray-50);
+    }
+    td {
+      border-bottom-color: #374151;
+    }
+  }
+
+  .progress-bar {
+    background: var(--gray-200);
+    height: 8px;
+    border-radius: 4px;
+    margin: 1rem 0;
+    overflow: hidden;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .progress-bar {
+      background: #374151;
+    }
+  }
+
+  .progress-fill {
+    background: linear-gradient(90deg, var(--primary), var(--success));
+    height: 100%;
+    border-radius: 4px;
+  }
+
+  .emoji {
+    font-size: 1.3em;
+    margin-right: 0.5rem;
+  }
+
+  .highlight {
+    background: linear-gradient(120deg, #fef3c7 0%, #fde68a 100%);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 500;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .highlight {
+      background: #78350f;
+      color: #fbbf24;
+    }
+  }
+</style>
+
+<div class="container">
+  <h1>🎯 Stratégie UX/UI - Application Contrôle Parental Accessible</h1>
+
+  <div class="callout">
+    <strong>Objectif:</strong> Créer une application que les parents <strong>non-tech</strong> peuvent utiliser en 5 minutes, avec explications visuelles claires et soutien continu.
+  </div>
+
+  <!-- SECTION 1: MULTILINGUE -->
+  <div class="section">
+    <h2><span class="emoji">🌍</span> Stratégie Multilingue Européenne</h2>
+
+    <h3>Langues Prioritaires (Phase 1)</h3>
+    <p>Recommandation: Cibler les grandes populations européennes d'abord</p>
+
+    <div class="grid">
+      <div class="card">
+        <h4>🇫🇷 Français</h4>
+        <p><strong>Priorité:</strong> Haute</p>
+        <p>France, Belgique, Suisse, Luxembourg, Québec</p>
+      </div>
+      <div class="card">
+        <h4>🇩🇪 Allemand</h4>
+        <p><strong>Priorité:</strong> Haute</p>
+        <p>Allemagne, Autriche, Suisse alémanique</p>
+      </div>
+      <div class="card">
+        <h4>🇪🇸 Espagnol</h4>
+        <p><strong>Priorité:</strong> Haute</p>
+        <p>Espagne, Amérique latine (croissant Linux Mint)</p>
+      </div>
+      <div class="card">
+        <h4>🇬🇧 Anglais</h4>
+        <p><strong>Priorité:</strong> Très Haute</p>
+        <p>UK, Irlande, Commonwealth, international</p>
+      </div>
+    </div>
+
+    <h3>Autres Langues (Phase 2)</h3>
+    <div class="grid">
+      <div class="card">
+        <h4>🇮🇹 Italien</h4>
+        <p>Italie, Suisse italienne</p>
+      </div>
+      <div class="card">
+        <h4>🇵🇱 Polonais</h4>
+        <p>Pologne, Tchouquie, marché croissant</p>
+      </div>
+      <div class="card">
+        <h4>🇳🇱 Néerlandais</h4>
+        <p>Pays-Bas, Belgique flamande</p>
+      </div>
+      <div class="card">
+        <h4>🇸🇪 Suédois</h4>
+        <p>Suède, Scandinavie (tech-aware)</p>
+      </div>
+    </div>
+
+    <h3>Implémentation i18n (Internationalisation)</h3>
+    <div class="wireframe">
+application/
+├── locales/
+│   ├── fr.json        # Français
+│   ├── de.json        # Allemand
+│   ├── es.json        # Espagnol
+│   ├── en.json        # Anglais
+│   └── ...
+├── ui/
+│   └── common.py      # Charge langue depuis config
+└── main.py            # Détecte locale système
+
+# config.json
+{
+  "language": "auto",  # auto-detect ou fr/de/es/en
+  "locale_fallback": "en"  # Si langue non disponible
+}
+    </div>
+
+    <p class="accessibility-note">
+      <strong>💡 Conseil:</strong> Utiliser des fichiers JSON simples (pas de gettext complexe) pour faciliter contributions crowdsourced via GitHub/Crowdin.
+    </p>
+  </div>
+
+  <!-- SECTION 2: PRINCIPES UX POUR UTILISATEURS NOVICES -->
+  <div class="section">
+    <h2><span class="emoji">👥</span> Principes de Design pour Parents Novices</h2>
+
+    <h3>Le "Parent Novice" - Persona</h3>
+    <div class="card">
+      <p>
+        <strong>Maria, 45 ans, France</strong><br>
+        ✓ Utilise Internet et email<br>
+        ✓ Pas de formation informatique<br>
+        ✓ Anxieuse face à la technologie<br>
+        ✓ Veut protéger son enfant mais pas paraître "flics"<br>
+        ✓ Cherche des solutions simples sans jargon technique
+      </p>
+    </div>
+
+    <h3>5 Principes de Design Clés</h3>
+
+    <div class="grid">
+      <div class="card">
+        <h4><span class="emoji">1️⃣</span> Seulement 3 Actions Par Écran</h4>
+        <p>Pas de menu avec 10 options. Max 3 boutons visibles. Le reste en "Plus".</p>
+      </div>
+
+      <div class="card">
+        <h4><span class="emoji">2️⃣</span> Langage Simple = Pas de Jargon</h4>
+        <p>❌ "Configurer les règles iptables"<br>
+        ✅ "Bloquer des sites"</p>
+      </div>
+
+      <div class="card">
+        <h4><span class="emoji">3️⃣</span> Graphiques > Texte</h4>
+        <p>Une image vaut 1000 mots. Icônes claires, couleurs cohérentes.</p>
+      </div>
+
+      <div class="card">
+        <h4><span class="emoji">4️⃣</span> Onboarding Obligatoire</h4>
+        <p>Premier lancement = tutoriel step-by-step en 2 min (pas optionnel).</p>
+      </div>
+
+      <div class="card">
+        <h4><span class="emoji">5️⃣</span> Aide Contextuelle Partout</h4>
+        <p>Bouton "?" sur chaque écran → explique en langage simple avec illustration.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 3: STRUCTURE D'ÉCRANS -->
+  <div class="section">
+    <h2><span class="emoji">📱</span> Architecture des Écrans & Wireframes</h2>
+
+    <h3>Flux Principal (Simplifié)</h3>
+    <div class="wireframe">
+Lancement
+    ↓
+[Vous êtes le parent?] → Oui
+    ↓
+Authentification (PIN/Empreinte)
+    ↓
+╔════════════════════════════════╗
+║   TABLEAU DE BORD PRINCIPAL    ║
+║  (Dashboard Parent - Écran 1)  ║
+║════════════════════════════════║
+║ ✓ Enfant ACTIF maintenant       ║
+║ 📊 Utilisé: 1h45 / 3h (58%)    ║
+║ 🚫 Site bloqué (YouTube)       ║
+║                                 ║
+║ [Réglages Temps] [Blocage]      ║
+║ [Voir Rapport]                  ║
+╚════════════════════════════════╝
+    ↓
+  (Voir rapport détaillé,
+   configurer sites, etc.)
+    </div>
+
+    <h3>Écran 1: Dashboard Principal</h3>
+    <div class="mockup-container">
+      <div class="mockup-frame">
+        <div class="mockup-header">📊 Tableau de Bord</div>
+        <div class="mockup-content">
+          <div class="mockup-item">
+            <strong>👤 Enfant: Alice</strong><br>
+            <small>Session active</small>
+          </div>
+          <div class="mockup-item">
+            <strong>⏰ Temps du jour</strong><br>
+            1h 45min / 3h max<br>
+            <div class="progress-bar">
+              <div class="progress-fill" style="width: 58%"></div>
+            </div>
+          </div>
+          <div class="mockup-item">
+            <strong>🚫 Dernière restriction</strong><br>
+            YouTube bloqué (18:32)
+          </div>
+          <div class="mockup-item">
+            <strong>⚙️ Actions Rapides</strong><br>
+            [Réglages] [Rapports]
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <h4>Points Clés:</h4>
+        <ul class="feature-list">
+          <li><strong>Vue d'ensemble en 3 sec</strong> - un coup d'oeil suffit</li>
+          <li><strong>Barre de progression</strong> - pas d'abstraction du temps</li>
+          <li><strong>Dernière action</strong> - sait ce qui s'est passé</li>
+          <li><strong>Seulement 2 boutons</strong> - pas surcharger</li>
+          <li><strong>Couleur cohérente</strong> - bleu = info, rouge = restriction</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3>Écran 2: Réglages du Temps (Simplifié)</h3>
+    <div class="mockup-container">
+      <div class="mockup-frame">
+        <div class="mockup-header">⏰ Temps d'Utilisation</div>
+        <div class="mockup-content">
+          <div class="mockup-item">
+            <strong>Lundi</strong><br>
+            Activé ✓<br>
+            16:00 - 20:00<br>
+            <small>[Modifier]</small>
+          </div>
+          <div class="mockup-item">
+            <strong>Mercredi</strong><br>
+            Activé ✓<br>
+            16:30 - 20:00<br>
+            <small>[Modifier]</small>
+          </div>
+          <div class="mockup-item">
+            <strong>Samedi</strong><br>
+            Activé ✓<br>
+            09:00 - 22:00<br>
+            <small>[Modifier]</small>
+          </div>
+          <div class="mockup-item">
+            <strong>Dimanche</strong><br>
+            ⊘ Désactivé<br>
+            (Accès toute journée)
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <h4>Points Clés:</h4>
+        <ul class="feature-list">
+          <li><strong>Champs simples</strong> - seulement jours + heures</li>
+          <li><strong>On/Off par jour</strong> - flexibilité</li>
+          <li><strong>Heure de logout auto</strong> - pas manuel</li>
+          <li><strong>Modification inline</strong> - pas de page de config complexe</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3>Écran 3: Blocage de Sites</h3>
+    <div class="mockup-container">
+      <div class="mockup-frame">
+        <div class="mockup-header">🚫 Sites Bloqués</div>
+        <div class="mockup-content">
+          <div class="mockup-item">
+            <strong>Catégories</strong><br>
+            ☐ Réseaux sociaux<br>
+            ☑ Divertissement<br>
+            ☐ Jeux en ligne<br>
+            ☐ Contenu 18+
+          </div>
+          <div class="mockup-item">
+            <strong>Sites personnalisés</strong><br>
+            ✗ tiktok.com<br>
+            ✗ instagram.com<br>
+            [+ Ajouter site]
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <h4>Points Clés:</h4>
+        <ul class="feature-list">
+          <li><strong>Catégories prédéfinies</strong> - 80% des cas couverts</li>
+          <li><strong>Checkbox simple</strong> - on/off facile</li>
+          <li><strong>Ajout manuel</strong> - pour cas spécifiques</li>
+          <li><strong>Pas de domaines techniques</strong> - juste le nom lisible</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 4: ONBOARDING -->
+  <div class="section">
+    <h2><span class="emoji">🚀</span> Onboarding pour Parents Novices</h2>
+
+    <h3>Premier Lancement - Étapes (2 minutes total)</h3>
+
+    <div class="grid">
+      <div class="card">
+        <h4><span class="emoji">1️⃣</span> Bienvenue</h4>
+        <p><strong>Écran 1: "Protéger votre enfant"</strong></p>
+        <p>Image: Parent + enfant + ordinateur (illustration friendly)</p>
+        <p>Texte: "Aidez votre enfant à explorer internet en toute sécurité"</p>
+        <p>[Commencer →]</p>
+      </div>
+
+      <div class="card">
+        <h4><span class="emoji">2️⃣</span> Créer Compte Enfant</h4>
+        <p><strong>Écran 2: "Quel enfant voulez-vous protéger?"</strong></p>
+        <p>Sélectionner compte utilisateur existant OU créer nouveau</p>
+        <p>Photo profil (avatar)</p>
+        <p>[Continuer →]</p>
+      </div>
+
+      <div class="card">
+        <h4><span class="emoji">3️⃣</span> Défaut Sûr</h4>
+        <p><strong>Écran 3: "Configuration rapide"</strong></p>
+        <p>Pré-selections intelligentes (âge → restrictions)</p>
+        <p>6-12 ans → Accès 2h, réseaux sociaux bloqués</p>
+        <p>13-18 ans → Accès 3h, certains contenus filtrés</p>
+        <p>[Appliquer]</p>
+      </div>
+
+      <div class="card">
+        <h4><span class="emoji">4️⃣</span> Code de Sécurité</h4>
+        <p><strong>Écran 4: "Protéger vos paramètres"</strong></p>
+        <p>PIN 4 chiffres (simple, pas compliqué)</p>
+        <p>OU empreinte digitale (if available)</p>
+        <p>Pourquoi: "Pour que votre enfant ne change pas les règles"</p>
+      </div>
+
+      <div class="card">
+        <h4><span class="emoji">5️⃣</span> Explication Visuelle</h4>
+        <p><strong>Écran 5: "Comment ça fonctionne?"</strong></p>
+        <p>Infographie simple:</p>
+        <p>👤 Enfant utilise PC → 📊 App voit l'activité → 🚫 Bloque contenu → 📬 Parent averti</p>
+      </div>
+
+      <div class="card">
+        <h4><span class="emoji">6️⃣</span> C'est Prêt!</h4>
+        <p><strong>Écran 6: "Succès!"</strong></p>
+        <p>Résumé des règles appliquées</p>
+        <p>Lien vers tutoriels vidéo</p>
+        <p>[Aller au Tableau de Bord]</p>
+      </div>
+    </div>
+
+    <p class="accessibility-note">
+      <strong>🎬 Complément vidéo:</strong> Chaque étape du onboarding peut avoir une vidéo courte de 30-60 sec avec sous-titres multilingues montrant l'écran réel.
+    </p>
+  </div>
+
+  <!-- SECTION 5: AIDE CONTEXTUELLE -->
+  <div class="section">
+    <h2><span class="emoji">❓</span> Système d'Aide Contextuelle (Crucial)</h2>
+
+    <h3>Aide Intégrée dans l'Interface</h3>
+
+    <div class="grid">
+      <div class="card">
+        <h4>Boutons "?"</h4>
+        <p>Chaque paramètre a un petit bouton "?" → explique en langage simple</p>
+        <p><strong>Ex:</strong> "Qu'est-ce qu'un site bloqué?"<br>
+        Réponse: "Votre enfant ne peut pas accéder à ce site. Il verra un message d'erreur."</p>
+      </div>
+
+      <div class="card">
+        <h4>Tooltips au Survol</h4>
+        <p>Passer la souris sur un élément → explication rapide</p>
+        <p>Exemple: Hover "Heure de déconnexion auto"<br>
+        → "L'application ferme la session à cette heure"</p>
+      </div>
+
+      <div class="card">
+        <h4>Section "FAQ"</h4>
+        <p>Accès depuis menu principal</p>
+        <p>Questions pré-rédigées en langage simple</p>
+        <p>Exemple: "Mon enfant dit que c'est injuste"</p>
+      </div>
+
+      <div class="card">
+        <h4>Support Chat (Future)</h4>
+        <p>Chatbot simple ou human support</p>
+        <p>En français, allemand, espagnol</p>
+        <p>Disponible via bouton "Besoin d'aide?" en haut</p>
+      </div>
+    </div>
+
+    <h3>Exemple d'Aide Contextuelle</h3>
+    <div class="wireframe">
+┌─────────────────────────────────────────┐
+│ Bloquer ces sites (réseaux sociaux)?    │
+│                                          │
+│  ☑ Facebook                             │
+│  ☑ Instagram                            │
+│  ☑ TikTok                               │
+│                                          │
+│  [?] Qu'est-ce que "bloquer"?           │
+│                                          │
+│  ↓ Popup d'aide                         │
+│  ┌─────────────────────────────────────┐
+│  │ Que signifie "bloquer" ?            │
+│  │                                      │
+│  │ Si vous bloquez un site, votre      │
+│  │ enfant NE PEUT PAS le visiter.     │
+│  │ Il verra juste : "Page non          │
+│  │ accessible" avec un petit message  │
+│  │ amusant 😊                          │
+│  │                                      │
+│  │ Vous pouvez débloquer n'importe    │
+│  │ quand.                              │
+│  │                                      │
+│  │ [Fermer] [Voir plus...]             │
+│  └─────────────────────────────────────┘
+└─────────────────────────────────────────┘
+    </div>
+  </div>
+
+  <!-- SECTION 6: ACCESSIBILITÉ -->
+  <div class="section">
+    <h2><span class="emoji">♿</span> Accessibilité pour Tous</h2>
+
+    <h3>Standards d'Accessibilité (WCAG 2.1 AA minimum)</h3>
+
+    <ul class="feature-list">
+      <li><strong>Contraste</strong> - Texte sombre sur fond clair (au moins 4.5:1)</li>
+      <li><strong>Taille police</strong> - Minimum 14px (pour écrans haute résolution)</li>
+      <li><strong>Zoom</strong> - Supporte jusqu'à 200% zoom sans perte</li>
+      <li><strong>Clavier</strong> - Tous les éléments accessibles au clavier (Tab key)</li>
+      <li><strong>Lecteur d'écran</strong> - Compatible NVDA / JAWS (testé)</li>
+      <li><strong>Couleurs</strong> - Pas seulement dépendant de couleur (utilise aussi icônes)</li>
+    </ul>
+
+    <h3>Accessibilité pour Parents d'Âge Avancé</h3>
+
+    <div class="grid">
+      <div class="card">
+        <h4>🔤 Police Agrandie</h4>
+        <p>Mode "Large" en settings → police 18px+</p>
+      </div>
+
+      <div class="card">
+        <h4>🌙 Mode Sombre</h4>
+        <p>Réduit fatigue oculaire (surtout le soir)</p>
+      </div>
+
+      <div class="card">
+        <h4>🔊 Audio Descriptions</h4>
+        <p>Lire le texte à haute voix (TTS)</p>
+      </div>
+
+      <div class="card">
+        <h4>🎨 Mode Haut Contraste</h4>
+        <p>Couleurs plus visibles pour mal-voyants</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 7: DESIGN GRAPHIQUE -->
+  <div class="section">
+    <h2><span class="emoji">🎨</span> Système de Design Visuel</h2>
+
+    <h3>Palette de Couleurs</h3>
+
+    <div class="grid">
+      <div class="card" style="border-left-color: #0ea5e9;">
+        <h4 style="color: #0ea5e9;">Bleu Primaire (#0EA5E9)</h4>
+        <p>Boutons principaux, actions positives</p>
+      </div>
+
+      <div class="card" style="border-left-color: #10b981;">
+        <h4 style="color: #10b981;">Vert (Succès #10B981)</h4>
+        <p>Confirmations, statuts positifs ("Protégé")</p>
+      </div>
+
+      <div class="card" style="border-left-color: #f59e0b;">
+        <h4 style="color: #f59e0b;">Orange (Attention #F59E0B)</h4>
+        <p>Avertissements, restriction imminente</p>
+      </div>
+
+      <div class="card" style="border-left-color: #ef4444;">
+        <h4 style="color: #ef4444;">Rouge (Danger #EF4444)</h4>
+        <p>Bloquages actifs, restrictions</p>
+      </div>
+    </div>
+
+    <h3>Iconographie</h3>
+    <p>Icônes simples, monolines, reconnaissables.</p>
+
+    <div class="wireframe">
+👤 Utilisateur/Profil
+⏰ Temps/Horloge
+🚫 Blocage/Interdiction
+📊 Dashboard/Statistiques
+⚙️ Paramètres
+🔒 Sécurité/Verrou
+📱 Dispositif/Téléphone
+🌍 Langue/Monde
+❓ Aide
+💾 Sauvegarder
+✅ Succès/Confirmé
+⚠️ Attention
+🔔 Notification
+    </div>
+
+    <h3>Typographie</h3>
+    <div class="wireframe">
+Font: Inter, Roboto, ou system-ui (pas de serif)
+Raison: Lisible sur écrans, friendly
+
+Hiérarchie:
+H1: 28px bold - Titres écrans
+H2: 22px bold - Sections
+H3: 18px bold - Sous-sections
+Texte: 16px regular - Corps
+Petit: 14px regular - Labels, aide
+
+Utiliser same font partout (pas mélanger)
+    </div>
+  </div>
+
+  <!-- SECTION 8: MESSAGES UTILISATEUR -->
+  <div class="section">
+    <h2><span class="emoji">💬</span> Langage Utilisateur (Tone of Voice)</h2>
+
+    <h3>Règles de Langage Simple</h3>
+
+    <table>
+      <tr>
+        <th>❌ Éviter (Jargon Tech)</th>
+        <th>✅ À Dire (Langage Simple)</th>
+      </tr>
+      <tr>
+        <td>"Configurer les règles DNS"</td>
+        <td>"Choisir les sites à bloquer"</td>
+      </tr>
+      <tr>
+        <td>"Implémenter des cgroups"</td>
+        <td>"Limiter le temps utilisé"</td>
+      </tr>
+      <tr>
+        <td>"AppArmor policy denied"</td>
+        <td>"Application non autorisée"</td>
+      </tr>
+      <tr>
+        <td>"Authentification échouée"</td>
+        <td>"Mot de passe incorrect"</td>
+      </tr>
+      <tr>
+        <td>"Erreur 403 Forbidden"</td>
+        <td>"Cette page est bloquée"</td>
+      </tr>
+      <tr>
+        <td>"Processus de démon activé"</td>
+        <td>"Protection activée ✓"</td>
+      </tr>
+    </table>
+
+    <h3>Tone - Bienveillant et Rassurant</h3>
+
+    <div class="card">
+      <p><strong>Phrase d'Introduction:</strong><br>
+      "Vous aider à créer un environnement numérique sûr pour votre enfant - pas pour surveiller, mais pour guider."</p>
+
+      <p><strong>Ton conversationnel:</strong><br>
+      "Votre enfant a utilisé 2h aujourd'hui. C'est dans les limites. Bravo! 👏"</p>
+
+      <p><strong>Pas de menaces:</strong><br>
+      ❌ "VOTRE ENFANT A ACCÉDÉ À UN SITE DANGEREUX"<br>
+      ✅ "Votre enfant a essayé d'accéder à YouTube. C'est bloqué. Tout va bien. 😊"</p>
+    </div>
+  </div>
+
+  <!-- SECTION 9: VISUALISATIONS EXPLIQUANT LE FONCTIONNEMENT -->
+  <div class="section">
+    <h2><span class="emoji">📊</span> Infographies Expliquant le Fonctionnement</h2>
+
+    <h3>Infographie 1: "Comment ça marche?"</h3>
+    <div class="wireframe">
+┌──────────────┐
+│  Votre       │
+│  Enfant      │
+│  Utilise PC  │
+└──────┬───────┘
+       │
+       ↓
+┌──────────────────────────────┐
+│   L'app ProtegeKids voit:    │
+│   - Quels sites visités      │
+│   - Quelle app ouverte       │
+│   - Combien de temps utilisé │
+└──────┬───────────────────────┘
+       │
+       ├─→ ✓ Autorisé? → Laisse passer
+       │
+       └─→ 🚫 Bloqué? → Affiche message
+              "Ce site est bloqué"
+              "Votre parent peut l'autoriser"
+       │
+       ↓
+┌──────────────────────────────┐
+│  Vous recevez notification   │
+│  sur votre téléphone/email   │
+│  (Résumé du jour)            │
+└──────────────────────────────┘
+    </div>
+
+    <h3>Infographie 2: "Protection en 3 Niveaux"</h3>
+    <div class="wireframe">
+NIVEAU 1: Filtrage par Catégories
+┌─────────────────────────────────────────┐
+│ Réseaux sociaux (Facebook, Instagram)   │
+│ Jeux en ligne (Steam, Epic Games)       │
+│ Contenu adulte                          │
+│ En 1 clic: Tout bloqué ou partiellement │
+└─────────────────────────────────────────┘
+
+NIVEAU 2: Contrôle du Temps
+┌─────────────────────────────────────────┐
+│ Lun-Ven: 16h-20h (4h max)               │
+│ Samedi: 10h-22h (12h max)               │
+│ Dimanche: Accès libre                   │
+│ Après 20h: Déconnexion automatique       │
+└─────────────────────────────────────────┘
+
+NIVEAU 3: Alerte Parent
+┌─────────────────────────────────────────┐
+│ Notification si:                         │
+│ - Enfant essaie débloquer un site       │
+│ - Pendant les heures interdites         │
+│ - Limite de temps dépassée              │
+└─────────────────────────────────────────┘
+    </div>
+
+    <h3>Infographie 3: "Qu'est-ce que je Peux Faire?"</h3>
+    <div class="wireframe">
+┌──────────────────────────────────────────────┐
+│             VUE PARENT                        │
+├──────────────────────────────────────────────┤
+│                                              │
+│ MON ENFANT AUJOURD'HUI:                     │
+│                                              │
+│ ✓ Protection: ACTIVE                        │
+│ ⏰ Temps utilisé: 1h 30 min / 3h max        │
+│ 🚫 Sites bloqués tentés: 3                  │
+│   - TikTok (10:45)                          │
+│   - YouTube (14:20)                         │
+│   - Discord (16:55)                         │
+│                                              │
+│ QUE FAIRE MAINTENANT?                      │
+│                                              │
+│ [📋 Voir Rapport Complet]                   │
+│ [⚙️  Modifier Réglages]                     │
+│ [🔓 Débloquer Temporaire Site]              │
+│ [💬 Envoyer Message Enfant]                 │
+│                                              │
+└──────────────────────────────────────────────┘
+    </div>
+  </div>
+
+  <!-- SECTION 10: EXEMPLE DE RAPPORT -->
+  <div class="section">
+    <h2><span class="emoji">📈</span> Exemple de Rapport Simple</h2>
+
+    <div class="wireframe">
+╔════════════════════════════════════════╗
+║    RAPPORT HEBDOMADAIRE - ALICE         ║
+║    Semaine du 25-31 Août 2024           ║
+╚════════════════════════════════════════╝
+
+📊 RÉSUMÉ:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Temps utilisé:        15h 23min
+Limite autorisée:     21h
+Status:               ✓ Respecte les limites
+
+Jours les plus utilisés:    Samedi (4h 15min)
+Jours les moins utilisés:   Mercredi (1h 45min)
+
+🚫 BLOCAGES EFFECTUÉS:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TikTok:         5 fois (social media)
+YouTube:        3 fois (divertissement)
+Instagram:      2 fois (social media)
+Discord:        1 fois (jeux)
+
+✅ BONNE NOUVELLES:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Aucune tentative de contourner
+Pas d'accès hors heures autorisées
+Protection active 100% de la semaine
+
+💡 SUGGESTIONS:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- Prévoir une conversation: Alice veut accéder
+  à YouTube pour tutoriels scolaires?
+- Envisager augmenter limite samedi (journée libre)
+    </div>
+  </div>
+
+  <!-- SECTION 11: BRANDING & MARKETING -->
+  <div class="section">
+    <h2><span class="emoji">🎯</span> Branding & Positionnement</h2>
+
+    <h3>Nom & Tagline</h3>
+    <div class="card">
+      <p><strong>Nom:</strong> "MintGuard" ou "FamilyGuard" ou "ProtectWeb"</p>
+      <p><strong>Tagline:</strong> "Pour que vos enfants explorent Internet en toute sécurité"</p>
+      <p><strong>Sous-tagline:</strong> "Simple. Transparent. Bienfaisant."</p>
+    </div>
+
+    <h3>Positioning Statement</h3>
+    <div class="callout">
+      <strong>MintGuard</strong> est l'application de contrôle parental <strong>la plus simple</strong> et <strong>accessible</strong> pour les parents non-tech qui veulent protéger leurs enfants sans être intrusif ou punitif. Contrairement aux solutions commerciales complexes, MintGuard se configure en 2 minutes, explique tout en langage simple, et renforce la confiance parent-enfant.
+    </div>
+
+    <h3>Valeurs</h3>
+    <div class="grid">
+      <div class="card">
+        <h4>🤝 Confiance</h4>
+        <p>Pas d'espionnage. Pas de données vendues.</p>
+      </div>
+      <div class="card">
+        <h4>📖 Transparence</h4>
+        <p>Enfant sait qu'il/elle est protégé.</p>
+      </div>
+      <div class="card">
+        <h4>💚 Bienveillance</h4>
+        <p>Guider, pas punir.</p>
+      </div>
+      <div class="card">
+        <h4>👥 Accessible</h4>
+        <p>Pour parents novices. Open-source.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 12: ROADMAP DE DÉVELOPPEMENT -->
+  <div class="section">
+    <h2><span class="emoji">🗺️</span> Roadmap de Développement UX/UI</h2>
+
+    <h3>Phase 1: MVP (2-3 mois)</h3>
+    <ul class="feature-list">
+      <li>Interface de base (PyQt6)</li>
+      <li>Onboarding 6 étapes</li>
+      <li>Dashboard principal</li>
+      <li>Filtrage DNS basique (blocage sites)</li>
+      <li>Limitation temps d'utilisation</li>
+      <li>Multilingue: FR, EN, DE, ES</li>
+      <li>Aide contextuelle (?)buttons</li>
+    </ul>
+
+    <h3>Phase 2: Amélioration UX (2-3 mois)</h3>
+    <ul class="feature-list">
+      <li>Rapports visuels (graphiques, charts)</li>
+      <li>Notifications parent (email/push)</li>
+      <li>Messages parent → enfant</li>
+      <li>Blocage applications (AppArmor UI)</li>
+      <li>Mode "Déblocage Temporaire"</li>
+      <li>Dark mode amélioré</li>
+      <li>Accessibilité WCAG 2.1 AA</li>
+    </ul>
+
+    <h3>Phase 3: Enrichissement (Post-MVP)</h3>
+    <ul class="feature-list">
+      <li>Statistiques apprentissage machine (patterns détection)</li>
+      <li>Integration navigateur (Chrome, Firefox)</li>
+      <li>Synchronisation multi-appareils (cloud léger)</li>
+      <li>Communauté parents (forum, tips)</li>
+      <li>Support client humain (live chat)</li>
+      <li>Mobile app (iOS/Android) - parentales seulement</li>
+    </ul>
+  </div>
+
+  <!-- CONCLUSION -->
+  <div class="section">
+    <h2><span class="emoji">✨</span> Conclusion: Design Friendly, Tech Robust</h2>
+
+    <div class="callout">
+      <p><strong>Le Secret:</strong> Une interface <strong>extrêmement simple</strong> (parents novices) cachant une <strong>infrastructure tech solide</strong> (multi-couches de sécurité).</p>
+
+      <p>L'utilisateur ne voit que: Tableau de bord, Réglages, Rapports.</p>
+
+      <p>Sous le capot: DNS, AppArmor, systemd, SQLite, monitoring processus, logs chiffrés.</p>
+
+      <p>Le succès = parent peut tout faire sans jamais regarder terminal 🎉</p>
+    </div>
+  </div>
+
+</div>

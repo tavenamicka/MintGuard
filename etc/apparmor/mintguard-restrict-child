@@ -1,0 +1,20 @@
+profile mintguard-restrict-child flags=(attach_disconnected) {
+  include <abstractions/base>
+
+  # Bloquer Firefox
+  deny /usr/bin/firefox rx,
+  deny /usr/lib/firefox/** rx,
+
+  # Bloquer Chrome
+  deny /usr/bin/google-chrome rx,
+  deny /opt/google/** rx,
+
+  # Bloquer Discord
+  deny ~/.discord/** rwx,
+  deny ~/.config/discord/** rwx,
+
+  # Applications essentielles autorisées
+  allow /bin/** rx,
+  allow /usr/bin/bash rx,
+  allow /usr/bin/python3 rx,
+}

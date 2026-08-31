@@ -1,0 +1,66 @@
+{
+  "app": {
+    "name": "MintGuard",
+    "tagline": "Pour que vos enfants explorent Internet en toute sécurité",
+    "version": "0.1.0"
+  },
+  "common": {
+    "ok": "OK",
+    "cancel": "Annuler",
+    "save": "Sauvegarder",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "help": "Aide",
+    "close": "Fermer",
+    "settings": "Paramètres",
+    "dashboard": "Tableau de Bord",
+    "reports": "Rapports"
+  },
+  "dashboard": {
+    "title": "Tableau de Bord",
+    "protection_active": "Protection: ACTIVE ✓",
+    "protection_inactive": "Protection: INACTIVE",
+    "child_select": "Enfant",
+    "time_today": "Temps aujourd'hui",
+    "time_limit": "maximum",
+    "last_restriction": "Dernière restriction",
+    "no_restrictions": "Aucune restriction ce jour"
+  },
+  "settings": {
+    "title": "Paramètres",
+    "time_limits": "Limite de Temps",
+    "blocked_sites": "Sites à Bloquer",
+    "blocked_apps": "Applications à Bloquer",
+    "security": "Sécurité",
+    "language": "Langue"
+  },
+  "time": {
+    "monday": "Lundi",
+    "tuesday": "Mardi",
+    "wednesday": "Mercredi",
+    "thursday": "Jeudi",
+    "friday": "Vendredi",
+    "saturday": "Samedi",
+    "sunday": "Dimanche",
+    "enabled": "Activé",
+    "disabled": "Désactivé",
+    "access_all_day": "Accès toute la journée"
+  },
+  "help": {
+    "what_is_blocking": "Qu'est-ce que 'bloquer'?",
+    "blocking_explanation": "Si vous bloquez un site, votre enfant ne peut pas le visiter. Il verra un message: 'Cette page est bloquée'.",
+    "how_it_works": "Comment ça marche?",
+    "how_it_works_explanation": "L'application MintGuard voit quels sites et applications votre enfant utilise, puis applique les restrictions que vous avez configurées.",
+    "what_is_category": "Qu'est-ce qu'une catégorie?",
+    "category_explanation": "Une catégorie regroupe plusieurs sites similaires. Par exemple, 'Réseaux sociaux' inclut Facebook, Instagram, TikTok, etc."
+  },
+  "messages": {
+    "protection_enabled": "Protection activée ✓",
+    "site_blocked": "Ce site est bloqué",
+    "app_blocked": "Cette application ne peut pas être utilisée",
+    "time_limit_exceeded": "Limite de temps dépassée",
+    "settings_saved": "Paramètres sauvegardés ✓",
+    "error": "Erreur",
+    "warning": "Attention"
+  }
+}

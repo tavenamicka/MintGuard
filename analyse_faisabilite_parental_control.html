@@ -1,0 +1,864 @@
+<title>Faisabilité Technique - Contrôle Parental Linux</title>
+<style>
+  :root {
+    --primary: #2563eb;
+    --success: #16a34a;
+    --warning: #ea580c;
+    --danger: #dc2626;
+    --gray-50: #f9fafb;
+    --gray-100: #f3f4f6;
+    --gray-200: #e5e7eb;
+    --gray-700: #374151;
+    --gray-900: #111827;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --gray-50: #1f2937;
+      --gray-100: #374151;
+      --gray-200: #4b5563;
+      --gray-700: #d1d5db;
+      --gray-900: #f9fafb;
+    }
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    line-height: 1.6;
+    color: var(--gray-900);
+    background: var(--gray-50);
+  }
+
+  .container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+
+  h1 {
+    color: var(--primary);
+    border-bottom: 3px solid var(--primary);
+    padding-bottom: 0.5rem;
+  }
+
+  h2 {
+    color: var(--primary);
+    margin-top: 2rem;
+  }
+
+  h3 {
+    color: var(--gray-700);
+    margin-top: 1.5rem;
+  }
+
+  .section {
+    background: white;
+    padding: 1.5rem;
+    margin: 1rem 0;
+    border-radius: 8px;
+    border-left: 4px solid var(--primary);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .section {
+      background: #1f2937;
+      border-left-color: var(--primary);
+    }
+  }
+
+  .tech-stack {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+    margin: 1rem 0;
+  }
+
+  .tech-card {
+    background: var(--gray-100);
+    padding: 1rem;
+    border-radius: 6px;
+    border: 1px solid var(--gray-200);
+  }
+
+  .tech-card h4 {
+    margin: 0 0 0.5rem 0;
+    color: var(--primary);
+  }
+
+  .pros {
+    color: var(--success);
+    font-weight: 500;
+  }
+
+  .cons {
+    color: var(--danger);
+    font-weight: 500;
+  }
+
+  .warning {
+    background: #fef3c7;
+    border-left: 4px solid var(--warning);
+    padding: 1rem;
+    margin: 1rem 0;
+    border-radius: 4px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .warning {
+      background: #78350f;
+      color: #fbbf24;
+    }
+  }
+
+  .table-container {
+    overflow-x: auto;
+    margin: 1rem 0;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+  }
+
+  th {
+    background: var(--gray-200);
+    padding: 0.75rem;
+    text-align: left;
+    font-weight: 600;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    th {
+      background: #4b5563;
+    }
+  }
+
+  td {
+    padding: 0.75rem;
+    border-bottom: 1px solid var(--gray-200);
+  }
+
+  .difficulty-easy {
+    color: var(--success);
+  }
+
+  .difficulty-medium {
+    color: var(--warning);
+  }
+
+  .difficulty-hard {
+    color: var(--danger);
+  }
+
+  .code-block {
+    background: var(--gray-900);
+    color: #f0f0f0;
+    padding: 1rem;
+    border-radius: 6px;
+    overflow-x: auto;
+    font-family: 'Monaco', 'Courier New', monospace;
+    font-size: 0.875rem;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .code-block {
+      background: #111827;
+    }
+  }
+
+  .architecture {
+    background: var(--gray-100);
+    padding: 1.5rem;
+    border-radius: 6px;
+    border: 1px solid var(--gray-200);
+    font-family: monospace;
+    white-space: pre-wrap;
+    margin: 1rem 0;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .architecture {
+      background: #1f2937;
+    }
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin: 0.25rem 0.25rem 0.25rem 0;
+  }
+
+  .badge-root {
+    background: #fee2e2;
+    color: var(--danger);
+  }
+
+  .badge-kernel {
+    background: #dbeafe;
+    color: var(--primary);
+  }
+
+  .badge-service {
+    background: #dcfce7;
+    color: var(--success);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .badge-root { background: #7f1d1d; }
+    .badge-kernel { background: #0c2340; }
+    .badge-service { background: #064e3b; }
+  }
+</style>
+
+<div class="container">
+  <h1>🔒 Faisabilité Technique - Contrôle Parental Linux Mint</h1>
+
+  <!-- ARCHITECTURE -->
+  <div class="section">
+    <h2>1️⃣ Architecture Globale</h2>
+
+    <p>Une solution complète nécessite plusieurs couches qui communiquent entre elles :</p>
+
+    <div class="architecture">
+┌─────────────────────────────────────────────────┐
+│      Interface Graphique (PyQt/GTK)              │
+│   - Paramètres parent (UI admin)                 │
+│   - Dashboard monitoring                         │
+└────────────────┬────────────────────────────────┘
+                 │
+┌────────────────▼────────────────────────────────┐
+│   Daemon/Service Système (Python/systemd)       │
+│   - Gestion des règles                           │
+│   - Enforcement (mise en application)            │
+│   - Logging et surveillance                      │
+└────┬──────────┬──────────┬───────────┬──────────┘
+     │          │          │           │
+┌────▼──┐  ┌───▼──┐  ┌────▼──┐  ┌────▼──────┐
+│ DNS   │  │Fire- │  │Process │  │Session    │
+│Proxy  │  │wall  │  │Monitor │  │Manager    │
+└───────┘  └──────┘  └───────┘  └───────────┘
+    </div>
+  </div>
+
+  <!-- COMPOSANT 1: BLOCAGE DES SITES -->
+  <div class="section">
+    <h2>2️⃣ Blocage des Sites Web</h2>
+
+    <h3>Approche 1: DNS Filtering (Recommandée - Plus Simple)</h3>
+
+    <div class="tech-stack">
+      <div class="tech-card">
+        <h4>dnsmasq</h4>
+        <p class="pros">✓ Léger et rapide</p>
+        <p class="pros">✓ Pas besoin d'intercepter HTTPS</p>
+        <p class="cons">✗ Facile à contourner (VPN, changer DNS)</p>
+      </div>
+
+      <div class="tech-card">
+        <h4>/etc/hosts</h4>
+        <p class="pros">✓ Très simple à implémenter</p>
+        <p class="cons">✗ Facile à modifier si l'utilisateur a accès</p>
+        <p class="cons">✗ Scalabilité (milliers d'entrées)</p>
+      </div>
+    </div>
+
+    <h4>Implémentation DNS avec dnsmasq :</h4>
+    <div class="code-block">
+# Configuration dnsmasq
+address=/facebook.com/127.0.0.1
+address=/tiktok.com/127.0.0.1
+address=/youtube.com/127.0.0.1
+
+# Écouter sur localhost:5353
+listen-address=127.0.0.1
+port=5353
+
+# Rediriger les requêtes DNS système
+    </div>
+
+    <h3>Approche 2: Proxy HTTP/HTTPS (Plus Sécurisé)</h3>
+
+    <div class="tech-stack">
+      <div class="tech-card">
+        <h4>Squid Proxy</h4>
+        <p class="pros">✓ Inspection HTTP/HTTPS possible</p>
+        <p class="pros">✓ Filtrage granulaire (par URL, domaine)</p>
+        <p class="cons">✗ Complexe à configurer</p>
+        <p class="cons">✗ Performance (ralentit les connexions)</p>
+      </div>
+
+      <div class="tech-card">
+        <h4>mitmproxy</h4>
+        <p class="pros">✓ Man-in-the-middle HTTPS</p>
+        <p class="pros">✓ Très flexible</p>
+        <p class="cons">✗ Nécessite certificat CA local</p>
+        <p class="cons">✗ Haute complexité</p>
+      </div>
+    </div>
+
+    <div class="warning">
+      <strong>⚠️ Limitation HTTPS:</strong> L'interception HTTPS requiert un certificat de CA (Certificate Authority) local sur la machine enfant. L'utilisateur peut le désinstaller s'il a les droits administrateur. Solution : utiliser les permissions et AppArmor pour empêcher sa suppression.
+    </div>
+
+    <h3>Approche 3: Firewall Level (iptables)</h3>
+    <div class="code-block">
+# Bloquer par IP (après DNS lookup)
+iptables -A FORWARD -d 31.13.64.0/18 -j DROP  # Facebook
+iptables -A FORWARD -d 192.173.64.0/18 -j DROP  # YouTube
+
+# Avantages: aucun, pour du filtrage web
+# Désavantages: IP change, CDN rend impossible à maintenir
+    </div>
+
+    <div class="table-container">
+      <table>
+        <tr>
+          <th>Méthode</th>
+          <th>Sécurité</th>
+          <th>Performance</th>
+          <th>Complexité</th>
+          <th>Contournement</th>
+        </tr>
+        <tr>
+          <td><strong>dnsmasq</strong></td>
+          <td class="difficulty-easy">Faible</td>
+          <td class="difficulty-easy">Excellent</td>
+          <td class="difficulty-easy">Facile</td>
+          <td>VPN, DNS custom, hosts local</td>
+        </tr>
+        <tr>
+          <td><strong>Squid Proxy</strong></td>
+          <td class="difficulty-medium">Moyen</td>
+          <td class="difficulty-medium">Bon</td>
+          <td class="difficulty-hard">Complexe</td>
+          <td>VPN, Tor, proxy local</td>
+        </tr>
+        <tr>
+          <td><strong>mitmproxy</strong></td>
+          <td class="difficulty-medium">Moyen</td>
+          <td class="difficulty-medium">Moyen</td>
+          <td class="difficulty-hard">Très complexe</td>
+          <td>Suppression certificat CA</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- COMPOSANT 2: LIMITER HEURES D'UTILISATION -->
+  <div class="section">
+    <h2>3️⃣ Limitation du Temps d'Utilisation</h2>
+
+    <h3>Approche 1: Session Lock (Recommandée)</h3>
+
+    <p><span class="badge badge-service">Approach: systemd + Service</span></p>
+
+    <div class="code-block">
+# Service systemd: /etc/systemd/system/parental-timer.service
+[Unit]
+Description=Parental Control Timer
+After=multi-user.target
+
+[Service]
+Type=simple
+User=root
+ExecStart=/usr/local/bin/parental-timer.py
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+    </div>
+
+    <h4>Implémentation (pseudo-code Python) :</h4>
+    <div class="code-block">
+import subprocess
+from datetime import datetime, time
+
+RESTRICTED_USER = "child"
+ALLOWED_HOURS = {
+    "monday": ("16:00", "20:00"),
+    "saturday": ("10:00", "22:00"),
+    "sunday": ("10:00", "21:00")
+}
+
+while True:
+    now = datetime.now()
+    day = now.strftime("%A").lower()
+    current_time = now.time()
+
+    if day in ALLOWED_HOURS:
+        start, end = ALLOWED_HOURS[day]
+        start_t = time.fromisoformat(start)
+        end_t = time.fromisoformat(end)
+
+        if not (start_t <= current_time <= end_t):
+            # Hors des heures autorisées
+            subprocess.run(["loginctl", "terminate-user", RESTRICTED_USER])
+            log_action("User locked out - outside allowed hours")
+
+    time.sleep(60)  # Vérifier toutes les minutes
+    </div>
+
+    <h3>Approche 2: cgroups/systemd (Contrôle fin)</h3>
+
+    <div class="code-block">
+# Limiter CPU/Memory pour l'utilisateur enfant
+[Service]
+User=child
+CPUQuota=30%
+MemoryLimit=500M
+    </div>
+
+    <h3>Approche 3: Accès clavier/souris bloqué</h3>
+
+    <p><span class="badge badge-root">Nécessite: root</span></p>
+
+    <div class="code-block">
+# Utiliser /dev/input/event* pour bloquer périphériques
+# Avantage: empêche totalement l'interaction
+# Désavantage: contrôle grossier
+chmod 000 /dev/input/event0  # Bloquer clavier
+    </div>
+
+    <div class="table-container">
+      <table>
+        <tr>
+          <th>Méthode</th>
+          <th>Efficacité</th>
+          <th>Contournement</th>
+          <th>Complexité Implémentation</th>
+        </tr>
+        <tr>
+          <td><strong>Session Logout</strong></td>
+          <td class="difficulty-easy">Très bonne</td>
+          <td>Re-login si password connu</td>
+          <td class="difficulty-easy">Facile</td>
+        </tr>
+        <tr>
+          <td><strong>cgroups</strong></td>
+          <td class="difficulty-medium">Bonne</td>
+          <td>Pas vraiment contournable</td>
+          <td class="difficulty-medium">Moyen</td>
+        </tr>
+        <tr>
+          <td><strong>Clavier/Souris</strong></td>
+          <td class="difficulty-easy">Excellente</td>
+          <td>Difficile sans accès physique</td>
+          <td class="difficulty-easy">Facile</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- COMPOSANT 3: BLOCAGE APPLICATIONS -->
+  <div class="section">
+    <h2>4️⃣ Blocage des Applications</h2>
+
+    <h3>Approche 1: Permissions Fichiers (Simple mais Imparfait)</h3>
+
+    <div class="code-block">
+# Rendre inévitable un exécutable
+chmod 000 /usr/bin/firefox
+chmod 000 /opt/discord/Discord
+
+# Problème: L'utilisateur peut changer permissions
+# Solution: Utiliser AppArmor/SELinux
+    </div>
+
+    <h3>Approche 2: AppArmor (Recommandée pour Linux Mint)</h3>
+
+    <p><span class="badge badge-kernel">Niveau: Kernel</span></p>
+
+    <div class="code-block">
+# Profil AppArmor: /etc/apparmor.d/restrict-child
+profile restrict-child flags=(attach_disconnected) {
+  include &lt;abstractions/base&gt;
+
+  # Bloquer Firefox
+  deny /usr/bin/firefox rx,
+  deny /usr/lib/firefox/** rx,
+
+  # Bloquer Chrome
+  deny /usr/bin/google-chrome rx,
+  deny /opt/google/** rx,
+
+  # Bloquer Steam
+  deny ~/.steam/** rwx,
+  deny ~/.local/share/Steam/** rwx,
+
+  # Autoriser applications essentielles
+  allow /bin/** rx,
+  allow /usr/bin/bash rx,
+  allow /usr/bin/python3 rx,
+}
+    </div>
+
+    <h4>Activation :</h4>
+    <div class="code-block">
+# Parser le profil
+apparmor_parser -r /etc/apparmor.d/restrict-child
+
+# Charger au démarrage de session enfant
+# Dans ~/.bashrc ou pam_apparmor
+sudo -u child aa-exec -p restrict-child -- bash
+    </div>
+
+    <h3>Approche 3: SELinux (Plus Puissant, Plus Complexe)</h3>
+
+    <p><span class="badge badge-kernel">Niveau: Kernel</span></p>
+    <p><strong>Note:</strong> Linux Mint utilise AppArmor par défaut, pas SELinux. Mais SELinux peut être installé.</p>
+
+    <h3>Approche 4: Process Monitoring + Termination</h3>
+
+    <div class="code-block">
+import psutil
+import subprocess
+
+BLOCKED_APPS = {
+    "firefox": None,
+    "chrome": None,
+    "steam": None,
+    "vlc": None,  # Peut contourner filtrage DNS
+}
+
+def monitor_processes():
+    for proc in psutil.process_iter(['pid', 'name']):
+        if proc.info['name'] in BLOCKED_APPS:
+            print(f"Killing blocked app: {proc.info['name']}")
+            proc.kill()
+            log_action(f"Blocked app attempted: {proc.info['name']}")
+
+while True:
+    monitor_processes()
+    time.sleep(5)
+    </div>
+
+    <div class="warning">
+      <strong>⚠️ Limitation:</strong> L'utilisateur peut renommer l'exécutable ou créer des liens symboliques. AppArmor est plus sécurisé car il identifie par inode, pas par nom.
+    </div>
+
+    <div class="table-container">
+      <table>
+        <tr>
+          <th>Méthode</th>
+          <th>Sécurité</th>
+          <th>Contournement</th>
+          <th>Performance</th>
+        </tr>
+        <tr>
+          <td><strong>Permissions</strong></td>
+          <td class="difficulty-easy">Très faible</td>
+          <td>Facile (chmod si accès root)</td>
+          <td class="difficulty-easy">Excellent</td>
+        </tr>
+        <tr>
+          <td><strong>AppArmor</strong></td>
+          <td class="difficulty-medium">Très bonne</td>
+          <td>Très difficile sans root</td>
+          <td class="difficulty-easy">Excellent</td>
+        </tr>
+        <tr>
+          <td><strong>SELinux</strong></td>
+          <td class="difficulty-hard">Excellente</td>
+          <td>Pratiquement impossible</td>
+          <td class="difficulty-medium">Bon</td>
+        </tr>
+        <tr>
+          <td><strong>Process Monitor</strong></td>
+          <td class="difficulty-easy">Faible</td>
+          <td>Renommer, symlinks</td>
+          <td class="difficulty-medium">Moyen (CPU)</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- CONSIDÉRATIONS DE SÉCURITÉ -->
+  <div class="section">
+    <h2>5️⃣ Prérequis de Sécurité</h2>
+
+    <h3>Contrôle des Accès Root</h3>
+
+    <p><span class="badge badge-root">Critique: root access</span></p>
+
+    <div class="code-block">
+# L'application doit tourner en root pour:
+# - Modifier /etc/hosts ou dnsmasq
+# - Contrôler systemd sessions
+# - Utiliser iptables/firewall
+# - Charger modules AppArmor
+
+# Solution: sudo sans mot de passe pour actions spécifiques
+# /etc/sudoers.d/parental-control
+%parental-admin ALL=(ALL) NOPASSWD: /usr/local/bin/apply-parental-rules.sh
+%parental-admin ALL=(ALL) NOPASSWD: /usr/sbin/iptables
+    </div>
+
+    <h3>Protection de la Configuration</h3>
+
+    <div class="code-block">
+# Rendre la config read-only pour l'utilisateur enfant
+sudo chmod 600 /etc/parental-control/config.json
+sudo chown root:root /etc/parental-control/config.json
+
+# Empêcher modification du daemon
+chmod 555 /usr/local/bin/parental-daemon.py
+    </div>
+
+    <h3>Logging et Monitoring</h3>
+
+    <div class="code-block">
+# Stocker les logs en base de données (pas en fichier modifiable)
+# SQLite3 avec permissions restrictives
+/var/lib/parental-control/logs.db  # 400 permissions
+    </div>
+
+    <div class="warning">
+      <strong>⚠️ Escalade de Privilèges:</strong> Un utilisateur avec accès administrateur local peut contourner n'importe quelle mesure logicielle. La solution doit viser les utilisateurs SANS droits root.
+    </div>
+  </div>
+
+  <!-- CONTOURNEMENTS POSSIBLES -->
+  <div class="section">
+    <h2>6️⃣ Contournements Possibles & Mitigations</h2>
+
+    <div class="table-container">
+      <table>
+        <tr>
+          <th>Contournement</th>
+          <th>Technique</th>
+          <th>Mitigation</th>
+          <th>Efficacité</th>
+        </tr>
+        <tr>
+          <td><strong>VPN/Proxy externe</strong></td>
+          <td>Contourner DNS parental</td>
+          <td>Bloquer accès VPN par AppArmor + port blocking</td>
+          <td class="difficulty-medium">Moyen</td>
+        </tr>
+        <tr>
+          <td><strong>Tor Browser</strong></td>
+          <td>Anonymiser, contourner filtrage</td>
+          <td>Bloquer exécutable Tor + AppArmor</td>
+          <td class="difficulty-medium">Moyen</td>
+        </tr>
+        <tr>
+          <td><strong>Live USB/CD</strong></td>
+          <td>Démarrer autre OS</td>
+          <td>Contrôle BIOS/UEFI (password)</td>
+          <td class="difficulty-hard">Difficile</td>
+        </tr>
+        <tr>
+          <td><strong>Modifier code source app</strong></td>
+          <td>Compiler version sans restrictions</td>
+          <td>AppArmor sur binaires spécifiques</td>
+          <td class="difficulty-hard">Difficile</td>
+        </tr>
+        <tr>
+          <td><strong>Changer mot de passe</strong></td>
+          <td>Accéder compte administrateur</td>
+          <td>Mot passe fort + 2FA</td>
+          <td class="difficulty-easy">Facile</td>
+        </tr>
+        <tr>
+          <td><strong>Démarrage en mode recovery</strong></td>
+          <td>Accès root sans mot de passe</td>
+          <td>GRUB password, UEFI Secure Boot</td>
+          <td class="difficulty-medium">Moyen</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- STACK TECHNIQUE PROPOSÉE -->
+  <div class="section">
+    <h2>7️⃣ Stack Technique Recommandée</h2>
+
+    <div class="tech-stack">
+      <div class="tech-card">
+        <h4>🎨 Interface Graphique</h4>
+        <p><strong>PyQt6</strong> ou <strong>GTK3 + Python</strong></p>
+        <p>Raison: Native sur Linux, facile à développer, bonne perf</p>
+      </div>
+
+      <div class="tech-card">
+        <h4>🔧 Backend</h4>
+        <p><strong>Python 3.10+</strong></p>
+        <p>Raison: Flexibilité, libs disponibles, facile à maintenir</p>
+      </div>
+
+      <div class="tech-card">
+        <h4>📡 Filtrage DNS</h4>
+        <p><strong>dnsmasq</strong></p>
+        <p>Raison: Léger, standard Linux, config simple</p>
+      </div>
+
+      <div class="tech-card">
+        <h4>🛡️ Confinement</h4>
+        <p><strong>AppArmor</strong></p>
+        <p>Raison: Native sur Linux Mint, bien intégré</p>
+      </div>
+
+      <div class="tech-card">
+        <h4>📊 Base de Données</h4>
+        <p><strong>SQLite3</strong></p>
+        <p>Raison: Zéro config, stockage local sécurisé</p>
+      </div>
+
+      <div class="tech-card">
+        <h4>🔔 Service Système</h4>
+        <p><strong>systemd</strong></p>
+        <p>Raison: Standard, autolancement, logging</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- STRUCTURE FICHIERS -->
+  <div class="section">
+    <h2>8️⃣ Structure de Fichiers</h2>
+
+    <div class="code-block">
+/usr/local/bin/
+├── parental-control-gui.py     # Interface parent
+├── parental-daemon.py           # Service principal
+└── setup-parental-rules.sh      # Installation initiale
+
+/etc/parental-control/
+├── config.json                  # Config (600 perms)
+└── blocklist.txt                # Sites à bloquer
+
+/etc/systemd/system/
+└── parental-control.service     # Service systemd
+
+/etc/apparmor.d/
+└── restrict-child               # Profil AppArmor
+
+/var/lib/parental-control/
+├── logs.db                      # Logs SQLite (400)
+└── rules.db                     # État des règles
+
+/etc/dnsmasq.d/
+└── parental-control.conf        # Config dnsmasq
+    </div>
+  </div>
+
+  <!-- COMPLEXITÉ ET TIMELINE -->
+  <div class="section">
+    <h2>9️⃣ Estimation de Complexité</h2>
+
+    <div class="table-container">
+      <table>
+        <tr>
+          <th>Fonctionnalité</th>
+          <th>Temps Estim.</th>
+          <th>Difficulté</th>
+          <th>Prérequis</th>
+        </tr>
+        <tr>
+          <td>Interface basique (PyQt)</td>
+          <td>3-5 jours</td>
+          <td class="difficulty-easy">Facile</td>
+          <td>Python, PyQt basics</td>
+        </tr>
+        <tr>
+          <td>Filtrage DNS (dnsmasq)</td>
+          <td>1-2 jours</td>
+          <td class="difficulty-easy">Facile</td>
+          <td>Linux sysadmin</td>
+        </tr>
+        <tr>
+          <td>Limitation temps</td>
+          <td>2-3 jours</td>
+          <td class="difficulty-easy">Facile</td>
+          <td>Systemd, scheduler Python</td>
+        </tr>
+        <tr>
+          <td>Blocage apps (AppArmor)</td>
+          <td>3-4 jours</td>
+          <td class="difficulty-medium">Moyen</td>
+          <td>AppArmor, profils</td>
+        </tr>
+        <tr>
+          <td>Logging + Dashboard</td>
+          <td>2-3 jours</td>
+          <td class="difficulty-easy">Facile</td>
+          <td>SQLite, charting</td>
+        </tr>
+        <tr>
+          <td>Tests de sécurité</td>
+          <td>3-5 jours</td>
+          <td class="difficulty-hard">Difficile</td>
+          <td>Pen-testing, security mindset</td>
+        </tr>
+        <tr>
+          <td><strong>TOTAL MVP</strong></td>
+          <td><strong>14-22 jours</strong></td>
+          <td class="difficulty-medium">Moyen</td>
+          <td>-</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- ALTERNATIVES EXISTANTES -->
+  <div class="section">
+    <h2>🔟 Alternatives Existantes</h2>
+
+    <h3>Outils Parental Existants sur Linux :</h3>
+
+    <div class="tech-stack">
+      <div class="tech-card">
+        <h4>Net Nanny</h4>
+        <p>Solution commerciale, support Linux</p>
+      </div>
+
+      <div class="tech-card">
+        <h4>Family Link (Google)</h4>
+        <p>Gratuit, mais surtout pour Android/Chrome OS</p>
+      </div>
+
+      <div class="tech-card">
+        <h4>OpenDNS / Cloudflare Families</h4>
+        <p>DNS-based, niveau réseau</p>
+      </div>
+
+      <div class="tech-card">
+        <h4>Cold Turkey</h4>
+        <p>Bloqueur applicatif, a Linux version</p>
+      </div>
+    </div>
+
+    <p><strong>Pourquoi créer sa propre version :</strong> Personnalisation, open-source, pas de dépendance service cloud, données locales.</p>
+  </div>
+
+  <!-- RECOMMANDATIONS FINALES -->
+  <div class="section">
+    <h2>✅ Recommandations Finales</h2>
+
+    <h3>Pour une Solution Robuste :</h3>
+
+    <ol style="line-height: 2;">
+      <li><strong>Combiner DNS + AppArmor + Monitoring systèmes</strong> (défense en profondeur)</li>
+      <li><strong>Stocker config en root-only</strong> pour empêcher modifications</li>
+      <li><strong>Implémenter 2FA/password fort</strong> pour compte parent</li>
+      <li><strong>Logger toutes tentatives de contournement</strong> en base de données chiffrée</li>
+      <li><strong>Contrôle BIOS/UEFI</strong> au niveau matériel pour éviter live USB</li>
+      <li><strong>Updater régulièrement les listes de sites</strong> (service cloud minimal)</li>
+      <li><strong>Audit de sécurité régulier</strong> pour identifier nouvelles failles</li>
+    </ol>
+
+    <h3>Limitation Intrinsèque :</h3>
+
+    <p><strong>Aucune solution logicielle n'est 100% sécurisée.</strong> Un utilisateur déterminé avec accès physique et temps peut toujours contourner. Les meilleures pratiques consistent à :</p>
+
+    <ul style="line-height: 2;">
+      <li>Rendre le contournement <strong>difficile et chronophage</strong></li>
+      <li>Enregistrer les tentatives pour une conversation parent-enfant</li>
+      <li>Combiner avec <strong>supervision humaine</strong> (dialogue, confiance)</li>
+    </ul>
+  </div>
+
+</div>
