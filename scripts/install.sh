@@ -6,7 +6,7 @@
 #   - service systemd installe et ACTIVE au demarrage, mais PAS demarre
 #     (le daemon n'est lance qu'a la demande explicite de l'utilisateur,
 #     voir le message final)
-#   - dnsmasq.conf installe en l'etat (port 5353, PAS le resolveur
+#   - dnsmasq.conf installe en l'etat (port 5354, PAS le resolveur
 #     systeme - aucun impact reseau tant que la bascule n'est pas faite
 #     separement, voir SUIVI.md)
 #   - repertoires de donnees/logs/config avec permissions restrictives
@@ -61,12 +61,13 @@ fi
 # Le paquet dnsmasq demarre parfois son service avec la conf par defaut
 # (port 53) au moment de l'installation -> conflit possible avec
 # systemd-resolved. On l'arrete/desactive avant d'installer notre conf
-# (port 5353) ; il sera (re)demarre par la dependance Requires= du
+# (port 5354) ; il sera (re)demarre par la dependance Requires= du
 # service mintguard-daemon quand l'utilisateur le lancera explicitement.
 systemctl stop dnsmasq 2>/dev/null || true
 systemctl disable dnsmasq 2>/dev/null || true
+systemctl reset-failed dnsmasq 2>/dev/null || true
 install -m 644 "$REPO_ROOT/etc/dnsmasq.d/mintguard.conf" /etc/dnsmasq.d/mintguard.conf
-echo "mintguard.conf installe (port 5353 - resolveur systeme non touche, voir SUIVI.md)"
+echo "mintguard.conf installe (port 5354 - resolveur systeme non touche, voir SUIVI.md)"
 
 echo "== Service systemd =="
 install -m 644 "$REPO_ROOT/etc/systemd/mintguard-daemon.service" /etc/systemd/system/mintguard-daemon.service
