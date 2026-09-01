@@ -16,7 +16,7 @@
 
 from datetime import datetime, time as dt_time, timezone
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Time
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Time, UniqueConstraint
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
@@ -82,6 +82,21 @@ class ActivityLog(Base):
     details: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
     child: Mapped["Child"] = relationship(back_populates="activity_logs")
+
+
+class DailyUsage(Base):
+    """Cumul du temps de session (en secondes) par enfant et par jour local — alimenté par
+    `UsageTracker.record_tick()` à chaque cycle du daemon, lu par le Dashboard pour la barre de
+    progression. Pas de vrai bus D-Bus/IPC (voir SUIVI.md, décision d'architecture Semaine 5) :
+    même principe de BD partagée que le reste (TimeRule, BlockedApp...)."""
+
+    __tablename__ = "daily_usage"
+    __table_args__ = (UniqueConstraint("child_id", "date", name="uq_daily_usage_child_date"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    child_id: Mapped[int] = mapped_column(ForeignKey("children.id"))
+    date: Mapped[str] = mapped_column(String(10))  # "AAAA-MM-JJ", jour local (cohérent avec TimeRule)
+    seconds_used: Mapped[int] = mapped_column(Integer, default=0)
 
 
 class ParentConfig(Base):

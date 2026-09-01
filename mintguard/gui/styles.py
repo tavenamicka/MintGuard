@@ -17,6 +17,10 @@
 """Système de design MintGuard (palette, typographie, feuille de style QSS)
 conforme à STRATEGIE_UX_UI.html section "Design Graphique"."""
 
+from pathlib import Path
+
+from PyQt6.QtGui import QFontDatabase
+
 COLORS = {
     # Trouvé à l'audit d'accessibilité Phase 4 (voir SUIVI.md) : la palette d'origine
     # (#0EA5E9/#10B981/#F59E0B/#EF4444, cf. STRATEGIE_UX_UI.html) ne passait pas le contraste
@@ -38,6 +42,27 @@ COLORS = {
 }
 
 FONT_FAMILY = "Inter, Roboto, 'Segoe UI', system-ui, sans-serif"
+
+# Police display des titres (h1/h2) du thème sombre uniquement — le thème clair garde
+# FONT_FAMILY partout, inchangé. Bundlée (voir assets/fonts/) car Qt ne charge pas les Google
+# Fonts par lien CSS comme un navigateur ; approuvé par l'utilisateur avant téléchargement
+# (Archivo Black, licence SIL OFL, cf. assets/fonts/OFL.txt).
+DISPLAY_FONT_FAMILY = f"'Archivo Black', {FONT_FAMILY}"
+_FONT_DIR = Path(__file__).parent / "assets" / "fonts"
+_display_font_loaded = False
+
+
+def load_display_font() -> None:
+    """Enregistre la police display auprès de Qt (QFontDatabase) — idempotent, sans effet si
+    déjà chargée. À appeler après la création de QApplication et avant toute mise en forme
+    QSS qui la référence (voir MainWindow.__init__)."""
+    global _display_font_loaded
+    if _display_font_loaded:
+        return
+    font_path = _FONT_DIR / "ArchivoBlack-Regular.ttf"
+    if font_path.exists():
+        QFontDatabase.addApplicationFont(str(font_path))
+    _display_font_loaded = True
 
 # Piste "Néon" proposée via /innovative-design (voir historique de conversation) : thème sombre
 # dégradé cyan/magenta pour un rendu plus actuel. Choisi par l'utilisateur parmi 3 pistes, avec
@@ -170,8 +195,8 @@ def build_dark_stylesheet() -> str:
             font-family: {FONT_FAMILY};
             font-size: {f['body']}px;
         }}
-        QLabel#h1 {{ font-size: {f['h1']}px; font-weight: 700; color: {c['text']}; }}
-        QLabel#h2 {{ font-size: {f['h2']}px; font-weight: 700; color: {c['text']}; }}
+        QLabel#h1 {{ font-family: {DISPLAY_FONT_FAMILY}; font-size: {f['h1']}px; font-weight: 700; color: {c['text']}; }}
+        QLabel#h2 {{ font-family: {DISPLAY_FONT_FAMILY}; font-size: {f['h2']}px; font-weight: 700; color: {c['text']}; }}
         QLabel#h3 {{ font-size: {f['h3']}px; font-weight: 600; color: {c['text']}; }}
         QLabel#small {{ font-size: {f['small']}px; color: {c['text_muted']}; }}
         {pill('success')}
@@ -201,6 +226,14 @@ def build_dark_stylesheet() -> str:
             border: 1px solid {c['border']};
             border-radius: 16px;
         }}
+
+        QProgressBar {{
+            background: {c['border']};
+            border-radius: 6px;
+            min-height: 12px;
+            max-height: 12px;
+        }}
+        QProgressBar::chunk {{ background: {gradient}; border-radius: 6px; }}
 
         QComboBox {{
             background: {c['surface']};

@@ -27,6 +27,7 @@
     "child_select": "Enfant",
     "time_today": "Temps aujourd'hui",
     "time_limit": "maximum",
+    "time_used_of_limit": "{0} sur {1}",
     "last_restriction": "Dernière restriction",
     "no_restrictions": "Aucune restriction ce jour",
     "today_window": "Aujourd'hui : accès autorisé de {0} à {1}",

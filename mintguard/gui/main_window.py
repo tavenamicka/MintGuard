@@ -22,7 +22,7 @@ from mintguard.db.database import get_session
 from mintguard.db.models import ParentConfig
 from mintguard.gui.dashboard import DashboardScreen
 from mintguard.gui.onboarding import OnboardingWizard
-from mintguard.gui.styles import DEFAULT_THEME, THEMES
+from mintguard.gui.styles import DEFAULT_THEME, THEMES, load_display_font
 from mintguard.locales.loader import get_i18n
 
 
@@ -41,6 +41,7 @@ class MainWindow(QMainWindow):
         # Appliqué sur QApplication, pas sur self : un QDialog (Settings, HelpDialog...) est
         # une fenêtre top-level distincte et n'hériterait pas d'un style posé ici (voir aussi
         # main_gui.py). set_theme() re-pose ce même style à la volée, sans relancer l'appli.
+        load_display_font()
         self.theme = self._load_theme()
         QApplication.instance().setStyleSheet(THEMES[self.theme]())
 

@@ -15,13 +15,22 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from datetime import datetime
+from datetime import time as dt_time
 
-from PyQt6.QtWidgets import QComboBox, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
+from PyQt6.QtCore import QTimer
+from PyQt6.QtWidgets import QComboBox, QHBoxLayout, QLabel, QProgressBar, QPushButton, QVBoxLayout, QWidget
 
+from mintguard.backend.usage_tracker import UsageTracker
 from mintguard.db.database import get_session
 from mintguard.db.models import ActivityLog, BlockedSite, Child, TimeRule
 from mintguard.gui.widgets import Card, heading, small_label
 from mintguard.locales.loader import I18nLoader
+from mintguard.utils.formatters import format_duration, format_percentage
+
+# Cadence de rafraîchissement du Dashboard pendant qu'il reste affiché — même principe que le
+# daemon (voir SUIVI.md, décision d'architecture Semaine 5) : la BD partagée tient lieu de canal
+# GUI<->daemon, un délai de quelques secondes est imperceptible pour ce besoin.
+_LIVE_REFRESH_INTERVAL_MS = 5000
 
 
 class DashboardScreen(QWidget):
@@ -29,15 +38,23 @@ class DashboardScreen(QWidget):
 
     Note d'architecture : le blocage de sites (BlockedSite) est global à la machine, pas par
     enfant (un seul résolveur DNS pour tout le poste) — seule la limite de temps (TimeRule) est
-    propre à l'enfant sélectionné. Le statut « Protection: ACTIVE » n'a pas encore de source live
-    (pas d'IPC GUI↔daemon avant la Semaine 5) : il reflète la présence de règles configurées en BD.
+    propre à l'enfant sélectionné. Le statut « Protection: ACTIVE » reflète la présence de règles
+    configurées en BD, pas un signal live du daemon (pas de bus D-Bus — voir SUIVI.md). Le temps
+    utilisé aujourd'hui, lui, vient bien du daemon (`UsageTracker`, table `DailyUsage`) : un
+    QTimer relit la BD toutes les `_LIVE_REFRESH_INTERVAL_MS` pour que la barre avance pendant
+    que le parent regarde l'écran, sans canal IPC dédié.
     """
 
     def __init__(self, i18n: I18nLoader, parent=None):
         super().__init__(parent)
         self.i18n = i18n
+        self._usage_tracker = UsageTracker()
         self._build_ui()
         self.reload()
+
+        self._live_refresh_timer = QTimer(self)
+        self._live_refresh_timer.timeout.connect(self._refresh)
+        self._live_refresh_timer.start(_LIVE_REFRESH_INTERVAL_MS)
 
     def _build_ui(self) -> None:
         # Thème "Néon" appliqué globalement (voir mintguard/main_gui.py, styles.py::DARK_COLORS).
@@ -66,6 +83,15 @@ class DashboardScreen(QWidget):
         self.window_label.setWordWrap(True)
         self.window_card.add(self.window_label)
         layout.addWidget(self.window_card)
+
+        self.usage_card = Card()
+        self.usage_card.add(small_label(self.i18n("dashboard.time_today")))
+        self.usage_bar = QProgressBar()
+        self.usage_bar.setTextVisible(False)
+        self.usage_card.add(self.usage_bar)
+        self.usage_value = QLabel("")
+        self.usage_card.add(self.usage_value)
+        layout.addWidget(self.usage_card)
 
         self.restriction_card = Card()
         self.restriction_card.add(small_label(self.i18n("dashboard.last_restriction")))
@@ -121,6 +147,7 @@ class DashboardScreen(QWidget):
             self.status_label.style().unpolish(self.status_label)
             self.status_label.style().polish(self.status_label)
             self.window_label.setText("")
+            self.usage_card.hide()
             self.restriction_value.setText("")
             self.settings_button.setEnabled(False)
             self.reports_button.setEnabled(False)
@@ -136,7 +163,9 @@ class DashboardScreen(QWidget):
         self.status_label.style().unpolish(self.status_label)
         self.status_label.style().polish(self.status_label)
 
-        self.window_label.setText(self._today_window_text(child_id))
+        window = self._today_rule_window(child_id)
+        self.window_label.setText(self._today_window_text(window))
+        self._refresh_usage(child_id, window)
         self.restriction_value.setText(self._last_restriction_text(child_id))
 
     def _is_protection_active(self, child_id: int) -> bool:
@@ -148,7 +177,7 @@ class DashboardScreen(QWidget):
         finally:
             session.close()
 
-    def _today_window_text(self, child_id: int) -> str:
+    def _today_rule_window(self, child_id: int) -> tuple[dt_time, dt_time] | None:
         today = datetime.now().weekday()
         session = get_session()
         try:
@@ -160,13 +189,38 @@ class DashboardScreen(QWidget):
             # Extraire les valeurs pendant que la session est ouverte : après close(), les
             # attributs ne sont accessibles que par chance (tant qu'aucun commit ne les a
             # expirés) — mieux vaut ne pas dépendre de ce détail d'implémentation SQLAlchemy.
-            window = (rule.start_hour, rule.end_hour) if rule is not None else None
+            return (rule.start_hour, rule.end_hour) if rule is not None else None
         finally:
             session.close()
+
+    def _today_window_text(self, window: tuple[dt_time, dt_time] | None) -> str:
         if window is None:
             return self.i18n("dashboard.no_rule_today")
         start_hour, end_hour = window
         return self.i18n("dashboard.today_window").format(start_hour.strftime("%H:%M"), end_hour.strftime("%H:%M"))
+
+    def _refresh_usage(self, child_id: int, window: tuple[dt_time, dt_time] | None) -> None:
+        """Barre de progression du temps utilisé aujourd'hui — seulement quand une plage horaire
+        est définie pour aujourd'hui (sinon pas de "maximum" auquel comparer, cf. accès libre)."""
+        if window is None:
+            self.usage_card.hide()
+            return
+
+        start_hour, end_hour = window
+        limit_seconds = self._seconds_since_midnight(end_hour) - self._seconds_since_midnight(start_hour)
+        used_seconds = self._usage_tracker.get_seconds_used_today(child_id)
+
+        self.usage_card.show()
+        self.usage_bar.setValue(format_percentage(used_seconds, limit_seconds))
+        self.usage_value.setText(
+            self.i18n("dashboard.time_used_of_limit").format(
+                format_duration(used_seconds), format_duration(limit_seconds)
+            )
+        )
+
+    @staticmethod
+    def _seconds_since_midnight(value: dt_time) -> int:
+        return value.hour * 3600 + value.minute * 60 + value.second
 
     def _last_restriction_text(self, child_id: int) -> str:
         session = get_session()

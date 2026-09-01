@@ -20,6 +20,7 @@ from mintguard.backend.dns_controller import DNSController
 from mintguard.backend.firewall_controller import FirewallController
 from mintguard.backend.process_monitor import ProcessMonitor
 from mintguard.backend.scheduler import Scheduler
+from mintguard.backend.usage_tracker import UsageTracker
 from mintguard.config import get_config
 from mintguard.db.database import init_db
 from mintguard.logger import setup_logging
@@ -32,10 +33,12 @@ def run_cycle(
     scheduler: Scheduler,
     dns_controller: DNSController,
     firewall_controller: FirewallController,
+    usage_tracker: UsageTracker,
     state: dict,
     now: float,
     session_interval: float,
     dns_refresh_interval: float,
+    process_interval: float,
 ) -> None:
     """Un tour de boucle du daemon. Isolé de `main()` pour être testable sans horloge réelle.
 
@@ -48,6 +51,10 @@ def run_cycle(
     et la liste des enfants change rarement.
     """
     process_monitor.check_and_kill()
+    # Même cadence que check_and_kill() (un tick = process_interval secondes) : c'est cette
+    # écriture périodique dans DailyUsage, relue par le Dashboard, qui tient lieu d'"IPC temps
+    # réel" GUI<->daemon pour la barre de progression (cf. décision d'architecture ci-dessus).
+    usage_tracker.record_tick(process_interval)
 
     if now - state["last_session_check"] >= session_interval:
         scheduler.check_all_children()
@@ -73,6 +80,7 @@ def main() -> None:
     scheduler = Scheduler()
     dns_controller = DNSController()
     firewall_controller = FirewallController()
+    usage_tracker = UsageTracker()
 
     dns_controller.generate_blocklist()
     firewall_controller.sync_child_dns_restriction()
@@ -85,10 +93,12 @@ def main() -> None:
                 scheduler,
                 dns_controller,
                 firewall_controller,
+                usage_tracker,
                 state,
                 time.monotonic(),
                 session_interval,
                 dns_refresh_interval,
+                process_interval,
             )
             time.sleep(process_interval)
     except KeyboardInterrupt:

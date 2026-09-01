@@ -29,6 +29,7 @@ setup(
     include_package_data=True,
     package_data={
         "mintguard.locales": ["*.json"],
+        "mintguard.gui": ["assets/fonts/*"],
     },
     install_requires=[
         "PyQt6>=6.5.0",
