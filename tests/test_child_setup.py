@@ -16,7 +16,7 @@
 
 import pytest
 
-from mintguard.backend.child_setup import create_child_with_age_preset
+from mintguard.backend.child_setup import DuplicateUsernameError, create_child_with_age_preset
 from mintguard.db.database import get_session, init_db
 from mintguard.db.models import BlockedSite, Child, TimeRule
 
@@ -81,3 +81,19 @@ def test_does_not_duplicate_blocked_site_shared_between_two_children():
     finally:
         session.close()
     assert tiktok_rows == 1
+
+
+def test_raises_clear_error_on_duplicate_username_instead_of_crashing():
+    # Trouve en usage reel (voir SUIVI.md) : un appelant qui oublie de verifier les doublons
+    # en amont (c'etait le cas de l'onboarding) provoquait une IntegrityError SQLite brute,
+    # plantant toute l'application. Cette fonction doit rester sure quel que soit l'appelant.
+    create_child_with_age_preset("Test", "mintguard-test-child", 10, "young")
+
+    with pytest.raises(DuplicateUsernameError):
+        create_child_with_age_preset("Elisa", "mintguard-test-child", 12, "teen")
+
+    session = get_session()
+    try:
+        assert session.query(Child).filter_by(username="mintguard-test-child").count() == 1
+    finally:
+        session.close()

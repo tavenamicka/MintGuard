@@ -32,7 +32,7 @@ from PyQt6.QtWidgets import (
 from mintguard.backend.child_setup import create_child_with_age_preset
 from mintguard.backend.system_users import list_candidate_usernames
 from mintguard.db.database import get_session
-from mintguard.db.models import ParentConfig
+from mintguard.db.models import Child, ParentConfig
 from mintguard.gui.widgets import Card, HelpButton, heading, small_label
 from mintguard.locales.loader import I18nLoader
 from mintguard.utils.security import hash_pin
@@ -160,11 +160,26 @@ class OnboardingWizard(QWidget):
             self._child_error.setText(self.i18n("onboarding.child.error_required"))
             self._child_error.show()
             return False
+        # Trouve en usage reel (voir SUIVI.md) : sans cette verification, un nom de compte
+        # deja utilise par un autre enfant provoquait une IntegrityError SQLite non rattrapee
+        # au moment de _persist() (page Succes), plantant toute l'application.
+        if self._username_already_used(username):
+            self._child_error.setText(self.i18n("add_child.error_duplicate"))
+            self._child_error.show()
+            return False
         self._child_error.hide()
         self.data["name"] = name
         self.data["username"] = username
         self.data["age"] = self.age_input.value()
         return True
+
+    @staticmethod
+    def _username_already_used(username: str) -> bool:
+        session = get_session()
+        try:
+            return session.query(Child).filter_by(username=username).first() is not None
+        finally:
+            session.close()
 
     # -- Page 3: Configuration rapide -------------------------------------
 

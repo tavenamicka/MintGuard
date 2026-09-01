@@ -27,12 +27,25 @@ from mintguard.db.database import get_session
 from mintguard.db.models import BlockedSite, Child, TimeRule
 
 
+class DuplicateUsernameError(ValueError):
+    """Un enfant avec ce nom d'utilisateur existe déjà (contrainte UNIQUE sur `Child.username`)."""
+
+
 def create_child_with_age_preset(name: str, username: str, age: int, age_bracket: str) -> int:
     """Crée l'enfant, applique le préréglage d'âge (7 `TimeRule`, `BlockedSite` par domaine
     déjà défini par catégorie). Retourne l'id du nouvel enfant.
+
+    Lève `DuplicateUsernameError` plutôt que de laisser remonter l'`IntegrityError` SQLite
+    brute — trouvé en usage réel (voir SUIVI.md) : un appelant qui oublie de vérifier les
+    doublons en amont (c'était le cas de l'onboarding) plantait toute l'application au lieu
+    d'afficher un message. Vérification défensive ici en plus de celle des appelants GUI,
+    pour que cette fonction reste sûre quel que soit l'appelant.
     """
     session = get_session()
     try:
+        if session.query(Child).filter_by(username=username).first() is not None:
+            raise DuplicateUsernameError(username)
+
         child = Child(name=name, username=username, age=age)
         session.add(child)
         session.flush()

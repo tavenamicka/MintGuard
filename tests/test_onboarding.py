@@ -72,6 +72,24 @@ def test_child_page_accepts_valid_input():
     assert wizard.data["age"] == 9
 
 
+def test_child_page_rejects_username_already_used_by_another_child():
+    # Trouve en usage reel (voir SUIVI.md) : sans cette verification, l'onboarding plantait
+    # (IntegrityError SQLite non rattrapee) en tentant de reutiliser un nom de compte deja
+    # associe a un autre enfant.
+    session = get_session()
+    try:
+        session.add(Child(name="Test", username="mintguard-test-child", age=10))
+        session.commit()
+    finally:
+        session.close()
+
+    wizard = make_wizard()
+    wizard.name_input.setText("Elisa")
+    wizard.username_input.setCurrentText("mintguard-test-child")
+    assert wizard._validate_child_page() is False
+    assert wizard._child_error.isHidden() is False
+
+
 def test_age_bracket_defaults_to_young_for_child():
     wizard = make_wizard()
     wizard.data["age"] = 9
