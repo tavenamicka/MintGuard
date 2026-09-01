@@ -67,6 +67,14 @@ if [ ! -d "$VENV_DIR" ]; then
   python3 -m venv "$VENV_DIR"
 fi
 "$VENV_DIR/bin/pip" install --upgrade pip -q
+# ATTENTION (constat d'audit de securite Phase 3, voir SUIVI.md) : install editable = le
+# daemon root execute du code Python directement depuis $REPO_ROOT, qui appartient a un
+# compte utilisateur normal (pas root). Volontairement conserve ainsi pour l'instant : ce
+# script sert au developpement/test actif sur cible reelle (modifier le code, relancer le
+# daemon, sans reinstallation), pas encore a une vraie installation chez une famille. Avant
+# une release Phase 4, remplacer par une copie figee du code dans un emplacement root-only
+# (ex: paquet/wheel installe normalement, ou `cp -r` vers /opt/mintguard/src) pour que le
+# daemon ne depende plus d'un repertoire modifiable par un compte non-root.
 "$VENV_DIR/bin/pip" install -e "$REPO_ROOT" -q
 "$VENV_DIR/bin/pip" install -r "$REPO_ROOT/requirements.txt" -q
 echo "Paquet installe (editable -> $REPO_ROOT)"

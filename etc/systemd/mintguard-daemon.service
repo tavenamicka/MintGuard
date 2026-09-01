@@ -12,5 +12,23 @@ RestartSec=10
 StandardOutput=journal
 StandardError=journal
 
+# Durcissement (trouve a l'audit de securite Phase 3, voir SUIVI.md) : le daemon tourne en
+# root plein (necessaire pour piloter iptables/dnsmasq/loginctl), reduire la surface en cas
+# de faille dans le code Python ou une dependance.
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/mintguard /var/lib/mintguard-dns /var/log/mintguard
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+# ProtectHome= et CapabilityBoundSet= volontairement absents : ProtectHome casserait le
+# daemon lui-meme, dont le code (install editable, cf. install.sh) est aujourd'hui charge
+# depuis un checkout git dans /home/latitude - a activer une fois l'installation figee
+# (paquet non-editable, voir constat d'audit correspondant dans SUIVI.md). CapabilityBoundSet
+# non restreint faute de pouvoir valider les capacites minimales necessaires sans acces root
+# pour tester une regression en conditions reelles.
+
 [Install]
 WantedBy=multi-user.target

@@ -35,34 +35,55 @@ class ProcessMonitor:
         finally:
             session.close()
 
+    def get_child_usernames(self) -> set[str]:
+        session = get_session()
+        try:
+            return {c.username for c in session.query(Child).all()}
+        finally:
+            session.close()
+
     def check_and_kill(self) -> list[str]:
-        """Parcourt les processus actifs, termine ceux qui sont bloqués. Retourne les noms tués."""
+        """Termine les processus bloqués tournant sous un compte enfant. Retourne les noms tués.
+
+        Filtré par utilisateur, pas seulement par nom : trouvé à l'audit de sécurité (voir
+        SUIVI.md) — sans ce filtre, un processus du même nom tournant sous le compte PARENT (ou
+        tout autre compte du système) était tué aussi, dommage collatéral non intentionnel.
+        """
         blocked_names = self.get_blocked_app_names()
         if not blocked_names:
+            return []
+        child_usernames = self.get_child_usernames()
+        if not child_usernames:
             return []
 
         killed = []
         for proc in psutil.process_iter(["pid", "name", "username"]):
             proc_name = (proc.info.get("name") or "").lower()
-            if proc_name in blocked_names:
+            username = self._plain_username(proc.info.get("username"))
+            if proc_name in blocked_names and username in child_usernames:
                 try:
                     proc.kill()
                     killed.append(proc_name)
-                    child_id = self._child_id_for_username(proc.info.get("username"))
+                    child_id = self._child_id_for_username(username)
                     self._log_action(child_id, "app_blocked", proc_name)
                 except psutil.Error as e:
                     logger.warning("Impossible de terminer %s: %s", proc_name, e)
         return killed
 
+    @staticmethod
+    def _plain_username(username: str | None) -> str | None:
+        if not username:
+            return None
+        # psutil renvoie "DOMAINE\\utilisateur" sous Windows ; sans effet sous Linux (cible réelle).
+        return username.rsplit("\\", 1)[-1]
+
     def _child_id_for_username(self, username: str | None) -> int | None:
         """Associe le processus tué à l'enfant propriétaire de la session (pour le Dashboard)."""
         if not username:
             return None
-        # psutil renvoie "DOMAINE\\utilisateur" sous Windows ; sans effet sous Linux (cible réelle).
-        plain_username = username.rsplit("\\", 1)[-1]
         session = get_session()
         try:
-            child = session.query(Child).filter_by(username=plain_username).first()
+            child = session.query(Child).filter_by(username=username).first()
             return child.id if child else None
         finally:
             session.close()
