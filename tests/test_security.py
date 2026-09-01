@@ -15,7 +15,12 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from mintguard.utils.security import hash_pin, verify_pin
-from mintguard.utils.validators import is_valid_domain, is_valid_pin, is_valid_time_string
+from mintguard.utils.validators import (
+    is_valid_domain,
+    is_valid_pin,
+    is_valid_time_string,
+    is_valid_username,
+)
 
 
 def test_hash_pin_is_not_plaintext():
@@ -67,3 +72,17 @@ def test_valid_pin():
 def test_invalid_pin():
     assert is_valid_pin("123") is False
     assert is_valid_pin("abcd") is False
+
+
+def test_valid_username():
+    assert is_valid_username("emma") is True
+    assert is_valid_username("mintguard-test-child") is True
+
+
+def test_invalid_username():
+    """Ces noms partent tels quels dans `iptables --uid-owner` et
+    `loginctl terminate-user` : un nom commençant par « - » y serait lu comme une option."""
+    assert is_valid_username("--jump=ACCEPT") is False
+    assert is_valid_username("emma; rm -rf /") is False
+    assert is_valid_username("") is False
+    assert is_valid_username(None) is False

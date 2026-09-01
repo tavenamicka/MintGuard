@@ -43,7 +43,7 @@ import sys
 path = sys.argv[1]
 with open(path) as f:
     config = json.load(f)
-config.setdefault("dns", {})["blocklist_path"] = "/var/lib/mintguard-dns/blocklist.hosts"
+config.setdefault("dns", {})["blocklist_path"] = "/var/lib/mintguard-dns/blocklist.conf"
 with open(path, "w") as f:
     json.dump(config, f, indent=2)
     f.write("\n")
@@ -55,8 +55,9 @@ fi
 
 echo "== Mise a jour de $DNSMASQ_CONF =="
 if [ -f "$DNSMASQ_CONF" ]; then
-  sed -i 's#^addn-hosts=.*#addn-hosts=/var/lib/mintguard-dns/blocklist.hosts#' "$DNSMASQ_CONF"
-  echo "addn-hosts mis a jour dans $DNSMASQ_CONF"
+  sed -i 's#^addn-hosts=.*#conf-file=/var/lib/mintguard-dns/blocklist.conf#' "$DNSMASQ_CONF"
+  sed -i 's#^conf-file=.*#conf-file=/var/lib/mintguard-dns/blocklist.conf#' "$DNSMASQ_CONF"
+  echo "conf-file mis a jour dans $DNSMASQ_CONF"
 else
   echo "Attention : $DNSMASQ_CONF introuvable, rien a mettre a jour." >&2
 fi
@@ -74,5 +75,5 @@ systemctl restart dnsmasq
 echo
 echo "== Correctif applique =="
 echo "Verification recommandee (apres quelques secondes, le temps du cycle du daemon) :"
-echo "  cat /var/lib/mintguard-dns/blocklist.hosts"
+echo "  cat /var/lib/mintguard-dns/blocklist.conf"
 echo "  dig +short @127.0.0.1 <domaine_bloque>   # doit renvoyer 0.0.0.0"

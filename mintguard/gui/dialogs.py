@@ -16,9 +16,10 @@
 
 import subprocess
 
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import QDialog, QHBoxLayout, QLabel, QLineEdit, QMessageBox, QPushButton, QVBoxLayout
 
+from mintguard.backend import pin_policy
 from mintguard.db.database import get_session
 from mintguard.db.models import ParentConfig
 from mintguard.gui.widgets import NumericKeypad
@@ -35,10 +36,15 @@ def _confirm_admin_identity() -> bool | None:
     True/False selon que l'authentification a réussi ou a été annulée/incorrecte.
     """
     try:
-        result = subprocess.run(["pkexec", "true"], capture_output=True)
+        # `timeout` : sans agent polkit graphique (application lancée depuis un terminal),
+        # pkexec bascule sur une invite texte et attendrait indéfiniment une saisie que
+        # personne ne voit — la fenêtre parent resterait figée sans explication.
+        result = subprocess.run(["pkexec", "true"], capture_output=True, timeout=120)
         return result.returncode == 0
     except FileNotFoundError:
         return None
+    except subprocess.TimeoutExpired:
+        return False
 
 
 class HelpDialog(QDialog):
@@ -107,9 +113,9 @@ class PinDialog(QDialog):
         cancel_button.clicked.connect(self.reject)
         buttons_row.addWidget(cancel_button)
 
-        ok_button = QPushButton(i18n("common.ok"))
-        ok_button.clicked.connect(self._check)
-        buttons_row.addWidget(ok_button)
+        self._ok_button = QPushButton(i18n("common.ok"))
+        self._ok_button.clicked.connect(self._check)
+        buttons_row.addWidget(self._ok_button)
         layout.addLayout(buttons_row)
 
         # Trouvé en rédigeant le guide utilisateur (voir SUIVI.md) : un PIN oublié rendait
@@ -122,7 +128,33 @@ class PinDialog(QDialog):
         forgot_button.clicked.connect(self._forgot_pin)
         layout.addWidget(forgot_button, alignment=Qt.AlignmentFlag.AlignRight)
 
+        # Un verrouillage en cours doit s'appliquer dès l'ouverture : sinon il suffisait de
+        # fermer et rouvrir la fenêtre pour repartir avec un compteur neuf.
+        self._lockout_timer = QTimer(self)
+        self._lockout_timer.setInterval(1000)
+        self._lockout_timer.timeout.connect(self._refresh_lockout)
+        self._refresh_lockout()
+
+    # -- Verrouillage après échecs répétés ---------------------------------
+
+    def _refresh_lockout(self) -> bool:
+        """Met à jour l'état verrouillé/déverrouillé. Retourne True si toujours verrouillé."""
+        remaining = pin_policy.lockout_remaining()
+        self._ok_button.setEnabled(remaining == 0)
+        self.pin_input.setEnabled(remaining == 0)
+        if remaining > 0:
+            self._error_label.setText(self.i18n("pin_dialog.locked_out").format(remaining))
+            self._error_label.show()
+            if not self._lockout_timer.isActive():
+                self._lockout_timer.start()
+            return True
+        self._lockout_timer.stop()
+        return False
+
     def _check(self) -> None:
+        if self._refresh_lockout():
+            return
+
         session = get_session()
         try:
             stored = session.query(ParentConfig).filter_by(key="parent_pin_hash").first()
@@ -131,11 +163,15 @@ class PinDialog(QDialog):
             session.close()
 
         if verify_pin(self.pin_input.text(), stored_hash):
+            pin_policy.reset()
             self.accept()
-        else:
+            return
+
+        pin_policy.register_failure()
+        self.pin_input.clear()
+        if not self._refresh_lockout():
             self._error_label.setText(self.i18n("pin_dialog.error"))
             self._error_label.show()
-            self.pin_input.clear()
             self.pin_input.setFocus()
 
     def _forgot_pin(self) -> None:
@@ -171,6 +207,9 @@ class PinDialog(QDialog):
             session.commit()
         finally:
             session.close()
+        # Le parent vient de prouver son identité via polkit : le compteur d'échecs (et un
+        # éventuel verrouillage en cours) n'a plus lieu d'être.
+        pin_policy.reset()
         self.accept()
 
     @staticmethod

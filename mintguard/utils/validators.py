@@ -20,6 +20,8 @@ DOMAIN_RE = re.compile(
     r"^(?!-)[A-Za-z0-9-]{1,63}(?<!-)(\.(?!-)[A-Za-z0-9-]{1,63}(?<!-))+$"
 )
 TIME_RE = re.compile(r"^([01]\d|2[0-3]):([0-5]\d)$")
+# Forme documentee par useradd (/etc/login.defs, NAME_REGEX Debian/Mint).
+USERNAME_RE = re.compile(r"^[a-z_][a-z0-9_-]{0,31}\$?$")
 
 
 def is_valid_domain(domain: str) -> bool:
@@ -33,3 +35,14 @@ def is_valid_time_string(value: str) -> bool:
 def is_valid_pin(pin: str) -> bool:
     """Code de sécurité parent: 4 à 8 chiffres."""
     return bool(re.fullmatch(r"\d{4,8}", pin))
+
+
+def is_valid_username(username: str | None) -> bool:
+    """Nom de compte Linux plausible.
+
+    Ces noms viennent de la BD et sont passés tels quels à des commandes privilégiées
+    (`iptables --uid-owner`, `loginctl terminate-user`) : on n'accepte que la forme
+    documentée par useradd, pour qu'une valeur inattendue ne puisse pas devenir une option
+    de commande (un nom commençant par « - » serait interprété comme un drapeau).
+    """
+    return bool(username) and bool(USERNAME_RE.match(username))

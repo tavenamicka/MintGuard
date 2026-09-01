@@ -23,6 +23,7 @@ from mintguard.db.database import get_session
 from mintguard.db.models import ActivityLog, Child
 from mintguard.gui.widgets import Card, heading, small_label
 from mintguard.locales.loader import I18nLoader
+from mintguard.utils.formatters import local_to_utc
 
 REPORT_WINDOW_DAYS = 7
 
@@ -95,7 +96,9 @@ class ReportsWindow(QDialog):
             self.blocks_list.clear()
             return
 
-        cutoff = datetime.now() - timedelta(days=REPORT_WINDOW_DAYS)
+        # `ActivityLog.timestamp` est stocké en UTC naïf (cf. `models.utcnow`) : comparer
+        # à `datetime.now()` local décalait la fenêtre du fuseau horaire.
+        cutoff = local_to_utc(datetime.now()) - timedelta(days=REPORT_WINDOW_DAYS)
         session = get_session()
         try:
             entries = [

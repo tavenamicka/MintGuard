@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 
 DAY_KEYS = ("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday")
 
@@ -22,6 +22,23 @@ DAY_KEYS = ("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", 
 def weekday_key(day_index: int) -> str:
     """Clé i18n 'time.<jour>' pour un index de jour SQLAlchemy/datetime.weekday() (0=lundi)."""
     return DAY_KEYS[day_index]
+
+
+def utc_to_local(value: datetime) -> datetime:
+    """Convertit un horodatage UTC naïf (tel que stocké en BD, cf. `models.utcnow`) en heure
+    locale, pour affichage.
+
+    Sans cette conversion, le Dashboard et les Rapports affichaient l'heure UTC : « application
+    bloquée à 16:30 » pour un blocage survenu à 18:30 en France l'été. Un parent qui compare
+    avec l'horloge de son écran conclut logiquement que MintGuard raconte n'importe quoi.
+    """
+    return value.replace(tzinfo=timezone.utc).astimezone().replace(tzinfo=None)
+
+
+def local_to_utc(value: datetime) -> datetime:
+    """Réciproque de `utc_to_local` — pour comparer une date locale aux horodatages en BD
+    (ex: la fenêtre glissante de 7 jours des Rapports)."""
+    return value.astimezone(timezone.utc).replace(tzinfo=None)
 
 
 def format_duration(seconds: int) -> str:

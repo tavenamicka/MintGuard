@@ -421,7 +421,10 @@ class AppsTab(QWidget):
 
     def _add_custom_app(self) -> None:
         name = self.add_input.text().strip().lower()
-        if not name or " " in name:
+        # `split() != [name]` couvre tous les blancs (tabulation, saut de ligne collé depuis
+        # un autre document), pas seulement l'espace : un nom contenant un blanc ne
+        # correspondra jamais à un `proc.info["name"]`, la règle serait silencieusement morte.
+        if not name or name.split() != [name]:
             self.error_label.setText(self.i18n("settings.invalid_app_error"))
             self.error_label.show()
             return

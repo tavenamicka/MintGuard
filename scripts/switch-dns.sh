@@ -79,9 +79,15 @@ echo "== Reecriture de $INSTALLED_CONF (port 53 + amont explicite) =="
     echo "server=$ip"
   done
   echo
-  echo "addn-hosts=/var/lib/mintguard-dns/blocklist.hosts"
+  echo "conf-file=/var/lib/mintguard-dns/blocklist.conf"
   echo
-  echo "log-queries"
+  # Canari DoH de Firefox : NXDOMAIN ici desactive son DNS-over-HTTPS
+  # automatique, qui contournerait sinon tout le blocage (voir
+  # etc/dnsmasq.d/mintguard.conf).
+  echo "server=/use-application-dns.net/"
+  echo
+  # log-queries volontairement absent : historique de navigation complet de
+  # toute la machine, sans rotation, que rien ne lit (voir etc/dnsmasq.d/mintguard.conf).
   echo "log-facility=/var/log/mintguard/dns.log"
 } > "$INSTALLED_CONF"
 

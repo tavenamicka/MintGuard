@@ -15,7 +15,8 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging
-from datetime import datetime
+from collections import defaultdict
+from datetime import datetime, time as dt_time
 
 from mintguard.backend.session_manager import SessionManager
 from mintguard.db.database import get_session
@@ -49,33 +50,38 @@ class Scheduler:
             db_session.close()
 
     def check_all_children(self, now: datetime | None = None) -> list[str]:
-        """Vérifie chaque enfant; ferme la session de ceux hors plage horaire autorisée."""
+        """Vérifie chaque enfant; ferme la session de ceux hors plage horaire autorisée.
+
+        Toutes les règles du jour sont chargées en une seule requête : la version précédente
+        rouvrait deux sessions de BD par enfant (`get_active_rule` + `_has_any_rule_today`)
+        à chaque passage, soit 2N connexions par minute sur une BD SQLite partagée avec la
+        GUI, pour une poignée de lignes qui tiennent en mémoire.
+        """
         now = now or datetime.now()
         db_session = get_session()
         try:
-            children = db_session.query(Child).all()
+            children = [(c.id, c.username) for c in db_session.query(Child).all()]
+            rules_today: dict[int, list[tuple[dt_time, dt_time]]] = defaultdict(list)
+            for rule in (
+                db_session.query(TimeRule).filter_by(day_of_week=now.weekday(), enabled=True).all()
+            ):
+                rules_today[rule.child_id].append((rule.start_hour, rule.end_hour))
         finally:
             db_session.close()
 
         terminated = []
-        for child in children:
-            if self.get_active_rule(child.id, now) is None and self._has_any_rule_today(child.id, now):
-                if self.session_manager.terminate_user_session(child.username):
-                    terminated.append(child.username)
-                    self._log_action(child.id, "time_limit_hit", "Auto-logout: outside allowed hours")
+        current_time = now.time()
+        for child_id, username in children:
+            windows = rules_today.get(child_id)
+            if not windows:
+                # Aucune règle aujourd'hui = pas de restriction (accès libre), pas un blocage.
+                continue
+            if any(start <= current_time <= end for start, end in windows):
+                continue
+            if self.session_manager.terminate_user_session(username):
+                terminated.append(username)
+                self._log_action(child_id, "time_limit_hit", "Auto-logout: outside allowed hours")
         return terminated
-
-    def _has_any_rule_today(self, child_id: int, now: datetime) -> bool:
-        db_session = get_session()
-        try:
-            return (
-                db_session.query(TimeRule)
-                .filter_by(child_id=child_id, day_of_week=now.weekday(), enabled=True)
-                .count()
-                > 0
-            )
-        finally:
-            db_session.close()
 
     def _log_action(self, child_id: int, action: str, details: str) -> None:
         db_session = get_session()

@@ -21,7 +21,15 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
 def utcnow() -> datetime:
-    return datetime.now(timezone.utc)
+    """Instant courant en UTC, *naïf* (sans tzinfo).
+
+    Les colonnes `DateTime` SQLite ne stockent pas le décalage horaire : SQLAlchemy écrivait
+    déjà l'heure UTC en perdant silencieusement le `tzinfo`, et relisait donc un datetime
+    naïf. Le retour est rendu naïf ici pour que ce qui est écrit corresponde exactement à ce
+    qui sera relu — et pour signaler à l'appelant qu'un affichage doit passer par
+    `formatters.utc_to_local()` (voir le Dashboard, qui affichait l'heure UTC au parent).
+    """
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
 class Base(DeclarativeBase):

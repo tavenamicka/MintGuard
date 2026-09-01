@@ -165,6 +165,7 @@
     "title": "PIN required",
     "label": "Enter the parent PIN to continue",
     "error": "Incorrect PIN",
+    "locked_out": "Too many incorrect attempts. Try again in {0} seconds.",
     "forgot_link": "Forgot your PIN?",
     "forgot_explain": "To set a new code, you'll need to confirm with the password of YOUR account (the one used to log into this computer). A system window will open. Continue?",
     "forgot_unavailable": "Reset is not available on this system (missing component). Contact whoever installed MintGuard.",

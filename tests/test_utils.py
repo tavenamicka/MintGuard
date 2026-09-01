@@ -14,7 +14,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from mintguard.utils.formatters import format_duration, format_percentage
+from datetime import datetime, timezone
+
+from mintguard.utils.formatters import (
+    format_duration,
+    format_percentage,
+    local_to_utc,
+    utc_to_local,
+)
 
 
 def test_format_duration_hours_and_minutes():
@@ -43,3 +50,17 @@ def test_format_percentage_over_limit_clamped():
 
 def test_format_percentage_zero_total():
     assert format_percentage(10, 0) == 0
+
+
+def test_utc_to_local_matches_system_offset():
+    """Les horodatages sont stockés en UTC (`models.utcnow`) mais affichés au parent, qui
+    les compare à l'horloge de son écran : le Dashboard montrait 16:30 pour un blocage
+    survenu à 18:30 (France, heure d'été)."""
+    utc = datetime(2026, 7, 1, 16, 30)
+    expected = utc.replace(tzinfo=timezone.utc).astimezone().replace(tzinfo=None)
+    assert utc_to_local(utc) == expected
+
+
+def test_local_to_utc_is_inverse_of_utc_to_local():
+    utc = datetime(2026, 7, 1, 16, 30)
+    assert local_to_utc(utc_to_local(utc)) == utc

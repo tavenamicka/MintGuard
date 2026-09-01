@@ -34,7 +34,7 @@ def make_controllers(tmp_path):
     return (
         ProcessMonitor(),
         Scheduler(),
-        DNSController(blocklist_path=tmp_path / "blocklist.hosts"),
+        DNSController(blocklist_path=tmp_path / "blocklist.conf"),
         FirewallController(),
         UsageTracker(),
     )
@@ -44,8 +44,7 @@ def test_process_monitor_runs_every_cycle(tmp_path, monkeypatch):
     process_monitor, scheduler, dns_controller, firewall_controller, usage_tracker = make_controllers(tmp_path)
     calls = []
     monkeypatch.setattr(process_monitor, "check_and_kill", lambda: calls.append(1))
-    monkeypatch.setattr(dns_controller, "generate_blocklist", lambda: 0)
-    monkeypatch.setattr(dns_controller, "reload_dnsmasq", lambda: True)
+    monkeypatch.setattr(dns_controller, "apply", lambda: False)
     monkeypatch.setattr(firewall_controller, "sync_child_dns_restriction", lambda: True)
     monkeypatch.setattr(usage_tracker, "record_tick", lambda seconds: None)
 
@@ -65,8 +64,7 @@ def test_process_monitor_runs_every_cycle(tmp_path, monkeypatch):
 def test_usage_tracker_ticks_every_cycle(tmp_path, monkeypatch):
     process_monitor, scheduler, dns_controller, firewall_controller, usage_tracker = make_controllers(tmp_path)
     monkeypatch.setattr(process_monitor, "check_and_kill", lambda: None)
-    monkeypatch.setattr(dns_controller, "generate_blocklist", lambda: 0)
-    monkeypatch.setattr(dns_controller, "reload_dnsmasq", lambda: True)
+    monkeypatch.setattr(dns_controller, "apply", lambda: False)
     monkeypatch.setattr(firewall_controller, "sync_child_dns_restriction", lambda: True)
 
     ticks = []
@@ -88,8 +86,7 @@ def test_usage_tracker_ticks_every_cycle(tmp_path, monkeypatch):
 def test_scheduler_runs_only_after_session_interval_elapsed(tmp_path, monkeypatch):
     process_monitor, scheduler, dns_controller, firewall_controller, usage_tracker = make_controllers(tmp_path)
     monkeypatch.setattr(process_monitor, "check_and_kill", lambda: None)
-    monkeypatch.setattr(dns_controller, "generate_blocklist", lambda: 0)
-    monkeypatch.setattr(dns_controller, "reload_dnsmasq", lambda: True)
+    monkeypatch.setattr(dns_controller, "apply", lambda: False)
     monkeypatch.setattr(firewall_controller, "sync_child_dns_restriction", lambda: True)
     monkeypatch.setattr(usage_tracker, "record_tick", lambda seconds: None)
 
@@ -126,8 +123,7 @@ def test_dns_and_firewall_refresh_only_after_interval_elapsed(tmp_path, monkeypa
     monkeypatch.setattr(usage_tracker, "record_tick", lambda seconds: None)
 
     calls = []
-    monkeypatch.setattr(dns_controller, "generate_blocklist", lambda: calls.append("gen"))
-    monkeypatch.setattr(dns_controller, "reload_dnsmasq", lambda: calls.append("reload"))
+    monkeypatch.setattr(dns_controller, "apply", lambda: calls.append("dns"))
     monkeypatch.setattr(firewall_controller, "sync_child_dns_restriction", lambda: calls.append("firewall"))
 
     state = {"last_session_check": 0.0, "last_dns_refresh": 0.0}
@@ -135,7 +131,7 @@ def test_dns_and_firewall_refresh_only_after_interval_elapsed(tmp_path, monkeypa
         process_monitor, scheduler, dns_controller, firewall_controller, usage_tracker, state,
         now=35.0, session_interval=999, dns_refresh_interval=30, process_interval=5,
     )
-    assert calls == ["gen", "reload", "firewall"]
+    assert calls == ["dns", "firewall"]
 
     calls.clear()
     run_cycle(
@@ -148,4 +144,4 @@ def test_dns_and_firewall_refresh_only_after_interval_elapsed(tmp_path, monkeypa
         process_monitor, scheduler, dns_controller, firewall_controller, usage_tracker, state,
         now=70.0, session_interval=999, dns_refresh_interval=30, process_interval=5,
     )
-    assert calls == ["gen", "reload", "firewall"]
+    assert calls == ["dns", "firewall"]

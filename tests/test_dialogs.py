@@ -20,6 +20,7 @@ pytest.importorskip("PyQt6")
 
 from PyQt6.QtWidgets import QApplication, QDialog, QMessageBox  # noqa: E402
 
+from mintguard.backend import pin_policy  # noqa: E402
 from mintguard.db.database import get_session, init_db  # noqa: E402
 from mintguard.db.models import ParentConfig  # noqa: E402
 from mintguard.gui import dialogs as dialogs_module  # noqa: E402
@@ -187,3 +188,60 @@ def test_forgot_pin_keeps_old_pin_if_new_pin_dialog_cancelled(monkeypatch):
         assert verify_pin("1234", stored.value) is True  # PIN inchangé
     finally:
         session.close()
+
+
+# Limitation des tentatives : sans elle, un PIN à 4 chiffres (10 000 combinaisons) tombait
+# en quelques dizaines de minutes pour qui a accès à la session parent — le scénario même
+# contre lequel le PIN protège. Voir mintguard/backend/pin_policy.py.
+
+
+def test_repeated_wrong_pins_lock_the_dialog():
+    set_parent_pin("1234")
+    dialog = PinDialog(I18nLoader("fr"))
+    for _ in range(pin_policy.MAX_ATTEMPTS):
+        dialog.pin_input.setText("0000")
+        dialog._check()
+
+    assert dialog._ok_button.isEnabled() is False
+    assert dialog.pin_input.isEnabled() is False
+    assert dialog._error_label.isHidden() is False
+
+
+def test_lockout_survives_closing_and_reopening_the_dialog():
+    """Le compteur est en BD et non en mémoire : rouvrir la fenêtre ne doit pas offrir
+    un nouveau lot d'essais."""
+    set_parent_pin("1234")
+    first = PinDialog(I18nLoader("fr"))
+    for _ in range(pin_policy.MAX_ATTEMPTS):
+        first.pin_input.setText("0000")
+        first._check()
+
+    second = PinDialog(I18nLoader("fr"))
+    assert second._ok_button.isEnabled() is False
+
+
+def test_locked_dialog_refuses_even_the_correct_pin():
+    set_parent_pin("1234")
+    dialog = PinDialog(I18nLoader("fr"))
+    for _ in range(pin_policy.MAX_ATTEMPTS):
+        dialog.pin_input.setText("0000")
+        dialog._check()
+
+    dialog.pin_input.setText("1234")
+    dialog._check()
+    assert dialog.result() != QDialog.DialogCode.Accepted
+
+
+def test_correct_pin_clears_the_failure_counter():
+    set_parent_pin("1234")
+    dialog = PinDialog(I18nLoader("fr"))
+    for _ in range(pin_policy.MAX_ATTEMPTS - 1):
+        dialog.pin_input.setText("0000")
+        dialog._check()
+
+    dialog.pin_input.setText("1234")
+    dialog._check()
+    assert dialog.result() == QDialog.DialogCode.Accepted
+    # Compteur remis à zéro : les essais ratés d'hier ne doivent pas verrouiller le parent
+    # au prochain doigt qui glisse.
+    assert pin_policy.register_failure() == 0

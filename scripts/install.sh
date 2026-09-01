@@ -53,6 +53,16 @@ install -d -m 700 -o root -g root /var/log/mintguard
 # /var/lib/mintguard (2770, reserve BD/PIN) meme si le fichier lui-meme
 # etait lisible - voir SUIVI.md Phase 3 (5e defaut de conception).
 install -d -m 755 -o root -g root /var/lib/mintguard-dns
+# dnsmasq REFUSE de demarrer si un `conf-file=` pointe sur un fichier absent.
+# Le daemon regenere ce fichier a son premier cycle, mais dnsmasq peut demarrer
+# avant lui (Requires= dans l'unite systemd) : on cree donc une blocklist vide
+# des l'installation. Les .hosts d'anciennes installations (format hosts, qui
+# ne bloquait pas les sous-domaines) sont retires.
+if [ ! -f /var/lib/mintguard-dns/blocklist.conf ]; then
+  echo "# Blocklist MintGuard (vide - regeneree par le daemon)" > /var/lib/mintguard-dns/blocklist.conf
+  chmod 644 /var/lib/mintguard-dns/blocklist.conf
+fi
+rm -f /var/lib/mintguard-dns/blocklist.hosts /var/lib/mintguard/blocklist.hosts
 
 echo "== Configuration =="
 if [ ! -f /etc/mintguard/config.json ]; then
@@ -107,6 +117,27 @@ systemctl disable dnsmasq 2>/dev/null || true
 systemctl reset-failed dnsmasq 2>/dev/null || true
 install -m 644 "$REPO_ROOT/etc/dnsmasq.d/mintguard.conf" /etc/dnsmasq.d/mintguard.conf
 echo "mintguard.conf installe (port 5354 - resolveur systeme non touche, voir SUIVI.md)"
+
+# Mise a niveau d'une installation existante : l'ancien chemin de blocklist
+# (format hosts) reste dans /etc/mintguard/config.json et ferait ecrire le
+# daemon a cote de ce que lit dnsmasq.
+if [ -f /etc/mintguard/config.json ]; then
+  python3 - /etc/mintguard/config.json <<'PYEOF'
+import json
+import sys
+
+path = sys.argv[1]
+with open(path) as f:
+    config = json.load(f)
+dns = config.setdefault("dns", {})
+if dns.get("blocklist_path", "").endswith(".hosts"):
+    dns["blocklist_path"] = "/var/lib/mintguard-dns/blocklist.conf"
+    with open(path, "w") as f:
+        json.dump(config, f, indent=2)
+        f.write("\n")
+    print("blocklist_path migre vers blocklist.conf dans", path)
+PYEOF
+fi
 
 echo "== Service systemd =="
 install -m 644 "$REPO_ROOT/etc/systemd/mintguard-daemon.service" /etc/systemd/system/mintguard-daemon.service

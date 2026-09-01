@@ -61,8 +61,11 @@ def run_cycle(
         state["last_session_check"] = now
 
     if now - state["last_dns_refresh"] >= dns_refresh_interval:
-        dns_controller.generate_blocklist()
-        dns_controller.reload_dnsmasq()
+        # `apply()` ne redémarre dnsmasq que si la blocklist a réellement changé, et
+        # `sync_child_dns_restriction()` ne reconstruit la chaîne iptables que si elle ne
+        # correspond plus à la BD : un cycle sans changement (le cas courant) ne touche
+        # plus au système du tout.
+        dns_controller.apply()
         firewall_controller.sync_child_dns_restriction()
         state["last_dns_refresh"] = now
 

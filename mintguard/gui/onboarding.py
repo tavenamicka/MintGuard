@@ -51,6 +51,7 @@ class OnboardingWizard(QWidget):
         super().__init__(parent)
         self.i18n = i18n
         self.data = {"name": "", "username": "", "age": 10, "age_bracket": "young", "pin": ""}
+        self._persisted = False
 
         self._age_group: QButtonGroup | None = None
         self._radio_young: QRadioButton | None = None
@@ -317,7 +318,12 @@ class OnboardingWizard(QWidget):
         return page
 
     def _maybe_refresh_success_page(self, index: int) -> None:
-        if index == 5:
+        # `_persisted` : `_persist()` est déclenché par un changement de page, pas par un
+        # clic unique. Un second passage sur la page de succès (retour arrière, signal émis
+        # deux fois) relançait `create_child_with_age_preset` avec le même nom de compte et
+        # remontait une `DuplicateUsernameError` non rattrapée depuis un slot Qt.
+        if index == 5 and not self._persisted:
+            self._persisted = True
             self._persist()
             self._success_subtitle.setText(
                 self.i18n("onboarding.success.subtitle").format(self.data["name"])

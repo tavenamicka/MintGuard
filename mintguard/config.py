@@ -38,7 +38,10 @@ DEFAULT_CONFIG: dict[str, Any] = {
         # pourrait pas traverser un repertoire dont il n'a pas le droit
         # d'execution, meme si le fichier lui-meme etait lisible - voir
         # SUIVI.md Phase 3 (5e defaut de conception).
-        "blocklist_path": "/var/lib/mintguard-dns/blocklist.hosts",
+        # ".conf" et non ".hosts" : fragment de configuration dnsmasq
+        # (`address=/domaine/0.0.0.0`), seul format qui bloque aussi les
+        # sous-domaines - voir DNSController.
+        "blocklist_path": "/var/lib/mintguard-dns/blocklist.conf",
         "refresh_interval": 30,
     },
     "monitoring": {

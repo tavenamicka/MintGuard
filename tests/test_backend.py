@@ -40,9 +40,9 @@ def test_scheduler_stub_passes():
 
 
 def test_dns_controller_generates_empty_blocklist(tmp_path):
-    controller = DNSController(blocklist_path=tmp_path / "blocklist.hosts")
+    controller = DNSController(blocklist_path=tmp_path / "blocklist.conf")
     assert controller.test() is True
-    assert (tmp_path / "blocklist.hosts").exists()
+    assert (tmp_path / "blocklist.conf").exists()
 
 
 # Ces contrôleurs dépendent d'outils système Linux (iptables/loginctl/apparmor_parser)
@@ -57,3 +57,14 @@ def test_session_manager_stub_returns_bool():
 
 def test_apparmor_controller_stub_returns_bool():
     assert isinstance(AppArmorController().test(), bool)
+
+
+def test_session_manager_refuses_implausible_username(monkeypatch):
+    """Le nom vient de la BD et part dans `loginctl terminate-user` : rien ne doit être
+    exécuté si sa forme est inattendue."""
+    calls = []
+    monkeypatch.setattr(
+        "mintguard.backend.session_manager.subprocess.run", lambda *a, **k: calls.append(a)
+    )
+    assert SessionManager().terminate_user_session("--all") is False
+    assert calls == []

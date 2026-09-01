@@ -25,7 +25,7 @@ from mintguard.db.database import get_session
 from mintguard.db.models import ActivityLog, BlockedSite, Child, TimeRule
 from mintguard.gui.widgets import Card, heading, small_label
 from mintguard.locales.loader import I18nLoader
-from mintguard.utils.formatters import format_duration, format_percentage
+from mintguard.utils.formatters import format_duration, format_percentage, utc_to_local
 
 # Cadence de rafraîchissement du Dashboard pendant qu'il reste affiché — même principe que le
 # daemon (voir SUIVI.md, décision d'architecture Semaine 5) : la BD partagée tient lieu de canal
@@ -238,7 +238,7 @@ class DashboardScreen(QWidget):
             return self.i18n("dashboard.no_restrictions")
 
         action, details, timestamp = entry
-        time_str = timestamp.strftime("%H:%M")
+        time_str = utc_to_local(timestamp).strftime("%H:%M")
         if action == "app_blocked":
             label = self.i18n("dashboard.restriction_app_blocked").format(details or "?")
         elif action == "time_limit_hit":

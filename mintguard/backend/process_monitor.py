@@ -35,10 +35,10 @@ class ProcessMonitor:
         finally:
             session.close()
 
-    def get_child_usernames(self) -> set[str]:
+    def get_child_ids_by_username(self) -> dict[str, int]:
         session = get_session()
         try:
-            return {c.username for c in session.query(Child).all()}
+            return {c.username: c.id for c in session.query(Child).all()}
         finally:
             session.close()
 
@@ -52,22 +52,31 @@ class ProcessMonitor:
         blocked_names = self.get_blocked_app_names()
         if not blocked_names:
             return []
-        child_usernames = self.get_child_usernames()
-        if not child_usernames:
+        # Un seul chargement par cycle : la version précédente rouvrait une session de BD
+        # pour retrouver l'enfant à chaque processus tué (`_child_id_for_username`), alors
+        # que la correspondance nom -> id est la même pour tout le cycle.
+        child_ids = self.get_child_ids_by_username()
+        if not child_ids:
             return []
 
         killed = []
+        events: list[tuple[int | None, str]] = []
         for proc in psutil.process_iter(["pid", "name", "username"]):
             proc_name = (proc.info.get("name") or "").lower()
             username = self._plain_username(proc.info.get("username"))
-            if proc_name in blocked_names and username in child_usernames:
+            if proc_name in blocked_names and username in child_ids:
                 try:
                     proc.kill()
-                    killed.append(proc_name)
-                    child_id = self._child_id_for_username(username)
-                    self._log_action(child_id, "app_blocked", proc_name)
                 except psutil.Error as e:
                     logger.warning("Impossible de terminer %s: %s", proc_name, e)
+                    continue
+                killed.append(proc_name)
+                events.append((child_ids[username], proc_name))
+
+        # Un seul commit pour tous les processus tués de ce cycle (fermer une application
+        # en tue souvent plusieurs d'un coup : onglets, processus de rendu...).
+        if events:
+            self._log_actions(events)
         return killed
 
     @staticmethod
@@ -77,21 +86,14 @@ class ProcessMonitor:
         # psutil renvoie "DOMAINE\\utilisateur" sous Windows ; sans effet sous Linux (cible réelle).
         return username.rsplit("\\", 1)[-1]
 
-    def _child_id_for_username(self, username: str | None) -> int | None:
-        """Associe le processus tué à l'enfant propriétaire de la session (pour le Dashboard)."""
-        if not username:
-            return None
+    def _log_actions(self, events: list[tuple[int | None, str]]) -> None:
+        """Journalise les applications bloquées de ce cycle (une seule transaction)."""
         session = get_session()
         try:
-            child = session.query(Child).filter_by(username=username).first()
-            return child.id if child else None
-        finally:
-            session.close()
-
-    def _log_action(self, child_id: int | None, action: str, details: str) -> None:
-        session = get_session()
-        try:
-            session.add(ActivityLog(child_id=child_id, action=action, details=details))
+            session.add_all(
+                ActivityLog(child_id=child_id, action="app_blocked", details=details)
+                for child_id, details in events
+            )
             session.commit()
         finally:
             session.close()

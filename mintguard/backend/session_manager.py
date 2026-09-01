@@ -17,6 +17,8 @@
 import logging
 import subprocess
 
+from mintguard.utils.validators import is_valid_username
+
 logger = logging.getLogger("mintguard.backend.session")
 
 
@@ -24,6 +26,12 @@ class SessionManager:
     """Gère la fermeture de session enfant via loginctl (fin de plage horaire autorisée)."""
 
     def terminate_user_session(self, username: str) -> bool:
+        # Le nom vient de la BD et est passé à une commande privilégiée : on refuse tout ce
+        # qui ne ressemble pas à un compte Linux plutôt que de laisser `loginctl` interpréter
+        # une valeur inattendue (un nom commençant par « - » deviendrait une option).
+        if not is_valid_username(username):
+            logger.error("Nom d'utilisateur invalide, session non fermée: %r", username)
+            return False
         try:
             subprocess.run(["loginctl", "terminate-user", username], check=True, capture_output=True)
             return True
