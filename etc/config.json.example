@@ -17,6 +17,10 @@
     "process_check_interval": 5,
     "session_check_interval": 60
   },
+  "child_tray": {
+    "poll_interval_seconds": 15,
+    "warning_thresholds_minutes": [10, 5, 1]
+  },
   "logging": {
     "level": "INFO",
     "path": "/var/log/mintguard/"

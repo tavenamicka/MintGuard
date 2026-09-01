@@ -33,6 +33,11 @@ iptables -X MINTGUARD 2>/dev/null || true
 echo "== dnsmasq =="
 rm -f /etc/dnsmasq.d/mintguard.conf
 
+echo "== Icone, entrees de menu et autostart =="
+rm -f /usr/share/applications/mintguard.desktop
+rm -f /usr/share/icons/hicolor/scalable/apps/mintguard.svg
+rm -f /etc/xdg/autostart/mintguard-child-tray.desktop
+
 echo "== Environnement Python =="
 rm -rf /opt/mintguard
 

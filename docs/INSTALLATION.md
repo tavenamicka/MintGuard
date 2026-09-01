@@ -12,7 +12,28 @@ pytest tests/ -v
 
 Les contrôleurs backend qui dépendent d'outils Linux (`iptables`, `loginctl`, `apparmor_parser`) échouent proprement hors Linux — c'est attendu en dev (voir `mintguard/backend/*.py`, méthode `test()`).
 
-## Installation cible (Linux Mint)
+## Paquet .deb (release)
+
+Pour installer MintGuard "comme une appli normale" (icône dans le menu, dépendances système gérées par apt, code figé — pas de checkout git à conserver) :
+
+```bash
+bash scripts/build-deb.sh
+sudo apt install ./dist/mintguard_0.1.0-1_all.deb
+```
+
+`apt install` (plutôt que `dpkg -i`) résout automatiquement les dépendances système (`libxcb-cursor0`, `dnsmasq`, `python3-venv`). Le `.deb` généré peut être copié tel quel sur un autre poste Linux Mint/Ubuntu et installé de la même façon, sans avoir besoin de cloner le dépôt dessus.
+
+Comme pour `install.sh`, le service n'est **pas démarré automatiquement** :
+
+```bash
+sudo systemctl start mintguard-daemon
+```
+
+Désinstallation : `sudo apt remove mintguard` (garde BD/logs/config) ou `sudo apt purge mintguard` (supprime tout — équivalent de `uninstall.sh --purge`).
+
+## Installation cible pour le développement (Linux Mint)
+
+Pour tester en conditions réelles sur cette même machine, en éditant le code et en relançant le daemon sans réinstaller (checkout git conservé, install éditable) :
 
 ```bash
 sudo bash scripts/install.sh

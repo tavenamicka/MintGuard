@@ -41,6 +41,7 @@ setup(
         "console_scripts": [
             "mintguard=mintguard.main_gui:main",
             "mintguard-daemon=mintguard.daemon:main",
+            "mintguard-child-tray=mintguard.child_tray:main",
         ]
     },
     python_requires=">=3.10",

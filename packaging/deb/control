@@ -1,0 +1,11 @@
+Package: mintguard
+Version: @VERSION@
+Section: admin
+Priority: optional
+Architecture: all
+Depends: python3 (>=3.10), python3-venv, python3-pip, libxcb-cursor0, dnsmasq
+Maintainer: Mickael Tavenart <290843456+tavenamicka@users.noreply.github.com>
+Description: Application de controle parental pour Linux Mint
+ Limitation du temps d'ecran, blocage de sites et d'applications,
+ multilingue (FR/EN/DE/ES). Installe un daemon systemd (root) et une
+ interface graphique PyQt6 pour le compte parent.

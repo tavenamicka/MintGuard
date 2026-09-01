@@ -57,7 +57,7 @@ Cliquer sur **Réglages** vous demande votre code PIN, puis ouvre trois onglets.
 
 ### Onglet Temps
 
-Pour chaque jour de la semaine : activer/désactiver une plage horaire, et définir l'heure de début et de fin. En dehors de cette plage, **la session de l'enfant se ferme automatiquement** (sans avertissement préalable — prévenez votre enfant de cette règle à l'avance). Un jour sans plage activée = accès libre ce jour-là.
+Pour chaque jour de la semaine : activer/désactiver une plage horaire, et définir l'heure de début et de fin. En dehors de cette plage, **la session de l'enfant se ferme automatiquement**. Une icône dans la zone de notification de l'enfant prévient quelques minutes avant (10, 5 puis 1 minute) et signale les applications fermées car interdites — un avertissement à titre indicatif, pas garanti (dépend de l'affichage systray du bureau) : prévenez tout de même votre enfant de cette règle à l'avance. Un jour sans plage activée = accès libre ce jour-là.
 
 Les changements ne sont appliqués qu'après avoir cliqué sur **Sauvegarder**.
 

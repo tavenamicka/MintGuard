@@ -4,6 +4,11 @@
     "tagline": "Damit Ihre Kinder das Internet sicher entdecken können",
     "version": "0.1.0"
   },
+  "child_tray": {
+    "tooltip_minutes": "MintGuard: noch {0} Min.",
+    "warning_minutes_left": "Noch {0} Minute(n) bis zum Ende deiner Sitzung.",
+    "app_blocked": "{0} wurde geschlossen: diese Anwendung ist nicht erlaubt."
+  },
   "common": {
     "ok": "OK",
     "cancel": "Abbrechen",

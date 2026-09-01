@@ -49,6 +49,36 @@ class Scheduler:
         finally:
             db_session.close()
 
+    def get_minutes_remaining(self, child_id: int, now: datetime | None = None) -> int | None:
+        """Minutes avant la fin de la fenêtre active pour cet enfant.
+
+        Réutilise le même chargement de règles que `get_active_rule()`, mais calcule une
+        durée au lieu d'un booléen (utilisé par `StatusServer` pour le tray enfant).
+        `None` = aucune règle aujourd'hui (accès libre, pas une coupure). `0` = déjà hors de
+        toute fenêtre (le prochain cycle de `check_all_children` va couper la session).
+        """
+        now = now or datetime.now()
+        day_of_week = now.weekday()
+
+        db_session = get_session()
+        try:
+            rules = (
+                db_session.query(TimeRule)
+                .filter_by(child_id=child_id, day_of_week=day_of_week, enabled=True)
+                .all()
+            )
+        finally:
+            db_session.close()
+
+        if not rules:
+            return None
+        current_time = now.time()
+        for rule in rules:
+            if rule.start_hour <= current_time <= rule.end_hour:
+                end_dt = datetime.combine(now.date(), rule.end_hour)
+                return max(0, int((end_dt - now).total_seconds() // 60))
+        return 0
+
     def check_all_children(self, now: datetime | None = None) -> list[str]:
         """Vérifie chaque enfant; ferme la session de ceux hors plage horaire autorisée.
 

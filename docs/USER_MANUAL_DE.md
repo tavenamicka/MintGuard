@@ -57,7 +57,7 @@ Ein Klick auf **Einstellungen** fragt nach Ihrem PIN-Code und öffnet dann drei 
 
 ### Reiter Zeit
 
-Für jeden Wochentag: ein Zeitfenster aktivieren/deaktivieren und Start- und Endzeit festlegen. Außerhalb dieses Fensters **schließt sich die Sitzung des Kindes automatisch** (ohne vorherige Warnung — informieren Sie Ihr Kind im Voraus über diese Regel). Ein Tag ohne aktiviertes Zeitfenster bedeutet freien Zugang an diesem Tag.
+Für jeden Wochentag: ein Zeitfenster aktivieren/deaktivieren und Start- und Endzeit festlegen. Außerhalb dieses Fensters **schließt sich die Sitzung des Kindes automatisch**. Ein Symbol im Benachrichtigungsbereich des Kindes warnt einige Minuten vorher (10, 5, dann 1 Minute) und meldet geschlossene, nicht erlaubte Anwendungen — eine informative Warnung, nicht garantiert (abhängig von der Systray-Unterstützung der Arbeitsumgebung): informieren Sie Ihr Kind dennoch im Voraus über diese Regel. Ein Tag ohne aktiviertes Zeitfenster bedeutet freien Zugang an diesem Tag.
 
 Änderungen werden erst nach Klick auf **Speichern** wirksam.
 

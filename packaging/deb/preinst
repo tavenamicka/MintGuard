@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# preinst du paquet mintguard.
+#
+# /etc/dnsmasq.d/mintguard.conf est un conffile du paquet : dpkg le remplace
+# par la version par defaut (port 5354) au depaquetage, AVANT que postinst ne
+# s'execute -- y compris quand scripts/switch-dns.sh a deja reecrit ce meme
+# fichier en resolveur systeme reel (port 53 + serveurs amont detectes).
+# On sauvegarde donc la version live ici pour que postinst la restaure une
+# fois le depaquetage termine (voir SUIVI.md, entree "Paquet .deb").
+set -euo pipefail
+
+case "$1" in
+  install|upgrade)
+    if [ -d /var/lib/mintguard/dns-switch-backup ] && [ -f /etc/dnsmasq.d/mintguard.conf ]; then
+      cp -p /etc/dnsmasq.d/mintguard.conf /var/lib/mintguard/dns-switch-backup/mintguard.conf.preinst-stash
+    fi
+    ;;
+esac
+
+exit 0

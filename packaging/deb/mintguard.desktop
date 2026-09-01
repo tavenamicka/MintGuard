@@ -1,0 +1,14 @@
+[Desktop Entry]
+Type=Application
+Name=MintGuard
+GenericName=Controle parental
+GenericName[fr]=Controle parental
+GenericName[en]=Parental control
+Comment=Controle parental pour Linux Mint : temps d'ecran, sites, applications
+Comment[fr]=Controle parental pour Linux Mint : temps d'ecran, sites, applications
+Comment[en]=Parental control for Linux Mint: screen time, sites, applications
+Exec=/opt/mintguard/venv/bin/mintguard
+Icon=mintguard
+Terminal=false
+Categories=Settings;
+StartupNotify=true

@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=MintGuard (avertissement enfant)
+Name[en]=MintGuard (child warning)
+Exec=/opt/mintguard/venv/bin/mintguard-child-tray
+Icon=mintguard
+Terminal=false
+NoDisplay=true
+OnlyShowIn=X-Cinnamon;GNOME;MATE;
+X-GNOME-Autostart-enabled=true
+Comment=S'auto-desactive silencieusement si le compte n'est pas un compte enfant MintGuard

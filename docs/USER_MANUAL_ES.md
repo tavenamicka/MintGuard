@@ -57,7 +57,7 @@ Al hacer clic en **Ajustes** se le pide su código PIN y luego se abren tres pes
 
 ### Pestaña Tiempo
 
-Para cada día de la semana: activar/desactivar una franja horaria y definir la hora de inicio y fin. Fuera de esa franja, **la sesión del hijo se cierra automáticamente** (sin aviso previo — avise a su hijo de esta regla con antelación). Un día sin franja activada significa acceso libre ese día.
+Para cada día de la semana: activar/desactivar una franja horaria y definir la hora de inicio y fin. Fuera de esa franja, **la sesión del hijo se cierra automáticamente**. Un icono en la zona de notificación del hijo avisa unos minutos antes (10, 5 y luego 1 minuto) e informa de las aplicaciones cerradas por no estar permitidas — un aviso orientativo, no garantizado (depende del soporte de bandeja del escritorio): avise igualmente a su hijo de esta regla con antelación. Un día sin franja activada significa acceso libre ese día.
 
 Los cambios solo se aplican tras hacer clic en **Guardar**.
 

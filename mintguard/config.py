@@ -48,6 +48,13 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "process_check_interval": 5,
         "session_check_interval": 60,
     },
+    "child_tray": {
+        "poll_interval_seconds": 15,
+        # Seuils (minutes restantes) auxquels mintguard-child-tray affiche un avertissement,
+        # un par session (voir child_tray.py) - pas de compte a rebours seconde par seconde,
+        # juste des paliers, coherent avec le polling (pas un besoin temps reel).
+        "warning_thresholds_minutes": [10, 5, 1],
+    },
     "logging": {
         "level": "INFO",
         "path": "/var/log/mintguard/",

@@ -107,16 +107,28 @@ if [ ! -d /etc/dnsmasq.d ]; then
   apt-get update -qq
   DEBIAN_FRONTEND=noninteractive apt-get install -y -qq dnsmasq
 fi
-# Le paquet dnsmasq demarre parfois son service avec la conf par defaut
-# (port 53) au moment de l'installation -> conflit possible avec
-# systemd-resolved. On l'arrete/desactive avant d'installer notre conf
-# (port 5354) ; il sera (re)demarre par la dependance Requires= du
-# service mintguard-daemon quand l'utilisateur le lancera explicitement.
-systemctl stop dnsmasq 2>/dev/null || true
-systemctl disable dnsmasq 2>/dev/null || true
-systemctl reset-failed dnsmasq 2>/dev/null || true
-install -m 644 "$REPO_ROOT/etc/dnsmasq.d/mintguard.conf" /etc/dnsmasq.d/mintguard.conf
-echo "mintguard.conf installe (port 5354 - resolveur systeme non touche, voir SUIVI.md)"
+if [ -d /var/lib/mintguard/dns-switch-backup ]; then
+  # scripts/switch-dns.sh a deja bascule ce dnsmasq en resolveur systeme reel
+  # (port 53, /etc/resolv.conf -> 127.0.0.1) : c'est le service qui fait
+  # fonctionner tout le reseau de la machine, pas juste une conf par defaut
+  # inutilisee. L'arreter, ou ecraser sa conf (port 53 + serveurs amont
+  # detectes a la bascule) par le gabarit de test (port 5354), casserait la
+  # resolution DNS de la machine entiere (constat direct lors du packaging
+  # .deb, voir SUIVI.md, entree "Paquet .deb" -- ce script partage le meme
+  # defaut, corrige ici a la meme occasion).
+  echo "Bascule DNS deja active (dns-switch-backup present) - dnsmasq et mintguard.conf non touches."
+else
+  # Le paquet dnsmasq demarre parfois son service avec la conf par defaut
+  # (port 53) au moment de l'installation -> conflit possible avec
+  # systemd-resolved. On l'arrete/desactive avant d'installer notre conf
+  # (port 5354) ; il sera (re)demarre par la dependance Requires= du
+  # service mintguard-daemon quand l'utilisateur le lancera explicitement.
+  systemctl stop dnsmasq 2>/dev/null || true
+  systemctl disable dnsmasq 2>/dev/null || true
+  systemctl reset-failed dnsmasq 2>/dev/null || true
+  install -m 644 "$REPO_ROOT/etc/dnsmasq.d/mintguard.conf" /etc/dnsmasq.d/mintguard.conf
+  echo "mintguard.conf installe (port 5354 - resolveur systeme non touche, voir SUIVI.md)"
+fi
 
 # Mise a niveau d'une installation existante : l'ancien chemin de blocklist
 # (format hosts) reste dans /etc/mintguard/config.json et ferait ecrire le
@@ -138,6 +150,12 @@ if dns.get("blocklist_path", "").endswith(".hosts"):
     print("blocklist_path migre vers blocklist.conf dans", path)
 PYEOF
 fi
+
+echo "== Icone et entrees de menu =="
+# Gabarits partages avec le paquet .deb (packaging/deb/), pas dupliques - voir build-deb.sh.
+install -D -m 644 "$REPO_ROOT/packaging/deb/mintguard.desktop" /usr/share/applications/mintguard.desktop
+install -D -m 644 "$REPO_ROOT/packaging/deb/mintguard.svg" /usr/share/icons/hicolor/scalable/apps/mintguard.svg
+install -D -m 644 "$REPO_ROOT/packaging/deb/mintguard-child-tray.desktop" /etc/xdg/autostart/mintguard-child-tray.desktop
 
 echo "== Service systemd =="
 install -m 644 "$REPO_ROOT/etc/systemd/mintguard-daemon.service" /etc/systemd/system/mintguard-daemon.service

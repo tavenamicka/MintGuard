@@ -20,6 +20,7 @@ from mintguard.backend.dns_controller import DNSController
 from mintguard.backend.firewall_controller import FirewallController
 from mintguard.backend.process_monitor import ProcessMonitor
 from mintguard.backend.scheduler import Scheduler
+from mintguard.backend.status_server import StatusServer
 from mintguard.backend.usage_tracker import UsageTracker
 from mintguard.config import get_config
 from mintguard.db.database import init_db
@@ -87,6 +88,7 @@ def main() -> None:
 
     dns_controller.generate_blocklist()
     firewall_controller.sync_child_dns_restriction()
+    StatusServer(scheduler).start()
     state = {"last_session_check": 0.0, "last_dns_refresh": time.monotonic()}
 
     try:

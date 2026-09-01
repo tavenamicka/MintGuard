@@ -57,7 +57,7 @@ Clicking **Settings** asks for your PIN code, then opens three tabs.
 
 ### Time tab
 
-For each day of the week: enable/disable a time window, and set start and end times. Outside that window, **the child's session closes automatically** (with no prior warning — let your child know about this rule in advance). A day with no window enabled means free access that day.
+For each day of the week: enable/disable a time window, and set start and end times. Outside that window, **the child's session closes automatically**. A notification-area icon in the child's session warns a few minutes ahead (10, 5, then 1 minute) and reports blocked applications that were closed — an advisory warning, not guaranteed (depends on the desktop's systray support): still let your child know about this rule in advance. A day with no window enabled means free access that day.
 
 Changes only take effect after clicking **Save**.
 

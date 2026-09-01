@@ -18,6 +18,11 @@ StandardError=journal
 NoNewPrivileges=true
 ProtectSystem=strict
 ReadWritePaths=/var/lib/mintguard /var/lib/mintguard-dns /var/log/mintguard
+# /run/mintguard : socket StatusServer (lecture seule, temps restant/applis bloquees pour le
+# compte enfant appelant, voir status_server.py). RuntimeDirectory= cree/nettoie ce repertoire
+# automatiquement (mode 0755), compatible avec ProtectSystem=strict sans ajout a ReadWritePaths.
+RuntimeDirectory=mintguard
+RuntimeDirectoryMode=0755
 ProtectKernelTunables=true
 ProtectKernelModules=true
 ProtectControlGroups=true

@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# postrm du paquet mintguard.
+# - remove : nettoyage iptables uniquement (defense en profondeur - une regle
+#   oubliee continuerait sinon a bloquer le compte enfant indefiniment).
+# - purge  : en plus, supprime BD/logs/config generes a l'install (pas geres
+#   par dpkg, qui ne connait que les fichiers du paquet). Equivalent du
+#   `scripts/uninstall.sh --purge` existant.
+set -euo pipefail
+
+case "$1" in
+  remove|purge)
+    echo "== Regles firewall (defense en profondeur) =="
+    iptables -D OUTPUT -j MINTGUARD 2>/dev/null || true
+    iptables -F MINTGUARD 2>/dev/null || true
+    iptables -X MINTGUARD 2>/dev/null || true
+    ;;
+esac
+
+case "$1" in
+  purge)
+    echo "== Purge des donnees =="
+    rm -rf /var/lib/mintguard /var/lib/mintguard-dns /var/log/mintguard /etc/mintguard
+    echo "BD, logs, blocklist DNS et config supprimes."
+    ;;
+esac
+
+exit 0

@@ -1,0 +1,104 @@
+#!/usr/bin/env bash
+# postinst du paquet mintguard.
+#
+# Reprend la logique de scripts/install.sh, sans les `apt-get install` (les
+# dependances systeme sont declarees dans DEBIAN/control, apt s'en charge)
+# et sans copie de code (dpkg a deja pose le payload dans /opt/mintguard/src
+# -- installation NON editable, contrairement a scripts/install.sh qui sert
+# au developpement actif sur checkout git).
+set -euo pipefail
+
+VENV_DIR=/opt/mintguard/venv
+SRC_DIR=/opt/mintguard/src
+ADMIN_GROUP=mintguard-admin
+
+case "$1" in
+  configure)
+    echo "== Groupe parent =="
+    groupadd -f "$ADMIN_GROUP"
+    if [ -n "${SUDO_USER:-}" ] && [ "$SUDO_USER" != "root" ]; then
+      usermod -aG "$ADMIN_GROUP" "$SUDO_USER"
+      echo "Utilisateur '$SUDO_USER' ajoute au groupe $ADMIN_GROUP (deconnexion/reconnexion necessaire pour que ca prenne effet)"
+    else
+      echo "Aucun utilisateur parent detecte - ajoutez-le manuellement :"
+      echo "  sudo usermod -aG $ADMIN_GROUP <votre_compte>"
+    fi
+
+    echo "== Repertoires de donnees =="
+    install -d -m 755 /etc/mintguard
+    install -d -o root -g "$ADMIN_GROUP" /var/lib/mintguard
+    chmod 2770 /var/lib/mintguard
+    install -d -m 700 -o root -g root /var/log/mintguard
+    install -d -m 755 -o root -g root /var/lib/mintguard-dns
+    if [ ! -f /var/lib/mintguard-dns/blocklist.conf ]; then
+      echo "# Blocklist MintGuard (vide - regeneree par le daemon)" > /var/lib/mintguard-dns/blocklist.conf
+      chmod 644 /var/lib/mintguard-dns/blocklist.conf
+    fi
+
+    echo "== Configuration =="
+    if [ ! -f /etc/mintguard/config.json ]; then
+      install -m 644 /etc/mintguard/config.json.example /etc/mintguard/config.json
+      echo "config.json cree depuis config.json.example"
+    else
+      echo "config.json existant conserve (non ecrase)"
+    fi
+
+    echo "== dnsmasq =="
+    if [ -d /var/lib/mintguard/dns-switch-backup ]; then
+      # scripts/switch-dns.sh a deja bascule ce dnsmasq en resolveur systeme
+      # reel (port 53, /etc/resolv.conf -> 127.0.0.1) : c'est le service qui
+      # fait fonctionner tout le reseau de la machine, pas juste une conf par
+      # defaut inutilisee. L'arreter ici casserait la resolution DNS de la
+      # machine entiere (constat direct : voir SUIVI.md, entree "Paquet .deb").
+      echo "Bascule DNS deja active (dns-switch-backup present) - dnsmasq non touche."
+      STASH=/var/lib/mintguard/dns-switch-backup/mintguard.conf.preinst-stash
+      if [ -f "$STASH" ]; then
+        mv "$STASH" /etc/dnsmasq.d/mintguard.conf
+        echo "Config dnsmasq de la bascule restauree (ecrasee par le depaquetage, cf. preinst)."
+      fi
+    else
+      # Le paquet dnsmasq demarre parfois son service avec la conf par defaut
+      # (port 53) au moment de l'installation -> conflit possible avec
+      # systemd-resolved. On l'arrete/desactive avant d'utiliser notre conf
+      # (port 5354) ; il sera (re)demarre par la dependance Requires= du
+      # service mintguard-daemon quand l'utilisateur le lancera explicitement.
+      systemctl stop dnsmasq 2>/dev/null || true
+      systemctl disable dnsmasq 2>/dev/null || true
+      systemctl reset-failed dnsmasq 2>/dev/null || true
+    fi
+
+    echo "== Environnement Python dedie ($VENV_DIR) =="
+    if [ ! -d "$VENV_DIR" ]; then
+      python3 -m venv "$VENV_DIR"
+    fi
+    "$VENV_DIR/bin/pip" install --upgrade pip -q
+    "$VENV_DIR/bin/pip" install "$SRC_DIR" -q
+    "$VENV_DIR/bin/pip" install -r "$SRC_DIR/requirements.txt" -q
+    echo "Paquet Python installe (copie figee -> $SRC_DIR)"
+
+    echo "== Service systemd =="
+    systemctl daemon-reload
+    systemctl enable mintguard-daemon.service
+    echo "Service installe et active au demarrage (PAS lance maintenant)"
+
+    cat <<EOF
+
+== Installation terminee ==
+
+Le daemon n'est PAS encore lance. Pour le demarrer explicitement :
+    sudo systemctl start mintguard-daemon
+    sudo systemctl status mintguard-daemon
+    sudo journalctl -u mintguard-daemon -f
+
+Pour l'interface graphique parent (compte utilisateur normal, pas root) :
+    /opt/mintguard/venv/bin/mintguard
+(une entree "MintGuard" est aussi disponible dans le menu des applications)
+
+IMPORTANT si vous venez d'etre ajoute au groupe $ADMIN_GROUP a l'instant :
+deconnexion/reconnexion necessaire (ou 'newgrp $ADMIN_GROUP' dans le shell
+courant) pour que la GUI ait acces en lecture/ecriture a la BD partagee.
+EOF
+    ;;
+esac
+
+exit 0

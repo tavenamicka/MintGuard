@@ -136,3 +136,19 @@ def test_only_the_child_out_of_window_is_logged_out(manager):
     add_child(username="louis", start=(8, 0), end=(23, 0))
 
     assert Scheduler(manager).check_all_children(WEDNESDAY.replace(hour=22)) == ["emma"]
+
+
+def test_minutes_remaining_none_without_rule_today(manager):
+    child_id = add_child(day=None)
+    assert Scheduler(manager).get_minutes_remaining(child_id, WEDNESDAY.replace(hour=18)) is None
+
+
+def test_minutes_remaining_inside_window(manager):
+    child_id = add_child(start=(16, 0), end=(20, 0))
+    remaining = Scheduler(manager).get_minutes_remaining(child_id, WEDNESDAY.replace(hour=19, minute=45))
+    assert remaining == 15
+
+
+def test_minutes_remaining_zero_outside_window(manager):
+    child_id = add_child(start=(16, 0), end=(20, 0))
+    assert Scheduler(manager).get_minutes_remaining(child_id, WEDNESDAY.replace(hour=22)) == 0

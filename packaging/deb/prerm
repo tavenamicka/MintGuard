@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# prerm du paquet mintguard : arrete le service AVANT que dpkg ne retire
+# le venv et l'unite systemd (evite un service qui pointe sur des fichiers
+# a moitie supprimes pendant un remove/upgrade).
+set -euo pipefail
+
+case "$1" in
+  remove|upgrade|deconfigure)
+    if systemctl is-active --quiet mintguard-daemon 2>/dev/null; then
+      systemctl stop mintguard-daemon
+    fi
+    systemctl disable mintguard-daemon 2>/dev/null || true
+    ;;
+esac
+
+exit 0
