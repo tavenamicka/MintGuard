@@ -181,31 +181,63 @@ def test_sites_tab_remove_custom_site():
 
 
 # -- AppsTab --------------------------------------------------------------
+#
+# Détection réelle (fichiers .desktop) plutôt qu'une liste figée (voir SUIVI.md) : les
+# applis réellement détectées dépendent de la machine qui exécute les tests, donc
+# `list_installed_apps` est mockée ici pour un résultat déterministe.
+
+FAKE_DETECTED_APPS = {
+    "social": [("thunderbird", "Thunderbird Mail")],
+    "entertainment": [("rhythmbox", "Rhythmbox")],
+    "gaming": [("supertux", "SuperTux")],
+}
 
 
-def test_apps_tab_toggle_predefined_app_creates_row():
+@pytest.fixture(autouse=True)
+def fake_installed_apps(monkeypatch):
+    import mintguard.gui.settings as settings_module
+
+    monkeypatch.setattr(settings_module, "list_installed_apps", lambda: FAKE_DETECTED_APPS)
+
+
+def test_apps_tab_groups_detected_apps_by_category():
     tab = AppsTab(I18nLoader("fr"))
-    tab._app_checkboxes["firefox"].setChecked(True)
+    assert set(tab._app_checkboxes) == {"thunderbird", "rhythmbox", "supertux"}
+
+
+def test_apps_tab_toggle_detected_app_creates_row():
+    tab = AppsTab(I18nLoader("fr"))
+    tab._app_checkboxes["supertux"].setChecked(True)
 
     session = get_session()
     try:
-        app = session.query(BlockedApp).filter_by(app_name="firefox").first()
+        app = session.query(BlockedApp).filter_by(app_name="supertux").first()
     finally:
         session.close()
     assert app is not None
     assert app.enabled is True
 
 
-def test_apps_tab_untoggle_predefined_app_removes_row():
+def test_apps_tab_untoggle_detected_app_removes_row():
     tab = AppsTab(I18nLoader("fr"))
-    tab._app_checkboxes["firefox"].setChecked(True)
-    tab._app_checkboxes["firefox"].setChecked(False)
+    tab._app_checkboxes["supertux"].setChecked(True)
+    tab._app_checkboxes["supertux"].setChecked(False)
 
     session = get_session()
     try:
-        assert session.query(BlockedApp).filter_by(app_name="firefox").first() is None
+        assert session.query(BlockedApp).filter_by(app_name="supertux").first() is None
     finally:
         session.close()
+
+
+def test_apps_tab_no_apps_detected_shows_no_checkboxes(monkeypatch):
+    import mintguard.gui.settings as settings_module
+
+    monkeypatch.setattr(
+        settings_module, "list_installed_apps", lambda: {"social": [], "entertainment": [], "gaming": []}
+    )
+    tab = AppsTab(I18nLoader("fr"))
+    assert tab._app_checkboxes == {}
 
 
 def test_apps_tab_add_valid_custom_app():

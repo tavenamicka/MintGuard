@@ -30,7 +30,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from mintguard.backend.app_presets import PREDEFINED_APPS
+from mintguard.backend.installed_apps import list_installed_apps
 from mintguard.backend.site_categories import CATEGORIES
 from mintguard.db.database import get_session
 from mintguard.db.models import BlockedApp, BlockedSite, TimeRule
@@ -265,12 +265,24 @@ class AppsTab(QWidget):
         title_row.addStretch(1)
         layout.addLayout(title_row)
 
-        layout.addWidget(small_label(self.i18n("settings.suggested_apps")))
-        for process_name, label in PREDEFINED_APPS:
-            checkbox = QCheckBox(label)
-            checkbox.toggled.connect(lambda checked, p=process_name: self._toggle_app(p, checked))
-            layout.addWidget(checkbox)
-            self._app_checkboxes[process_name] = checkbox
+        # Détection réelle des applications installées (fichiers .desktop) plutôt qu'une
+        # liste figée de 4 applis — voir SUIVI.md. Groupées par catégorie, mêmes libellés
+        # que l'onglet Sites pour rester cohérent. Une appli qui ne correspond à aucune des
+        # 3 catégories n'apparaît pas ici (ex: navigateurs) — la saisie manuelle ci-dessous
+        # reste le filet de sécurité, comme pour les sites personnalisés.
+        detected = list_installed_apps()
+        self._detected_process_names: set[str] = {name for apps in detected.values() for name, _ in apps}
+        if any(detected.values()):
+            layout.addWidget(small_label(self.i18n("settings.suggested_apps")))
+        for category, apps in detected.items():
+            if not apps:
+                continue
+            layout.addWidget(heading(self.i18n(f"settings.category_{category}"), "h3"))
+            for process_name, label in apps:
+                checkbox = QCheckBox(label)
+                checkbox.toggled.connect(lambda checked, p=process_name: self._toggle_app(p, checked))
+                layout.addWidget(checkbox)
+                self._app_checkboxes[process_name] = checkbox
 
         layout.addWidget(small_label(self.i18n("settings.custom_apps")))
         self.custom_list = QListWidget()
@@ -310,9 +322,8 @@ class AppsTab(QWidget):
             checkbox.setChecked(process_name in blocked_names)
             checkbox.blockSignals(False)
 
-        predefined_names = {p for p, _ in PREDEFINED_APPS}
         self.custom_list.clear()
-        for name in sorted(blocked_names - predefined_names):
+        for name in sorted(blocked_names - self._detected_process_names):
             self.custom_list.addItem(name)
 
     def _toggle_app(self, process_name: str, checked: bool) -> None:
