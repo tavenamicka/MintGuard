@@ -145,3 +145,100 @@ def test_protection_active_from_global_blocked_site():
 
     screen = DashboardScreen(I18nLoader("fr"))
     assert screen.status_label.text() == "Protection: ACTIVE ✓"
+
+
+# Trouvé à l'audit de sécurité (voir SUIVI.md) : Settings/Reports s'ouvraient sans jamais
+# demander le PIN parent. Vérifie que PinDialog.prompt() est bien consulté avant d'ouvrir
+# l'un ou l'autre, et que son résultat est respecté.
+
+
+def test_open_settings_blocked_when_pin_dialog_cancelled(monkeypatch):
+    make_child()
+    from mintguard.gui import dialogs, settings as settings_module
+
+    monkeypatch.setattr(dialogs.PinDialog, "prompt", staticmethod(lambda i18n, parent=None: False))
+
+    opened = []
+
+    class FakeSettingsWindow:
+        def __init__(self, *args, **kwargs):
+            opened.append(True)
+
+        def exec(self):
+            return None
+
+    monkeypatch.setattr(settings_module, "SettingsWindow", FakeSettingsWindow)
+
+    screen = DashboardScreen(I18nLoader("fr"))
+    screen.open_settings()
+
+    assert opened == []
+
+
+def test_open_settings_opens_when_pin_dialog_accepted(monkeypatch):
+    make_child()
+    from mintguard.gui import dialogs, settings as settings_module
+
+    monkeypatch.setattr(dialogs.PinDialog, "prompt", staticmethod(lambda i18n, parent=None: True))
+
+    opened = []
+
+    class FakeSettingsWindow:
+        def __init__(self, *args, **kwargs):
+            opened.append(True)
+
+        def exec(self):
+            return None
+
+    monkeypatch.setattr(settings_module, "SettingsWindow", FakeSettingsWindow)
+
+    screen = DashboardScreen(I18nLoader("fr"))
+    screen.open_settings()
+
+    assert opened == [True]
+
+
+def test_open_reports_blocked_when_pin_dialog_cancelled(monkeypatch):
+    make_child()
+    from mintguard.gui import dialogs, reports as reports_module
+
+    monkeypatch.setattr(dialogs.PinDialog, "prompt", staticmethod(lambda i18n, parent=None: False))
+
+    opened = []
+
+    class FakeReportsWindow:
+        def __init__(self, *args, **kwargs):
+            opened.append(True)
+
+        def exec(self):
+            return None
+
+    monkeypatch.setattr(reports_module, "ReportsWindow", FakeReportsWindow)
+
+    screen = DashboardScreen(I18nLoader("fr"))
+    screen.open_reports()
+
+    assert opened == []
+
+
+def test_open_reports_opens_when_pin_dialog_accepted(monkeypatch):
+    make_child()
+    from mintguard.gui import dialogs, reports as reports_module
+
+    monkeypatch.setattr(dialogs.PinDialog, "prompt", staticmethod(lambda i18n, parent=None: True))
+
+    opened = []
+
+    class FakeReportsWindow:
+        def __init__(self, *args, **kwargs):
+            opened.append(True)
+
+        def exec(self):
+            return None
+
+    monkeypatch.setattr(reports_module, "ReportsWindow", FakeReportsWindow)
+
+    screen = DashboardScreen(I18nLoader("fr"))
+    screen.open_reports()
+
+    assert opened == [True]

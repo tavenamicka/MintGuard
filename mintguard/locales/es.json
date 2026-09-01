@@ -149,5 +149,10 @@
     "time_limit_hits": "Límite de tiempo alcanzado {0} veces",
     "no_time_limit_hits": "Ningún límite de tiempo alcanzado esta semana ✅",
     "occurrences": "{0} veces"
+  },
+  "pin_dialog": {
+    "title": "Se requiere PIN",
+    "label": "Introduzca el PIN de los padres para continuar",
+    "error": "PIN incorrecto"
   }
 }

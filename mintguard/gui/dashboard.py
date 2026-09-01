@@ -188,14 +188,20 @@ class DashboardScreen(QWidget):
     # -- Actions ------------------------------------------------------------
 
     def open_settings(self) -> None:
+        from mintguard.gui.dialogs import PinDialog
         from mintguard.gui.settings import SettingsWindow
 
+        if not PinDialog.prompt(self.i18n, self):
+            return
         dialog = SettingsWindow(self.i18n, self.selected_child_id, self)
         dialog.exec()
         self.reload()
 
     def open_reports(self) -> None:
+        from mintguard.gui.dialogs import PinDialog
         from mintguard.gui.reports import ReportsWindow
 
+        if not PinDialog.prompt(self.i18n, self):
+            return
         dialog = ReportsWindow(self.i18n, self.selected_child_id, self)
         dialog.exec()

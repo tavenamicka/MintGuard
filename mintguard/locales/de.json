@@ -149,5 +149,10 @@
     "time_limit_hits": "Zeitlimit {0} Mal erreicht",
     "no_time_limit_hits": "Diese Woche kein Zeitlimit erreicht ✅",
     "occurrences": "{0} Mal"
+  },
+  "pin_dialog": {
+    "title": "PIN erforderlich",
+    "label": "Geben Sie den Eltern-PIN ein, um fortzufahren",
+    "error": "Falscher PIN"
   }
 }

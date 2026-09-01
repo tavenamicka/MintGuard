@@ -149,5 +149,10 @@
     "time_limit_hits": "Time limit reached {0} times",
     "no_time_limit_hits": "No time limit reached this week ✅",
     "occurrences": "{0} times"
+  },
+  "pin_dialog": {
+    "title": "PIN required",
+    "label": "Enter the parent PIN to continue",
+    "error": "Incorrect PIN"
   }
 }
