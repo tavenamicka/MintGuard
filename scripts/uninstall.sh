@@ -30,8 +30,8 @@ rm -rf /opt/mintguard
 
 if [ "$PURGE" -eq 1 ]; then
   echo "== Purge des donnees (--purge) =="
-  rm -rf /var/lib/mintguard /var/log/mintguard /etc/mintguard
-  echo "BD, logs et config supprimes."
+  rm -rf /var/lib/mintguard /var/lib/mintguard-dns /var/log/mintguard /etc/mintguard
+  echo "BD, logs, blocklist DNS et config supprimes."
 else
   echo "BD/logs/config conserves dans /var/lib/mintguard, /var/log/mintguard, /etc/mintguard."
   echo "Relancer avec --purge pour tout supprimer."

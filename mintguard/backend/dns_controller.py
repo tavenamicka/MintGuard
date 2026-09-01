@@ -30,7 +30,7 @@ class DNSController:
 
     def __init__(self, blocklist_path: Path | None = None):
         self.blocklist_path = blocklist_path or Path(
-            get_config().get("dns.blocklist_path", "/var/lib/mintguard/blocklist.hosts")
+            get_config().get("dns.blocklist_path", "/var/lib/mintguard-dns/blocklist.hosts")
         )
 
     def generate_blocklist(self) -> int:

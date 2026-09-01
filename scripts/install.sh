@@ -48,6 +48,11 @@ install -d -m 755 /etc/mintguard
 install -d -o root -g "$ADMIN_GROUP" /var/lib/mintguard
 chmod 2770 /var/lib/mintguard   # setgid : les nouveaux fichiers heritent du groupe mintguard-admin
 install -d -m 700 -o root -g root /var/log/mintguard
+# Repertoire separe pour la blocklist DNS (pas de donnees sensibles) :
+# dnsmasq tourne en utilisateur non-privilegie et ne peut pas traverser
+# /var/lib/mintguard (2770, reserve BD/PIN) meme si le fichier lui-meme
+# etait lisible - voir SUIVI.md Phase 3 (5e defaut de conception).
+install -d -m 755 -o root -g root /var/lib/mintguard-dns
 
 echo "== Configuration =="
 if [ ! -f /etc/mintguard/config.json ]; then
