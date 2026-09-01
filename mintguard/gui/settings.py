@@ -59,6 +59,38 @@ class TimeTab(QWidget):
         title_row.addStretch(1)
         layout.addLayout(title_row)
 
+        # Trouvé en usage réel (voir SUIVI.md) : configurer les 7 jours un par un est
+        # répétitif quand le parent veut le même horaire toute la semaine, ou juste en
+        # semaine/le week-end. Ces boutons pré-remplissent plusieurs jours d'un coup — les
+        # cases et horaires par jour restent modifiables individuellement après coup, rien
+        # n'est retiré de la finesse existante.
+        layout.addWidget(small_label(self.i18n("settings.quick_apply")))
+        quick_row = QHBoxLayout()
+        self.quick_start = QTimeEdit(QTime(16, 0))
+        self.quick_start.setDisplayFormat("HH:mm")
+        self.quick_end = QTimeEdit(QTime(20, 0))
+        self.quick_end.setDisplayFormat("HH:mm")
+        quick_row.addWidget(self.quick_start)
+        quick_row.addWidget(self.quick_end)
+        layout.addLayout(quick_row)
+
+        quick_buttons_row = QHBoxLayout()
+        whole_week_button = QPushButton(self.i18n("settings.apply_whole_week"))
+        whole_week_button.setObjectName("secondary")
+        whole_week_button.clicked.connect(lambda: self._apply_quick(range(7)))
+        quick_buttons_row.addWidget(whole_week_button)
+
+        weekdays_button = QPushButton(self.i18n("settings.apply_weekdays"))
+        weekdays_button.setObjectName("secondary")
+        weekdays_button.clicked.connect(lambda: self._apply_quick(range(0, 5)))
+        quick_buttons_row.addWidget(weekdays_button)
+
+        weekend_button = QPushButton(self.i18n("settings.apply_weekend"))
+        weekend_button.setObjectName("secondary")
+        weekend_button.clicked.connect(lambda: self._apply_quick(range(5, 7)))
+        quick_buttons_row.addWidget(weekend_button)
+        layout.addLayout(quick_buttons_row)
+
         for day_index in range(7):
             row = QHBoxLayout()
             checkbox = QCheckBox(self.i18n(f"time.{weekday_key(day_index)}"))
@@ -84,6 +116,15 @@ class TimeTab(QWidget):
         layout.addWidget(save_button)
 
         self._load()
+
+    def _apply_quick(self, day_indices: range) -> None:
+        start_time = self.quick_start.time()
+        end_time = self.quick_end.time()
+        for day_index in day_indices:
+            checkbox, start_edit, end_edit = self._day_widgets[day_index]
+            checkbox.setChecked(True)
+            start_edit.setTime(start_time)
+            end_edit.setTime(end_time)
 
     def _load(self) -> None:
         if self.child_id is None:

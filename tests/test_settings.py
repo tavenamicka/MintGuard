@@ -109,6 +109,69 @@ def test_time_tab_disabled_without_child():
     assert tab.isEnabled() is False
 
 
+# Trouvé en usage réel (voir SUIVI.md) : configurer les 7 jours un par un est répétitif
+# quand le parent veut le même horaire toute la semaine, ou juste en semaine/le week-end.
+
+
+def test_apply_whole_week_checks_and_sets_all_seven_days():
+    child_id = make_child()
+    tab = TimeTab(I18nLoader("fr"), child_id)
+    tab.quick_start.setTime(QTime(9, 0))
+    tab.quick_end.setTime(QTime(18, 0))
+
+    tab._apply_quick(range(7))
+
+    for checkbox, start_edit, end_edit in tab._day_widgets:
+        assert checkbox.isChecked() is True
+        assert start_edit.time() == QTime(9, 0)
+        assert end_edit.time() == QTime(18, 0)
+
+
+def test_apply_weekdays_only_affects_monday_to_friday():
+    child_id = make_child()
+    tab = TimeTab(I18nLoader("fr"), child_id)
+    tab.quick_start.setTime(QTime(16, 0))
+    tab.quick_end.setTime(QTime(19, 0))
+
+    tab._apply_quick(range(0, 5))
+
+    for day_index, (checkbox, _, _) in enumerate(tab._day_widgets):
+        assert checkbox.isChecked() == (day_index < 5)
+
+
+def test_apply_weekend_only_affects_saturday_and_sunday():
+    child_id = make_child()
+    tab = TimeTab(I18nLoader("fr"), child_id)
+    tab.quick_start.setTime(QTime(10, 0))
+    tab.quick_end.setTime(QTime(22, 0))
+
+    tab._apply_quick(range(5, 7))
+
+    for day_index, (checkbox, _, _) in enumerate(tab._day_widgets):
+        assert checkbox.isChecked() == (day_index >= 5)
+
+
+def test_quick_apply_still_allows_individual_day_adjustment_afterwards():
+    # "Plus de finesse" : appliquer un preset n'empeche pas d'ajuster un jour precis ensuite.
+    child_id = make_child()
+    tab = TimeTab(I18nLoader("fr"), child_id)
+    tab._apply_quick(range(7))
+
+    friday_checkbox, friday_start, friday_end = tab._day_widgets[4]
+    friday_start.setTime(QTime(20, 0))
+    friday_end.setTime(QTime(23, 0))
+    tab._save()
+
+    session = get_session()
+    try:
+        rules = {r.day_of_week: r for r in session.query(TimeRule).filter_by(child_id=child_id).all()}
+    finally:
+        session.close()
+    assert len(rules) == 7
+    assert rules[4].start_hour.hour == 20  # vendredi modifie individuellement
+    assert rules[0].start_hour.hour == 16  # les autres jours gardent l'horaire par defaut
+
+
 # -- SitesTab --------------------------------------------------------------
 
 

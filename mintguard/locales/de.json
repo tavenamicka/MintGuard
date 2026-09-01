@@ -60,7 +60,11 @@
     "custom_apps": "Eigene Anwendungen",
     "add_app_placeholder": "z.B. telegram-desktop",
     "invalid_app_error": "Ungültiger Anwendungsname (keine Leerzeichen)",
-    "select_all": "Alle auswählen"
+    "select_all": "Alle auswählen",
+    "quick_apply": "Zeitplan schnell anwenden:",
+    "apply_whole_week": "Ganze Woche",
+    "apply_weekdays": "Montag-Freitag",
+    "apply_weekend": "Wochenende"
   },
   "time": {
     "monday": "Montag",
