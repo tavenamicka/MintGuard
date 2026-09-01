@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import (
     QButtonGroup,
     QComboBox,
@@ -33,7 +33,7 @@ from mintguard.backend.child_setup import create_child_with_age_preset
 from mintguard.backend.system_users import list_candidate_usernames
 from mintguard.db.database import get_session
 from mintguard.db.models import Child, ParentConfig
-from mintguard.gui.widgets import Card, HelpButton, heading, small_label
+from mintguard.gui.widgets import Card, HelpButton, NumericKeypad, heading, small_label
 from mintguard.locales.loader import I18nLoader
 from mintguard.utils.security import hash_pin
 from mintguard.utils.validators import is_valid_pin
@@ -252,6 +252,12 @@ class OnboardingWizard(QWidget):
         self.pin_confirm_input.setEchoMode(QLineEdit.EchoMode.Password)
         self.pin_confirm_input.setMaxLength(8)
         layout.addWidget(self.pin_confirm_input)
+
+        # Pavé numérique cliquable, ajouté à la demande de l'utilisateur en complément de la
+        # saisie clavier (voir SUIVI.md) — bascule automatiquement entre les deux champs.
+        keypad = NumericKeypad(self.pin_input)
+        keypad.bind_focus(self.pin_input, self.pin_confirm_input)
+        layout.addWidget(keypad, alignment=Qt.AlignmentFlag.AlignHCenter)
 
         self._pin_error = small_label("")
         self._pin_error.setObjectName("danger")

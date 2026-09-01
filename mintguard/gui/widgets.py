@@ -14,8 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QFrame, QLabel, QPushButton, QVBoxLayout
+from PyQt6.QtCore import QEvent, QObject, Qt
+from PyQt6.QtWidgets import QFrame, QGridLayout, QLabel, QLineEdit, QPushButton, QVBoxLayout, QWidget
 
 
 def heading(text: str, level: str = "h1") -> QLabel:
@@ -66,3 +66,69 @@ class HelpButton(QPushButton):
 
         dialog = HelpDialog(self._title, self._text, self)
         dialog.exec()
+
+
+class _KeypadFocusRouter(QObject):
+    """Redirige un `NumericKeypad` partagé vers le champ PIN qui a le focus — utilisé quand
+    un écran a deux champs (nouveau code + confirmation), pour n'afficher qu'un seul pavé."""
+
+    def __init__(self, keypad: "NumericKeypad"):
+        super().__init__()
+        self._keypad = keypad
+
+    def eventFilter(self, obj, event) -> bool:
+        if event.type() == QEvent.Type.FocusIn:
+            self._keypad.set_target(obj)
+        return False
+
+
+class NumericKeypad(QWidget):
+    """Pavé numérique cliquable pour saisir un code PIN, en complément du clavier (pas un
+    remplacement — le champ associé reste éditable normalement). Ajouté à la demande de
+    l'utilisateur après la mise en place du PIN (voir SUIVI.md)."""
+
+    def __init__(self, target: QLineEdit, parent=None):
+        super().__init__(parent)
+        self._target = target
+        self._router: _KeypadFocusRouter | None = None
+
+        grid = QGridLayout(self)
+        grid.setSpacing(6)
+        digits = "123456789"
+        for i, digit in enumerate(digits):
+            self._add_button(grid, digit, i // 3, i % 3, lambda _, d=digit: self._append(d))
+
+        self._add_button(grid, "C", 3, 0, lambda _: self._clear())
+        self._add_button(grid, "0", 3, 1, lambda _: self._append("0"))
+        self._add_button(grid, "⌫", 3, 2, lambda _: self._backspace())
+
+    @staticmethod
+    def _add_button(grid: QGridLayout, text: str, row: int, col: int, handler) -> None:
+        button = QPushButton(text)
+        button.setObjectName("secondary")
+        button.setMinimumSize(48, 40)
+        button.clicked.connect(handler)
+        grid.addWidget(button, row, col)
+
+    def bind_focus(self, *fields: QLineEdit) -> None:
+        """Bascule automatiquement la cible du pavé sur le champ qui reçoit le focus clavier
+        (utile quand plusieurs champs PIN partagent le même pavé)."""
+        self._router = _KeypadFocusRouter(self)
+        for field in fields:
+            field.installEventFilter(self._router)
+
+    def set_target(self, target: QLineEdit) -> None:
+        self._target = target
+
+    def _append(self, digit: str) -> None:
+        if len(self._target.text()) < self._target.maxLength():
+            self._target.setText(self._target.text() + digit)
+        self._target.setFocus()
+
+    def _backspace(self) -> None:
+        self._target.setText(self._target.text()[:-1])
+        self._target.setFocus()
+
+    def _clear(self) -> None:
+        self._target.clear()
+        self._target.setFocus()

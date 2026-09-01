@@ -21,6 +21,7 @@ from PyQt6.QtWidgets import QDialog, QHBoxLayout, QLabel, QLineEdit, QMessageBox
 
 from mintguard.db.database import get_session
 from mintguard.db.models import ParentConfig
+from mintguard.gui.widgets import NumericKeypad
 from mintguard.locales.loader import I18nLoader, get_i18n
 from mintguard.utils.security import hash_pin, verify_pin
 from mintguard.utils.validators import is_valid_pin
@@ -89,6 +90,10 @@ class PinDialog(QDialog):
         self.pin_input.setMaxLength(8)
         self.pin_input.returnPressed.connect(self._check)
         layout.addWidget(self.pin_input)
+
+        # Pavé numérique cliquable, ajouté à la demande de l'utilisateur en complément de la
+        # saisie clavier (voir SUIVI.md) — un seul champ ici, pas besoin de bascule de focus.
+        layout.addWidget(NumericKeypad(self.pin_input), alignment=Qt.AlignmentFlag.AlignHCenter)
 
         self._error_label = QLabel("")
         self._error_label.setObjectName("danger")
@@ -200,6 +205,12 @@ class SetPinDialog(QDialog):
         self.confirm_input.setMaxLength(8)
         self.confirm_input.returnPressed.connect(self._validate)
         layout.addWidget(self.confirm_input)
+
+        # Un seul pavé pour les deux champs : bascule automatiquement sur celui qui a le
+        # focus (voir SUIVI.md).
+        keypad = NumericKeypad(self.pin_input)
+        keypad.bind_focus(self.pin_input, self.confirm_input)
+        layout.addWidget(keypad, alignment=Qt.AlignmentFlag.AlignHCenter)
 
         self._error_label = QLabel("")
         self._error_label.setObjectName("danger")
