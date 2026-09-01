@@ -18,11 +18,18 @@
 conforme à STRATEGIE_UX_UI.html section "Design Graphique"."""
 
 COLORS = {
-    "primary": "#0EA5E9",
-    "primary_hover": "#0284C7",
-    "success": "#10B981",
-    "warning": "#F59E0B",
-    "danger": "#EF4444",
+    # Trouvé à l'audit d'accessibilité Phase 4 (voir SUIVI.md) : la palette d'origine
+    # (#0EA5E9/#10B981/#F59E0B/#EF4444, cf. STRATEGIE_UX_UI.html) ne passait pas le contraste
+    # WCAG AA (4.5:1) requis — explicitement listé comme "point critique" du projet pour des
+    # parents âgés (CLAUDE_CODE_BRIEFING.md). Le pire cas : texte blanc sur "primary" (boutons
+    # principaux, partout dans l'app) ne faisait que 2.77:1. Nuances assombries en conservant
+    # la même famille de teinte (bleu/vert/ambre/rouge reste reconnaissable) ; toutes vérifiées
+    # ≥4.5:1 à la fois en texte sur fond clair ET en texte blanc sur fond coloré (boutons).
+    "primary": "#0369A1",
+    "primary_hover": "#075985",
+    "success": "#047857",
+    "warning": "#B45309",
+    "danger": "#DC2626",
     "bg": "#F9FAFB",
     "surface": "#FFFFFF",
     "border": "#E5E7EB",

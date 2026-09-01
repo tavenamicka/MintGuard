@@ -52,6 +52,11 @@ class HelpButton(QPushButton):
         super().__init__("?", parent)
         self.setObjectName("help")
         self.setCursor(Qt.CursorShape.PointingHandCursor)
+        # Trouvé à l'audit d'accessibilité (voir SUIVI.md) : le texte visible "?" seul est
+        # annoncé par un lecteur d'écran (NVDA) comme "point d'interrogation, bouton", sans
+        # indiquer sur quoi porte l'aide avant activation. Le titre réel (déjà fourni pour le
+        # HelpDialog) sert aussi de nom accessible.
+        self.setAccessibleName(title)
         self._title = title
         self._text = text
         self.clicked.connect(self._show_help)
