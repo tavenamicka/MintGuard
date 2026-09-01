@@ -153,6 +153,11 @@
   "pin_dialog": {
     "title": "Code PIN requis",
     "label": "Entrez le code PIN parent pour continuer",
-    "error": "Code PIN incorrect"
+    "error": "Code PIN incorrect",
+    "forgot_link": "Code PIN oublié ?",
+    "forgot_explain": "Pour définir un nouveau code, vous devrez confirmer avec le mot de passe de VOTRE compte (celui utilisé pour ouvrir une session sur cet ordinateur). Une fenêtre du système va s'ouvrir. Continuer ?",
+    "forgot_unavailable": "La réinitialisation n'est pas disponible sur ce système (composant manquant). Contactez la personne qui a installé MintGuard.",
+    "forgot_failed": "Authentification annulée ou incorrecte. Le code PIN n'a pas été modifié.",
+    "new_pin_title": "Définir un nouveau code PIN"
   }
 }

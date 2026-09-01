@@ -153,6 +153,11 @@
   "pin_dialog": {
     "title": "PIN required",
     "label": "Enter the parent PIN to continue",
-    "error": "Incorrect PIN"
+    "error": "Incorrect PIN",
+    "forgot_link": "Forgot your PIN?",
+    "forgot_explain": "To set a new code, you'll need to confirm with the password of YOUR account (the one used to log into this computer). A system window will open. Continue?",
+    "forgot_unavailable": "Reset is not available on this system (missing component). Contact whoever installed MintGuard.",
+    "forgot_failed": "Authentication cancelled or incorrect. The PIN was not changed.",
+    "new_pin_title": "Set a new PIN"
   }
 }

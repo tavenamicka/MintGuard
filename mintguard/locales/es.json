@@ -153,6 +153,11 @@
   "pin_dialog": {
     "title": "Se requiere PIN",
     "label": "Introduzca el PIN de los padres para continuar",
-    "error": "PIN incorrecto"
+    "error": "PIN incorrecto",
+    "forgot_link": "¿Olvidó su PIN?",
+    "forgot_explain": "Para definir un nuevo código, deberá confirmar con la contraseña de SU cuenta (la que usa para iniciar sesión en este ordenador). Se abrirá una ventana del sistema. ¿Continuar?",
+    "forgot_unavailable": "El restablecimiento no está disponible en este sistema (falta un componente). Contacte con quien instaló MintGuard.",
+    "forgot_failed": "Autenticación cancelada o incorrecta. El PIN no se ha modificado.",
+    "new_pin_title": "Definir un nuevo PIN"
   }
 }

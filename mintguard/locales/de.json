@@ -153,6 +153,11 @@
   "pin_dialog": {
     "title": "PIN erforderlich",
     "label": "Geben Sie den Eltern-PIN ein, um fortzufahren",
-    "error": "Falscher PIN"
+    "error": "Falscher PIN",
+    "forgot_link": "PIN vergessen?",
+    "forgot_explain": "Um einen neuen Code festzulegen, müssen Sie sich mit dem Passwort IHRES Kontos bestätigen (das, mit dem Sie sich an diesem Computer anmelden). Ein Systemfenster wird sich öffnen. Fortfahren?",
+    "forgot_unavailable": "Die Zurücksetzung ist auf diesem System nicht verfügbar (fehlende Komponente). Wenden Sie sich an die Person, die MintGuard installiert hat.",
+    "forgot_failed": "Authentifizierung abgebrochen oder falsch. Der PIN wurde nicht geändert.",
+    "new_pin_title": "Neuen PIN festlegen"
   }
 }

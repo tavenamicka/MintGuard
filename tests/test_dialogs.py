@@ -18,13 +18,14 @@ import pytest
 
 pytest.importorskip("PyQt6")
 
-from PyQt6.QtWidgets import QApplication, QDialog  # noqa: E402
+from PyQt6.QtWidgets import QApplication, QDialog, QMessageBox  # noqa: E402
 
 from mintguard.db.database import get_session, init_db  # noqa: E402
 from mintguard.db.models import ParentConfig  # noqa: E402
-from mintguard.gui.dialogs import PinDialog  # noqa: E402
+from mintguard.gui import dialogs as dialogs_module  # noqa: E402
+from mintguard.gui.dialogs import PinDialog, SetPinDialog  # noqa: E402
 from mintguard.locales.loader import I18nLoader  # noqa: E402
-from mintguard.utils.security import hash_pin  # noqa: E402
+from mintguard.utils.security import hash_pin, verify_pin  # noqa: E402
 
 
 @pytest.fixture(autouse=True)
@@ -73,3 +74,116 @@ def test_no_pin_configured_always_fails_closed():
     dialog.pin_input.setText("1234")
     dialog._check()
     assert dialog.result() != QDialog.DialogCode.Accepted
+
+
+# "Code PIN oublié ?" : trouvé en rédigeant le guide utilisateur (voir SUIVI.md) qu'un PIN
+# oublié rendait Settings/Reports définitivement inaccessibles. L'identité est confirmée via
+# l'agent polkit du bureau (`_confirm_admin_identity`, mockée ici — impossible de simuler une
+# vraie authentification système en test), jamais par un secret géré par MintGuard.
+
+
+def test_set_pin_dialog_accepts_valid_matching_pin():
+    dialog = SetPinDialog(I18nLoader("fr"))
+    dialog.pin_input.setText("5678")
+    dialog.confirm_input.setText("5678")
+    dialog._validate()
+    assert dialog.result() == QDialog.DialogCode.Accepted
+    assert dialog._new_pin == "5678"
+
+
+def test_set_pin_dialog_rejects_invalid_pin():
+    dialog = SetPinDialog(I18nLoader("fr"))
+    dialog.pin_input.setText("12")  # trop court
+    dialog.confirm_input.setText("12")
+    dialog._validate()
+    assert dialog.result() != QDialog.DialogCode.Accepted
+    assert dialog._error_label.isHidden() is False
+
+
+def test_set_pin_dialog_rejects_mismatched_pins():
+    dialog = SetPinDialog(I18nLoader("fr"))
+    dialog.pin_input.setText("5678")
+    dialog.confirm_input.setText("8765")
+    dialog._validate()
+    assert dialog.result() != QDialog.DialogCode.Accepted
+    assert dialog._error_label.isHidden() is False
+
+
+def test_forgot_pin_writes_new_pin_when_authenticated(monkeypatch):
+    set_parent_pin("1234")
+    monkeypatch.setattr(QMessageBox, "question", lambda *a, **k: QMessageBox.StandardButton.Yes)
+    monkeypatch.setattr(dialogs_module, "_confirm_admin_identity", lambda: True)
+    monkeypatch.setattr(SetPinDialog, "prompt", staticmethod(lambda i18n, parent=None: "5678"))
+
+    dialog = PinDialog(I18nLoader("fr"))
+    dialog._forgot_pin()
+
+    assert dialog.result() == QDialog.DialogCode.Accepted
+    session = get_session()
+    try:
+        stored = session.query(ParentConfig).filter_by(key="parent_pin_hash").first()
+        assert verify_pin("5678", stored.value) is True
+        assert verify_pin("1234", stored.value) is False
+    finally:
+        session.close()
+
+
+def test_forgot_pin_does_nothing_if_confirmation_declined(monkeypatch):
+    set_parent_pin("1234")
+    monkeypatch.setattr(QMessageBox, "question", lambda *a, **k: QMessageBox.StandardButton.No)
+    called = []
+    monkeypatch.setattr(dialogs_module, "_confirm_admin_identity", lambda: called.append(1) or True)
+
+    dialog = PinDialog(I18nLoader("fr"))
+    dialog._forgot_pin()
+
+    assert called == []
+    assert dialog.result() != QDialog.DialogCode.Accepted
+
+
+def test_forgot_pin_shows_error_when_polkit_unavailable(monkeypatch):
+    set_parent_pin("1234")
+    monkeypatch.setattr(QMessageBox, "question", lambda *a, **k: QMessageBox.StandardButton.Yes)
+    monkeypatch.setattr(dialogs_module, "_confirm_admin_identity", lambda: None)
+
+    dialog = PinDialog(I18nLoader("fr"))
+    dialog._forgot_pin()
+
+    assert dialog.result() != QDialog.DialogCode.Accepted
+    assert dialog._error_label.isHidden() is False
+    session = get_session()
+    try:
+        stored = session.query(ParentConfig).filter_by(key="parent_pin_hash").first()
+        assert verify_pin("1234", stored.value) is True  # PIN inchangé
+    finally:
+        session.close()
+
+
+def test_forgot_pin_shows_error_when_authentication_fails(monkeypatch):
+    set_parent_pin("1234")
+    monkeypatch.setattr(QMessageBox, "question", lambda *a, **k: QMessageBox.StandardButton.Yes)
+    monkeypatch.setattr(dialogs_module, "_confirm_admin_identity", lambda: False)
+
+    dialog = PinDialog(I18nLoader("fr"))
+    dialog._forgot_pin()
+
+    assert dialog.result() != QDialog.DialogCode.Accepted
+    assert dialog._error_label.isHidden() is False
+
+
+def test_forgot_pin_keeps_old_pin_if_new_pin_dialog_cancelled(monkeypatch):
+    set_parent_pin("1234")
+    monkeypatch.setattr(QMessageBox, "question", lambda *a, **k: QMessageBox.StandardButton.Yes)
+    monkeypatch.setattr(dialogs_module, "_confirm_admin_identity", lambda: True)
+    monkeypatch.setattr(SetPinDialog, "prompt", staticmethod(lambda i18n, parent=None: None))
+
+    dialog = PinDialog(I18nLoader("fr"))
+    dialog._forgot_pin()
+
+    assert dialog.result() != QDialog.DialogCode.Accepted
+    session = get_session()
+    try:
+        stored = session.query(ParentConfig).filter_by(key="parent_pin_hash").first()
+        assert verify_pin("1234", stored.value) is True  # PIN inchangé
+    finally:
+        session.close()
