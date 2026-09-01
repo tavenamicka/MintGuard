@@ -112,26 +112,39 @@ def test_time_tab_disabled_without_child():
 # -- SitesTab --------------------------------------------------------------
 
 
-def test_sites_tab_toggle_category_creates_domains():
+# Trouvé en usage réel (voir SUIVI.md) : une case par catégorie entière ne montrait jamais
+# quels sites précis elle bloquait, ni ne permettait d'en retirer un seul. Remplacé par une
+# case par site, regroupées par catégorie (comme AppsTab).
+
+
+def test_sites_tab_shows_one_checkbox_per_reference_domain():
     tab = SitesTab(I18nLoader("fr"))
-    tab._category_checkboxes["social"].setChecked(True)
+    assert set(SOCIAL_MEDIA_DOMAINS) <= set(tab._domain_checkboxes)
+
+
+def test_sites_tab_toggle_single_domain_creates_row():
+    tab = SitesTab(I18nLoader("fr"))
+    tab._domain_checkboxes["tiktok.com"].setChecked(True)
 
     session = get_session()
     try:
-        domains = {s.domain for s in session.query(BlockedSite).filter_by(category="social").all()}
+        site = session.query(BlockedSite).filter_by(domain="tiktok.com").first()
+        other_social = session.query(BlockedSite).filter_by(domain="facebook.com").first()
     finally:
         session.close()
-    assert domains == set(SOCIAL_MEDIA_DOMAINS)
+    assert site is not None
+    assert site.category == "social"
+    assert other_social is None  # les autres sites de la categorie restent non bloques
 
 
-def test_sites_tab_untoggle_category_removes_domains():
+def test_sites_tab_untoggle_single_domain_removes_row():
     tab = SitesTab(I18nLoader("fr"))
-    tab._category_checkboxes["social"].setChecked(True)
-    tab._category_checkboxes["social"].setChecked(False)
+    tab._domain_checkboxes["tiktok.com"].setChecked(True)
+    tab._domain_checkboxes["tiktok.com"].setChecked(False)
 
     session = get_session()
     try:
-        count = session.query(BlockedSite).filter_by(category="social").count()
+        count = session.query(BlockedSite).filter_by(domain="tiktok.com").count()
     finally:
         session.close()
     assert count == 0

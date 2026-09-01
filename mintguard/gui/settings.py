@@ -140,7 +140,7 @@ class SitesTab(QWidget):
     def __init__(self, i18n: I18nLoader, parent=None):
         super().__init__(parent)
         self.i18n = i18n
-        self._category_checkboxes: dict[str, QCheckBox] = {}
+        self._domain_checkboxes: dict[str, QCheckBox] = {}
 
         layout = QVBoxLayout(self)
 
@@ -150,11 +150,17 @@ class SitesTab(QWidget):
         title_row.addStretch(1)
         layout.addLayout(title_row)
 
-        for category in CATEGORIES:
-            checkbox = QCheckBox(self.i18n(f"settings.category_{category}"))
-            checkbox.toggled.connect(lambda checked, c=category: self._toggle_category(c, checked))
-            layout.addWidget(checkbox)
-            self._category_checkboxes[category] = checkbox
+        # Trouvé en usage réel (voir SUIVI.md) : une case à cocher par catégorie entière ne
+        # montrait jamais quels sites précis elle bloquait, ni ne permettait d'en retirer un
+        # seul. Une case par site (regroupées par catégorie, comme AppsTab) rend le contenu
+        # visible et modifiable individuellement.
+        for category, domains in CATEGORIES.items():
+            layout.addWidget(heading(self.i18n(f"settings.category_{category}"), "h3"))
+            for domain in domains:
+                checkbox = QCheckBox(domain)
+                checkbox.toggled.connect(lambda checked, d=domain, c=category: self._toggle_domain(d, c, checked))
+                layout.addWidget(checkbox)
+                self._domain_checkboxes[domain] = checkbox
 
         layout.addWidget(small_label(self.i18n("settings.custom_sites")))
         self.custom_list = QListWidget()
@@ -189,10 +195,9 @@ class SitesTab(QWidget):
         finally:
             session.close()
 
-        for category, checkbox in self._category_checkboxes.items():
-            domains = set(CATEGORIES[category])
+        for domain, checkbox in self._domain_checkboxes.items():
             checkbox.blockSignals(True)
-            checkbox.setChecked(bool(domains) and domains.issubset(blocked_domains))
+            checkbox.setChecked(domain in blocked_domains)
             checkbox.blockSignals(False)
 
         predefined_domains = {d for domains in CATEGORIES.values() for d in domains}
@@ -200,15 +205,14 @@ class SitesTab(QWidget):
         for domain in sorted(blocked_domains - predefined_domains):
             self.custom_list.addItem(domain)
 
-    def _toggle_category(self, category: str, checked: bool) -> None:
+    def _toggle_domain(self, domain: str, category: str, checked: bool) -> None:
         session = get_session()
         try:
-            for domain in CATEGORIES[category]:
-                existing = session.query(BlockedSite).filter_by(domain=domain).first()
-                if checked and existing is None:
-                    session.add(BlockedSite(domain=domain, category=category, blocked=True))
-                elif not checked and existing is not None:
-                    session.delete(existing)
+            existing = session.query(BlockedSite).filter_by(domain=domain).first()
+            if checked and existing is None:
+                session.add(BlockedSite(domain=domain, category=category, blocked=True))
+            elif not checked and existing is not None:
+                session.delete(existing)
             session.commit()
         finally:
             session.close()
