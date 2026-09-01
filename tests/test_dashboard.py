@@ -242,3 +242,56 @@ def test_open_reports_opens_when_pin_dialog_accepted(monkeypatch):
     screen.open_reports()
 
     assert opened == [True]
+
+
+# "Ajouter un enfant" : trouvé en usage réel (voir SUIVI.md) que rien ne permettait d'ajouter
+# un second enfant après l'onboarding initial. PIN-protégé comme Settings/Reports.
+
+
+def test_open_add_child_blocked_when_pin_dialog_cancelled(monkeypatch):
+    make_child()
+    from mintguard.gui import add_child_dialog, dialogs
+
+    monkeypatch.setattr(dialogs.PinDialog, "prompt", staticmethod(lambda i18n, parent=None: False))
+
+    opened = []
+    monkeypatch.setattr(
+        add_child_dialog.AddChildDialog, "prompt", staticmethod(lambda i18n, parent=None: opened.append(True))
+    )
+
+    screen = DashboardScreen(I18nLoader("fr"))
+    screen.open_add_child()
+
+    assert opened == []
+
+
+def test_open_add_child_opens_and_reloads_when_pin_dialog_accepted(monkeypatch):
+    child_id = make_child("Alice", "alice")
+    from mintguard.gui import add_child_dialog, dialogs
+
+    monkeypatch.setattr(dialogs.PinDialog, "prompt", staticmethod(lambda i18n, parent=None: True))
+
+    new_child_id = make_child("Bob", "bob")  # simule la création faite par le vrai dialogue
+    monkeypatch.setattr(
+        add_child_dialog.AddChildDialog, "prompt", staticmethod(lambda i18n, parent=None: new_child_id)
+    )
+
+    screen = DashboardScreen(I18nLoader("fr"))
+    screen.open_add_child()
+
+    assert screen.child_combo.count() == 2
+    assert screen.selected_child_id == new_child_id
+    assert child_id != new_child_id  # les deux enfants coexistent bien
+
+
+def test_open_add_child_does_nothing_when_dialog_cancelled(monkeypatch):
+    make_child()
+    from mintguard.gui import add_child_dialog, dialogs
+
+    monkeypatch.setattr(dialogs.PinDialog, "prompt", staticmethod(lambda i18n, parent=None: True))
+    monkeypatch.setattr(add_child_dialog.AddChildDialog, "prompt", staticmethod(lambda i18n, parent=None: None))
+
+    screen = DashboardScreen(I18nLoader("fr"))
+    screen.open_add_child()
+
+    assert screen.child_combo.count() == 1

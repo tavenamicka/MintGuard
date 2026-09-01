@@ -44,9 +44,16 @@ class DashboardScreen(QWidget):
         layout.addWidget(heading(self.i18n("dashboard.title"), "h1"))
 
         layout.addWidget(small_label(self.i18n("dashboard.child_select")))
+        selector_row = QHBoxLayout()
         self.child_combo = QComboBox()
         self.child_combo.currentIndexChanged.connect(self._refresh)
-        layout.addWidget(self.child_combo)
+        selector_row.addWidget(self.child_combo, stretch=1)
+
+        self.add_child_button = QPushButton(self.i18n("dashboard.add_child"))
+        self.add_child_button.setObjectName("secondary")
+        self.add_child_button.clicked.connect(self.open_add_child)
+        selector_row.addWidget(self.add_child_button)
+        layout.addLayout(selector_row)
 
         self.status_card = Card()
         self.status_label = heading("", "h3")
@@ -186,6 +193,20 @@ class DashboardScreen(QWidget):
         return f"{label} ({time_str})"
 
     # -- Actions ------------------------------------------------------------
+
+    def open_add_child(self) -> None:
+        from mintguard.gui.add_child_dialog import AddChildDialog
+        from mintguard.gui.dialogs import PinDialog
+
+        if not PinDialog.prompt(self.i18n, self):
+            return
+        new_child_id = AddChildDialog.prompt(self.i18n, self)
+        if new_child_id is None:
+            return
+        self.reload()
+        index = self.child_combo.findData(new_child_id)
+        if index >= 0:
+            self.child_combo.setCurrentIndex(index)
 
     def open_settings(self) -> None:
         from mintguard.gui.dialogs import PinDialog

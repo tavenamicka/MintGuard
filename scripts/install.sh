@@ -62,6 +62,15 @@ else
   echo "config.json existant conserve (non ecrase)"
 fi
 
+echo "== Dependance systeme GUI (Qt/xcb) =="
+# Sans libxcb-cursor0, la GUI (PyQt6) echoue au demarrage avec "Could not load the Qt
+# platform plugin xcb" - le daemon (teste en continu en Phase 3) n'en a pas besoin, seule
+# la GUI parent, d'ou une decouverte tardive au premier vrai lancement graphique (Phase 4).
+if ! dpkg -s libxcb-cursor0 >/dev/null 2>&1; then
+  apt-get update -qq
+  DEBIAN_FRONTEND=noninteractive apt-get install -y -qq libxcb-cursor0
+fi
+
 echo "== Environnement Python dedie ($VENV_DIR) =="
 if [ ! -d "$VENV_DIR" ]; then
   python3 -m venv "$VENV_DIR"

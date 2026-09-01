@@ -54,7 +54,7 @@ def test_step_indicator_starts_at_one():
 def test_child_page_rejects_empty_fields():
     wizard = make_wizard()
     wizard.name_input.setText("")
-    wizard.username_input.setText("")
+    wizard.username_input.setCurrentText("")
     assert wizard._validate_child_page() is False
     # isHidden() reflète l'appel explicite à show()/hide() dans le code, contrairement
     # à isVisible() qui dépend aussi de la fenêtre parente (jamais affichée en test).
@@ -64,7 +64,7 @@ def test_child_page_rejects_empty_fields():
 def test_child_page_accepts_valid_input():
     wizard = make_wizard()
     wizard.name_input.setText("Alice")
-    wizard.username_input.setText("alice")
+    wizard.username_input.setCurrentText("alice")
     wizard.age_input.setValue(9)
     assert wizard._validate_child_page() is True
     assert wizard.data["name"] == "Alice"

@@ -33,7 +33,8 @@
     "no_rule_today": "Heute freier Zugang",
     "no_children": "Kein Kind konfiguriert. Bitte den Einrichtungsassistenten erneut starten.",
     "restriction_app_blocked": "Anwendung gesperrt: {0}",
-    "restriction_time_limit_hit": "Zeitlimit erreicht"
+    "restriction_time_limit_hit": "Zeitlimit erreicht",
+    "add_child": "Kind hinzufügen"
   },
   "settings": {
     "title": "Einstellungen",
@@ -109,6 +110,7 @@
       "title": "Welches Kind möchten Sie schützen?",
       "name_label": "Vorname",
       "username_label": "Benutzername (Linux-Sitzung)",
+      "username_hint": "Wählen Sie das Konto aus der Liste, oder geben Sie den Namen ein, wenn es nicht aufgeführt ist.",
       "age_label": "Alter",
       "error_required": "Bitte Vorname und Benutzername ausfüllen"
     },
@@ -159,5 +161,10 @@
     "forgot_unavailable": "Die Zurücksetzung ist auf diesem System nicht verfügbar (fehlende Komponente). Wenden Sie sich an die Person, die MintGuard installiert hat.",
     "forgot_failed": "Authentifizierung abgebrochen oder falsch. Der PIN wurde nicht geändert.",
     "new_pin_title": "Neuen PIN festlegen"
+  },
+  "add_child": {
+    "title": "Kind hinzufügen",
+    "add_button": "Hinzufügen",
+    "error_duplicate": "Dieses Konto wird bereits von MintGuard verwaltet."
   }
 }

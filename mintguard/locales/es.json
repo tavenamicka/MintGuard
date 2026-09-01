@@ -33,7 +33,8 @@
     "no_rule_today": "Acceso libre hoy",
     "no_children": "Ningún hijo/a configurado. Vuelva a ejecutar el asistente de configuración.",
     "restriction_app_blocked": "Aplicación bloqueada: {0}",
-    "restriction_time_limit_hit": "Límite de tiempo alcanzado"
+    "restriction_time_limit_hit": "Límite de tiempo alcanzado",
+    "add_child": "Añadir un hijo"
   },
   "settings": {
     "title": "Ajustes",
@@ -109,6 +110,7 @@
       "title": "¿A qué hijo/a quiere proteger?",
       "name_label": "Nombre",
       "username_label": "Nombre de usuario (sesión Linux)",
+      "username_hint": "Seleccione la cuenta de la lista, o escriba su nombre si no la ve.",
       "age_label": "Edad",
       "error_required": "Complete el nombre y el nombre de usuario"
     },
@@ -159,5 +161,10 @@
     "forgot_unavailable": "El restablecimiento no está disponible en este sistema (falta un componente). Contacte con quien instaló MintGuard.",
     "forgot_failed": "Autenticación cancelada o incorrecta. El PIN no se ha modificado.",
     "new_pin_title": "Definir un nuevo PIN"
+  },
+  "add_child": {
+    "title": "Añadir un hijo",
+    "add_button": "Añadir",
+    "error_duplicate": "Esta cuenta ya está gestionada por MintGuard."
   }
 }

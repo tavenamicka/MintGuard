@@ -14,11 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from datetime import time as dt_time
-
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import (
     QButtonGroup,
+    QComboBox,
     QHBoxLayout,
     QLabel,
     QLineEdit,
@@ -30,9 +29,10 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from mintguard.backend.site_categories import AGE_PRESETS, category_for_domain
+from mintguard.backend.child_setup import create_child_with_age_preset
+from mintguard.backend.system_users import list_candidate_usernames
 from mintguard.db.database import get_session
-from mintguard.db.models import BlockedSite, Child, ParentConfig, TimeRule
+from mintguard.db.models import ParentConfig
 from mintguard.gui.widgets import Card, HelpButton, heading, small_label
 from mintguard.locales.loader import I18nLoader
 from mintguard.utils.security import hash_pin
@@ -128,8 +128,15 @@ class OnboardingWizard(QWidget):
         layout.addWidget(self.name_input)
 
         layout.addWidget(small_label(self.i18n("onboarding.child.username_label")))
-        self.username_input = QLineEdit()
+        self.username_input = QComboBox()
+        self.username_input.setEditable(True)
+        # Comptes Linux locaux detectes (UID standard, pas systeme) : un parent novice ne
+        # connait pas toujours le nom exact de la session de son enfant. Liste vide hors
+        # Linux ou si la detection echoue - champ editable, saisie manuelle toujours possible.
+        self.username_input.addItems(list_candidate_usernames())
+        self.username_input.setCurrentText("")
         layout.addWidget(self.username_input)
+        layout.addWidget(small_label(self.i18n("onboarding.child.username_hint")))
 
         layout.addWidget(small_label(self.i18n("onboarding.child.age_label")))
         self.age_input = QSpinBox()
@@ -148,7 +155,7 @@ class OnboardingWizard(QWidget):
 
     def _validate_child_page(self) -> bool:
         name = self.name_input.text().strip()
-        username = self.username_input.text().strip()
+        username = self.username_input.currentText().strip()
         if not name or not username:
             self._child_error.setText(self.i18n("onboarding.child.error_required"))
             self._child_error.show()
@@ -299,25 +306,12 @@ class OnboardingWizard(QWidget):
 
     def _persist(self) -> None:
         """Crée le profil enfant, applique le préréglage d'âge, enregistre le PIN parent."""
+        create_child_with_age_preset(
+            self.data["name"], self.data["username"], self.data["age"], self.data["age_bracket"]
+        )
+
         session = get_session()
         try:
-            child = Child(name=self.data["name"], username=self.data["username"], age=self.data["age"])
-            session.add(child)
-            session.flush()
-
-            preset = AGE_PRESETS[self.data["age_bracket"]]
-            daily_hours = preset["daily_hours"]
-            start = dt_time(16, 0)
-            end = dt_time((16 + daily_hours) % 24, 0)
-            for day in range(7):
-                session.add(
-                    TimeRule(child_id=child.id, day_of_week=day, start_hour=start, end_hour=end, enabled=True)
-                )
-
-            for domain in preset["blocked_domains"]:
-                if session.query(BlockedSite).filter_by(domain=domain).first() is None:
-                    session.add(BlockedSite(domain=domain, category=category_for_domain(domain), blocked=True))
-
             session.merge(ParentConfig(key="parent_pin_hash", value=hash_pin(self.data["pin"])))
             session.merge(ParentConfig(key="onboarding_complete", value="1"))
             session.commit()

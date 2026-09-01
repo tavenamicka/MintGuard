@@ -33,7 +33,8 @@
     "no_rule_today": "Accès libre aujourd'hui",
     "no_children": "Aucun enfant configuré. Relancez l'assistant de configuration.",
     "restriction_app_blocked": "Application bloquée : {0}",
-    "restriction_time_limit_hit": "Limite de temps atteinte"
+    "restriction_time_limit_hit": "Limite de temps atteinte",
+    "add_child": "Ajouter un enfant"
   },
   "settings": {
     "title": "Paramètres",
@@ -109,6 +110,7 @@
       "title": "Quel enfant voulez-vous protéger ?",
       "name_label": "Prénom",
       "username_label": "Nom d'utilisateur (session Linux)",
+      "username_hint": "Sélectionnez le compte dans la liste, ou tapez son nom si vous ne le voyez pas.",
       "age_label": "Âge",
       "error_required": "Merci de remplir le prénom et le nom d'utilisateur"
     },
@@ -159,5 +161,10 @@
     "forgot_unavailable": "La réinitialisation n'est pas disponible sur ce système (composant manquant). Contactez la personne qui a installé MintGuard.",
     "forgot_failed": "Authentification annulée ou incorrecte. Le code PIN n'a pas été modifié.",
     "new_pin_title": "Définir un nouveau code PIN"
+  },
+  "add_child": {
+    "title": "Ajouter un enfant",
+    "add_button": "Ajouter",
+    "error_duplicate": "Ce compte est déjà géré par MintGuard."
   }
 }

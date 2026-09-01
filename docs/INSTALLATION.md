@@ -18,7 +18,7 @@ Les contrôleurs backend qui dépendent d'outils Linux (`iptables`, `loginctl`, 
 sudo bash scripts/install.sh
 ```
 
-Installe : venv dédié (`/opt/mintguard/venv`), config (`/etc/mintguard/config.json`), BD/logs (`/var/lib/mintguard`, `/var/log/mintguard`, permissions restrictives 700), service systemd (`/etc/systemd/system/mintguard-daemon.service`, activé au démarrage), config dnsmasq (`/etc/dnsmasq.d/mintguard.conf`).
+Installe : venv dédié (`/opt/mintguard/venv`), config (`/etc/mintguard/config.json`), BD/logs (`/var/lib/mintguard`, `/var/log/mintguard`, permissions restrictives), service systemd (`/etc/systemd/system/mintguard-daemon.service`, activé au démarrage), config dnsmasq (`/etc/dnsmasq.d/mintguard.conf`), et `libxcb-cursor0` (dépendance système de la GUI PyQt6 — sans elle, `mintguard` échoue au démarrage avec `Could not load the Qt platform plugin "xcb"`, voir `SUIVI.md`).
 
 Le service n'est **pas démarré automatiquement** — le script affiche la commande à lancer explicitement (`sudo systemctl start mintguard-daemon`).
 

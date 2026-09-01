@@ -33,7 +33,8 @@
     "no_rule_today": "Free access today",
     "no_children": "No child configured. Please re-run the setup wizard.",
     "restriction_app_blocked": "Application blocked: {0}",
-    "restriction_time_limit_hit": "Time limit reached"
+    "restriction_time_limit_hit": "Time limit reached",
+    "add_child": "Add a child"
   },
   "settings": {
     "title": "Settings",
@@ -109,6 +110,7 @@
       "title": "Which child do you want to protect?",
       "name_label": "First name",
       "username_label": "Username (Linux session)",
+      "username_hint": "Select the account from the list, or type its name if you don't see it.",
       "age_label": "Age",
       "error_required": "Please fill in the first name and username"
     },
@@ -159,5 +161,10 @@
     "forgot_unavailable": "Reset is not available on this system (missing component). Contact whoever installed MintGuard.",
     "forgot_failed": "Authentication cancelled or incorrect. The PIN was not changed.",
     "new_pin_title": "Set a new PIN"
+  },
+  "add_child": {
+    "title": "Add a child",
+    "add_button": "Add",
+    "error_duplicate": "This account is already managed by MintGuard."
   }
 }
