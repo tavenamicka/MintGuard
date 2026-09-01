@@ -103,6 +103,7 @@
     "warning": "Warnung"
   },
   "app_shell": {
+    "menu_button": "☰ Menü",
     "menu_help": "Hilfe",
     "menu_quit": "Beenden",
     "menu_theme": "Erscheinungsbild",

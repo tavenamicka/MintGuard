@@ -56,7 +56,12 @@ class MainWindow(QMainWindow):
             self._show_dashboard()
 
     def _build_menu(self) -> None:
-        menu = self.menuBar().addMenu(self.i18n("app.name"))
+        # Trouvé en test manuel : un menu intitulé du nom de l'application ("MintGuard")
+        # ressemble à du texte de marque, pas à un menu cliquable - le sélecteur de thème
+        # (clair/sombre), pourtant déjà fonctionnel, restait introuvable. L'icône ☰
+        # ("hamburger", convention universelle de menu) et le mot "Menu" rendent le bouton
+        # reconnaissable comme tel au premier coup d'œil.
+        menu = self.menuBar().addMenu(self.i18n("app_shell.menu_button"))
 
         self.settings_action = QAction(self.i18n("common.settings"), self)
         self.settings_action.triggered.connect(self.open_settings)
