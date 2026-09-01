@@ -22,6 +22,14 @@ systemctl disable mintguard-daemon 2>/dev/null || true
 rm -f /etc/systemd/system/mintguard-daemon.service
 systemctl daemon-reload
 
+echo "== Regles firewall (defense en profondeur) =="
+# A faire meme sans --purge : contrairement a la BD/logs (donnees inertes), une regle
+# iptables oubliee continuerait a bloquer le compte enfant indefiniment apres retrait
+# de MintGuard.
+iptables -D OUTPUT -j MINTGUARD 2>/dev/null || true
+iptables -F MINTGUARD 2>/dev/null || true
+iptables -X MINTGUARD 2>/dev/null || true
+
 echo "== dnsmasq =="
 rm -f /etc/dnsmasq.d/mintguard.conf
 

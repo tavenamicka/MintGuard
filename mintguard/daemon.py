@@ -17,6 +17,7 @@
 import time
 
 from mintguard.backend.dns_controller import DNSController
+from mintguard.backend.firewall_controller import FirewallController
 from mintguard.backend.process_monitor import ProcessMonitor
 from mintguard.backend.scheduler import Scheduler
 from mintguard.config import get_config
@@ -30,6 +31,7 @@ def run_cycle(
     process_monitor: ProcessMonitor,
     scheduler: Scheduler,
     dns_controller: DNSController,
+    firewall_controller: FirewallController,
     state: dict,
     now: float,
     session_interval: float,
@@ -41,6 +43,9 @@ def run_cycle(
     justification) : le daemon relit périodiquement la BD partagée, comme ProcessMonitor et
     Scheduler le font déjà à chaque cycle. `dns_refresh_interval` évite de relancer
     `systemctl reload dnsmasq` à chaque cycle process (par défaut 5s) alors que rien n'a changé.
+    Les règles firewall (défense en profondeur, voir FirewallController) sont resynchronisées
+    au même rythme que la blocklist DNS : même but (empêcher un contournement du blocage DNS),
+    et la liste des enfants change rarement.
     """
     process_monitor.check_and_kill()
 
@@ -51,6 +56,7 @@ def run_cycle(
     if now - state["last_dns_refresh"] >= dns_refresh_interval:
         dns_controller.generate_blocklist()
         dns_controller.reload_dnsmasq()
+        firewall_controller.sync_child_dns_restriction()
         state["last_dns_refresh"] = now
 
 
@@ -66,8 +72,10 @@ def main() -> None:
     process_monitor = ProcessMonitor()
     scheduler = Scheduler()
     dns_controller = DNSController()
+    firewall_controller = FirewallController()
 
     dns_controller.generate_blocklist()
+    firewall_controller.sync_child_dns_restriction()
     state = {"last_session_check": 0.0, "last_dns_refresh": time.monotonic()}
 
     try:
@@ -76,6 +84,7 @@ def main() -> None:
                 process_monitor,
                 scheduler,
                 dns_controller,
+                firewall_controller,
                 state,
                 time.monotonic(),
                 session_interval,

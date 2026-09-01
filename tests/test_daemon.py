@@ -17,6 +17,7 @@
 import pytest
 
 from mintguard.backend.dns_controller import DNSController
+from mintguard.backend.firewall_controller import FirewallController
 from mintguard.backend.process_monitor import ProcessMonitor
 from mintguard.backend.scheduler import Scheduler
 from mintguard.daemon import run_cycle
@@ -33,28 +34,35 @@ def make_controllers(tmp_path):
         ProcessMonitor(),
         Scheduler(),
         DNSController(blocklist_path=tmp_path / "blocklist.hosts"),
+        FirewallController(),
     )
 
 
 def test_process_monitor_runs_every_cycle(tmp_path, monkeypatch):
-    process_monitor, scheduler, dns_controller = make_controllers(tmp_path)
+    process_monitor, scheduler, dns_controller, firewall_controller = make_controllers(tmp_path)
     calls = []
     monkeypatch.setattr(process_monitor, "check_and_kill", lambda: calls.append(1))
     monkeypatch.setattr(dns_controller, "generate_blocklist", lambda: 0)
     monkeypatch.setattr(dns_controller, "reload_dnsmasq", lambda: True)
+    monkeypatch.setattr(firewall_controller, "sync_child_dns_restriction", lambda: True)
 
     state = {"last_session_check": 0.0, "last_dns_refresh": 0.0}
-    run_cycle(process_monitor, scheduler, dns_controller, state, now=1.0, session_interval=60, dns_refresh_interval=30)
-    run_cycle(process_monitor, scheduler, dns_controller, state, now=2.0, session_interval=60, dns_refresh_interval=30)
+    run_cycle(
+        process_monitor, scheduler, dns_controller, firewall_controller, state, now=1.0, session_interval=60, dns_refresh_interval=30
+    )
+    run_cycle(
+        process_monitor, scheduler, dns_controller, firewall_controller, state, now=2.0, session_interval=60, dns_refresh_interval=30
+    )
 
     assert len(calls) == 2
 
 
 def test_scheduler_runs_only_after_session_interval_elapsed(tmp_path, monkeypatch):
-    process_monitor, scheduler, dns_controller = make_controllers(tmp_path)
+    process_monitor, scheduler, dns_controller, firewall_controller = make_controllers(tmp_path)
     monkeypatch.setattr(process_monitor, "check_and_kill", lambda: None)
     monkeypatch.setattr(dns_controller, "generate_blocklist", lambda: 0)
     monkeypatch.setattr(dns_controller, "reload_dnsmasq", lambda: True)
+    monkeypatch.setattr(firewall_controller, "sync_child_dns_restriction", lambda: True)
 
     calls = []
     monkeypatch.setattr(scheduler, "check_all_children", lambda: calls.append(1))
@@ -62,33 +70,46 @@ def test_scheduler_runs_only_after_session_interval_elapsed(tmp_path, monkeypatc
     # État initial à 0.0 ("jamais vérifié") : le premier appel n'est dû que si `now` a déjà
     # atteint l'intervalle depuis 0 — donc now=70 pour un intervalle de 60s, pas now=10.
     state = {"last_session_check": 0.0, "last_dns_refresh": 0.0}
-    run_cycle(process_monitor, scheduler, dns_controller, state, now=70.0, session_interval=60, dns_refresh_interval=999)
+    run_cycle(
+        process_monitor, scheduler, dns_controller, firewall_controller, state, now=70.0, session_interval=60, dns_refresh_interval=999
+    )
     assert calls == [1]
     assert state["last_session_check"] == 70.0
 
-    run_cycle(process_monitor, scheduler, dns_controller, state, now=80.0, session_interval=60, dns_refresh_interval=999)
+    run_cycle(
+        process_monitor, scheduler, dns_controller, firewall_controller, state, now=80.0, session_interval=60, dns_refresh_interval=999
+    )
     assert calls == [1]  # 10s après : pas encore dû (interval 60s)
 
-    run_cycle(process_monitor, scheduler, dns_controller, state, now=140.0, session_interval=60, dns_refresh_interval=999)
+    run_cycle(
+        process_monitor, scheduler, dns_controller, firewall_controller, state, now=140.0, session_interval=60, dns_refresh_interval=999
+    )
     assert calls == [1, 1]
 
 
-def test_dns_refreshes_only_after_interval_elapsed(tmp_path, monkeypatch):
-    process_monitor, scheduler, dns_controller = make_controllers(tmp_path)
+def test_dns_and_firewall_refresh_only_after_interval_elapsed(tmp_path, monkeypatch):
+    process_monitor, scheduler, dns_controller, firewall_controller = make_controllers(tmp_path)
     monkeypatch.setattr(process_monitor, "check_and_kill", lambda: None)
     monkeypatch.setattr(scheduler, "check_all_children", lambda: None)
 
     calls = []
     monkeypatch.setattr(dns_controller, "generate_blocklist", lambda: calls.append("gen"))
     monkeypatch.setattr(dns_controller, "reload_dnsmasq", lambda: calls.append("reload"))
+    monkeypatch.setattr(firewall_controller, "sync_child_dns_restriction", lambda: calls.append("firewall"))
 
     state = {"last_session_check": 0.0, "last_dns_refresh": 0.0}
-    run_cycle(process_monitor, scheduler, dns_controller, state, now=35.0, session_interval=999, dns_refresh_interval=30)
-    assert calls == ["gen", "reload"]
+    run_cycle(
+        process_monitor, scheduler, dns_controller, firewall_controller, state, now=35.0, session_interval=999, dns_refresh_interval=30
+    )
+    assert calls == ["gen", "reload", "firewall"]
 
     calls.clear()
-    run_cycle(process_monitor, scheduler, dns_controller, state, now=45.0, session_interval=999, dns_refresh_interval=30)
+    run_cycle(
+        process_monitor, scheduler, dns_controller, firewall_controller, state, now=45.0, session_interval=999, dns_refresh_interval=30
+    )
     assert calls == []  # 10s après le refresh : pas encore dû (interval 30s)
 
-    run_cycle(process_monitor, scheduler, dns_controller, state, now=70.0, session_interval=999, dns_refresh_interval=30)
-    assert calls == ["gen", "reload"]
+    run_cycle(
+        process_monitor, scheduler, dns_controller, firewall_controller, state, now=70.0, session_interval=999, dns_refresh_interval=30
+    )
+    assert calls == ["gen", "reload", "firewall"]
