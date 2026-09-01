@@ -15,7 +15,18 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from PyQt6.QtCore import QEvent, QObject, Qt
-from PyQt6.QtWidgets import QFrame, QGridLayout, QLabel, QLineEdit, QPushButton, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import (
+    QCheckBox,
+    QFrame,
+    QGridLayout,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QPushButton,
+    QToolButton,
+    QVBoxLayout,
+    QWidget,
+)
 
 
 def heading(text: str, level: str = "h1") -> QLabel:
@@ -132,3 +143,84 @@ class NumericKeypad(QWidget):
     def _clear(self) -> None:
         self._target.clear()
         self._target.setFocus()
+
+
+class _SelectAllCheckBox(QCheckBox):
+    """Case tri-state dont le CLIC ne bascule jamais que Tout/Rien, jamais l'état partiel
+    (le cycle par défaut de Qt pour une case tri-state passe par l'état partiel au clic,
+    ce qui n'est pas ce qu'on veut pour un "tout sélectionner" — l'état partiel doit rester
+    un affichage piloté par le code, pas une destination de clic)."""
+
+    def nextCheckState(self) -> None:
+        if self.checkState() == Qt.CheckState.Checked:
+            self.setCheckState(Qt.CheckState.Unchecked)
+        else:
+            self.setCheckState(Qt.CheckState.Checked)
+
+
+class CollapsibleSection(QWidget):
+    """Section repliable avec une case "Tout sélectionner" toujours visible dans l'en-tête —
+    même repliée, on peut cocher/décocher toute la catégorie sans l'ouvrir. Ajouté à la
+    demande de l'utilisateur pour l'onglet Sites à Bloquer (voir SUIVI.md)."""
+
+    def __init__(self, title: str, select_all_label: str, parent=None):
+        super().__init__(parent)
+        self._children_checkboxes: list[QCheckBox] = []
+        self._updating_select_all = False
+
+        outer = QVBoxLayout(self)
+        outer.setContentsMargins(0, 0, 0, 0)
+
+        header = QHBoxLayout()
+        self._toggle_button = QToolButton()
+        self._toggle_button.setArrowType(Qt.ArrowType.DownArrow)
+        self._toggle_button.setCheckable(True)
+        self._toggle_button.setChecked(True)
+        self._toggle_button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        self._toggle_button.setText(title)
+        self._toggle_button.setObjectName("collapsible_header")
+        self._toggle_button.toggled.connect(self._on_toggle)
+        header.addWidget(self._toggle_button)
+        header.addStretch(1)
+
+        self.select_all_checkbox = _SelectAllCheckBox(select_all_label)
+        self.select_all_checkbox.setTristate(True)
+        self.select_all_checkbox.clicked.connect(self._on_select_all_clicked)
+        header.addWidget(self.select_all_checkbox)
+        outer.addLayout(header)
+
+        self._content = QWidget()
+        self._content_layout = QVBoxLayout(self._content)
+        self._content_layout.setContentsMargins(24, 0, 0, 0)
+        outer.addWidget(self._content)
+
+    def add(self, checkbox: QCheckBox) -> None:
+        """Ajoute une case à cocher au contenu de la section et la relie à la case
+        "Tout sélectionner" (son état s'actualise à chaque changement d'un enfant)."""
+        self._content_layout.addWidget(checkbox)
+        self._children_checkboxes.append(checkbox)
+        checkbox.toggled.connect(self.refresh_select_all)
+        self.refresh_select_all()
+
+    def _on_toggle(self, expanded: bool) -> None:
+        self._toggle_button.setArrowType(Qt.ArrowType.DownArrow if expanded else Qt.ArrowType.RightArrow)
+        self._content.setVisible(expanded)
+
+    def _on_select_all_clicked(self, checked: bool) -> None:
+        for checkbox in self._children_checkboxes:
+            checkbox.setChecked(checked)
+
+    def refresh_select_all(self) -> None:
+        if self._updating_select_all or not self._children_checkboxes:
+            return
+        self._updating_select_all = True
+        try:
+            checked_count = sum(c.isChecked() for c in self._children_checkboxes)
+            if checked_count == 0:
+                self.select_all_checkbox.setCheckState(Qt.CheckState.Unchecked)
+            elif checked_count == len(self._children_checkboxes):
+                self.select_all_checkbox.setCheckState(Qt.CheckState.Checked)
+            else:
+                self.select_all_checkbox.setCheckState(Qt.CheckState.PartiallyChecked)
+        finally:
+            self._updating_select_all = False

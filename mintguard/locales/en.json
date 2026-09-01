@@ -59,7 +59,8 @@
     "suggested_apps": "Suggested applications",
     "custom_apps": "Custom applications",
     "add_app_placeholder": "e.g. telegram-desktop",
-    "invalid_app_error": "Invalid application name (no spaces)"
+    "invalid_app_error": "Invalid application name (no spaces)",
+    "select_all": "Select all"
   },
   "time": {
     "monday": "Monday",

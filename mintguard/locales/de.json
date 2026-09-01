@@ -59,7 +59,8 @@
     "suggested_apps": "Vorgeschlagene Anwendungen",
     "custom_apps": "Eigene Anwendungen",
     "add_app_placeholder": "z.B. telegram-desktop",
-    "invalid_app_error": "Ungültiger Anwendungsname (keine Leerzeichen)"
+    "invalid_app_error": "Ungültiger Anwendungsname (keine Leerzeichen)",
+    "select_all": "Alle auswählen"
   },
   "time": {
     "monday": "Montag",

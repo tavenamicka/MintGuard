@@ -18,7 +18,7 @@ import pytest
 
 pytest.importorskip("PyQt6")
 
-from PyQt6.QtCore import QTime  # noqa: E402
+from PyQt6.QtCore import QTime, Qt  # noqa: E402
 from PyQt6.QtWidgets import QApplication  # noqa: E402
 
 from mintguard.backend.site_categories import SOCIAL_MEDIA_DOMAINS  # noqa: E402
@@ -148,6 +148,24 @@ def test_sites_tab_untoggle_single_domain_removes_row():
     finally:
         session.close()
     assert count == 0
+
+
+def test_sites_tab_select_all_reflects_state_loaded_from_db():
+    # Bug trouve en verification visuelle (voir SUIVI.md) : le blockSignals() utilise dans
+    # _load() pour eviter des ecritures BD au chargement empechait aussi la case "Tout
+    # selectionner" de chaque section de se mettre a jour - elle restait decochee meme quand
+    # tous les sites d'une categorie etaient deja bloques en BD avant l'ouverture de l'onglet.
+    session = get_session()
+    try:
+        for domain in ("youtube.com", "netflix.com", "twitch.tv"):  # toute la categorie "entertainment"
+            session.add(BlockedSite(domain=domain, category="entertainment", blocked=True))
+        session.commit()
+    finally:
+        session.close()
+
+    tab = SitesTab(I18nLoader("fr"))
+    entertainment_section = next(s for s in tab._sections if s._toggle_button.text() == "Divertissement")
+    assert entertainment_section.select_all_checkbox.checkState() == Qt.CheckState.Checked
 
 
 def test_sites_tab_add_valid_custom_site():

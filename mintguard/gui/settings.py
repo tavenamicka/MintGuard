@@ -34,7 +34,7 @@ from mintguard.backend.installed_apps import list_installed_apps
 from mintguard.backend.site_categories import CATEGORIES
 from mintguard.db.database import get_session
 from mintguard.db.models import BlockedApp, BlockedSite, TimeRule
-from mintguard.gui.widgets import HelpButton, heading, small_label
+from mintguard.gui.widgets import CollapsibleSection, HelpButton, heading, small_label
 from mintguard.locales.loader import I18nLoader
 from mintguard.utils.formatters import weekday_key
 from mintguard.utils.validators import is_valid_domain
@@ -141,6 +141,7 @@ class SitesTab(QWidget):
         super().__init__(parent)
         self.i18n = i18n
         self._domain_checkboxes: dict[str, QCheckBox] = {}
+        self._sections: list[CollapsibleSection] = []
 
         layout = QVBoxLayout(self)
 
@@ -153,13 +154,19 @@ class SitesTab(QWidget):
         # Trouvé en usage réel (voir SUIVI.md) : une case à cocher par catégorie entière ne
         # montrait jamais quels sites précis elle bloquait, ni ne permettait d'en retirer un
         # seul. Une case par site (regroupées par catégorie, comme AppsTab) rend le contenu
-        # visible et modifiable individuellement.
+        # visible et modifiable individuellement. Section repliable + "Tout sélectionner"
+        # dans l'en-tête (visible même repliée) pour retrouver un bascule rapide de toute la
+        # catégorie sans perdre la visibilité individuelle.
         for category, domains in CATEGORIES.items():
-            layout.addWidget(heading(self.i18n(f"settings.category_{category}"), "h3"))
+            section = CollapsibleSection(
+                self.i18n(f"settings.category_{category}"), self.i18n("settings.select_all")
+            )
+            layout.addWidget(section)
+            self._sections.append(section)
             for domain in domains:
                 checkbox = QCheckBox(domain)
                 checkbox.toggled.connect(lambda checked, d=domain, c=category: self._toggle_domain(d, c, checked))
-                layout.addWidget(checkbox)
+                section.add(checkbox)
                 self._domain_checkboxes[domain] = checkbox
 
         layout.addWidget(small_label(self.i18n("settings.custom_sites")))
@@ -199,6 +206,10 @@ class SitesTab(QWidget):
             checkbox.blockSignals(True)
             checkbox.setChecked(domain in blocked_domains)
             checkbox.blockSignals(False)
+        # blockSignals() ci-dessus empêche aussi la mise à jour de la case "Tout sélectionner"
+        # de chaque section (qui écoute le même signal) — rafraîchie explicitement ici.
+        for section in self._sections:
+            section.refresh_select_all()
 
         predefined_domains = {d for domains in CATEGORIES.values() for d in domains}
         self.custom_list.clear()
