@@ -40,6 +40,7 @@ class DashboardScreen(QWidget):
         self.reload()
 
     def _build_ui(self) -> None:
+        # Thème "Néon" appliqué globalement (voir mintguard/main_gui.py, styles.py::DARK_COLORS).
         layout = QVBoxLayout(self)
         layout.addWidget(heading(self.i18n("dashboard.title"), "h1"))
 

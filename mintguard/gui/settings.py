@@ -20,10 +20,12 @@ from PyQt6.QtCore import QTime
 from PyQt6.QtWidgets import (
     QCheckBox,
     QDialog,
+    QFrame,
     QHBoxLayout,
     QLineEdit,
     QListWidget,
     QPushButton,
+    QScrollArea,
     QTabWidget,
     QTimeEdit,
     QVBoxLayout,
@@ -38,6 +40,29 @@ from mintguard.gui.widgets import CollapsibleSection, HelpButton, heading, small
 from mintguard.locales.loader import I18nLoader
 from mintguard.utils.formatters import weekday_key
 from mintguard.utils.validators import is_valid_domain
+
+
+def _scrollable_layout(container: QWidget) -> QVBoxLayout:
+    """Place le contenu de `container` dans un QScrollArea au lieu de son layout direct.
+
+    Trouvé en vérifiant le thème Néon (voir historique de conversation) : un QTabWidget ne
+    redimensionne pas la fenêtre quand on bascule sur un onglet plus grand que celui affiché à
+    l'ouverture — son contenu se retrouve alors compressé sous la hauteur minimale de ses
+    widgets (cases à cocher illisibles, texte superposé). SitesTab et AppsTab sont les deux
+    onglets dont le contenu grandit avec les données (catégories de sites, applications
+    détectées) et peuvent dépasser la fenêtre ; le scroll évite la compression quel que soit
+    le nombre d'éléments, plutôt qu'une taille minimale fixe qui redeviendrait insuffisante.
+    """
+    outer = QVBoxLayout(container)
+    outer.setContentsMargins(0, 0, 0, 0)
+    scroll = QScrollArea()
+    scroll.setWidgetResizable(True)
+    scroll.setFrameShape(QFrame.Shape.NoFrame)
+    outer.addWidget(scroll)
+
+    content = QWidget()
+    scroll.setWidget(content)
+    return QVBoxLayout(content)
 
 
 class TimeTab(QWidget):
@@ -184,7 +209,7 @@ class SitesTab(QWidget):
         self._domain_checkboxes: dict[str, QCheckBox] = {}
         self._sections: list[CollapsibleSection] = []
 
-        layout = QVBoxLayout(self)
+        layout = _scrollable_layout(self)
 
         title_row = QHBoxLayout()
         title_row.addWidget(heading(self.i18n("settings.blocked_sites"), "h2"))
@@ -311,7 +336,7 @@ class AppsTab(QWidget):
         self.i18n = i18n
         self._app_checkboxes: dict[str, QCheckBox] = {}
 
-        layout = QVBoxLayout(self)
+        layout = _scrollable_layout(self)
 
         title_row = QHBoxLayout()
         title_row.addWidget(heading(self.i18n("settings.blocked_apps"), "h2"))

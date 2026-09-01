@@ -103,7 +103,10 @@
   },
   "app_shell": {
     "menu_help": "Ayuda",
-    "menu_quit": "Salir"
+    "menu_quit": "Salir",
+    "menu_theme": "Apariencia",
+    "theme_light": "Tema claro",
+    "theme_dark": "Tema oscuro"
   },
   "onboarding": {
     "step_indicator": "Paso {0} de {1}",

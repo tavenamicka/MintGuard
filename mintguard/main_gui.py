@@ -19,15 +19,14 @@ import sys
 from PyQt6.QtWidgets import QApplication
 
 from mintguard.gui.main_window import MainWindow
-from mintguard.gui.styles import build_stylesheet
+
+# Le thème (clair/sombre) est chargé et posé sur QApplication par MainWindow.__init__
+# lui-même (voir main_window.py::_load_theme) — il dépend de la préférence sauvegardée,
+# donc ne peut pas être fixé ici avant que MainWindow existe.
 
 
 def main() -> None:
     app = QApplication(sys.argv)
-    # Appliqué sur QApplication (pas juste MainWindow) pour que les QDialog
-    # (Settings, HelpDialog...) héritent aussi du thème — un QDialog est une
-    # fenêtre top-level distincte et n'hérite pas du style de son parent.
-    app.setStyleSheet(build_stylesheet())
     window = MainWindow()
     window.show()
     sys.exit(app.exec())

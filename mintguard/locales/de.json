@@ -103,7 +103,10 @@
   },
   "app_shell": {
     "menu_help": "Hilfe",
-    "menu_quit": "Beenden"
+    "menu_quit": "Beenden",
+    "menu_theme": "Erscheinungsbild",
+    "theme_light": "Helles Design",
+    "theme_dark": "Dunkles Design"
   },
   "onboarding": {
     "step_indicator": "Schritt {0} von {1}",
