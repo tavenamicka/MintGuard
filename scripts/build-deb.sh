@@ -30,6 +30,7 @@ echo "== Entree de menu, icone et autostart (avertissement enfant) =="
 install -D -m 644 "$PKG_DIR/mintguard.desktop" "$BUILD_DIR/usr/share/applications/mintguard.desktop"
 install -D -m 644 "$PKG_DIR/mintguard.svg" "$BUILD_DIR/usr/share/icons/hicolor/scalable/apps/mintguard.svg"
 install -D -m 644 "$PKG_DIR/mintguard-child-tray.desktop" "$BUILD_DIR/etc/xdg/autostart/mintguard-child-tray.desktop"
+install -D -m 644 "$PKG_DIR/mintguard-parent-tray.desktop" "$BUILD_DIR/etc/xdg/autostart/mintguard-parent-tray.desktop"
 
 echo "== Service systemd (chemin paquet, distinct de scripts/install.sh) =="
 install -D -m 644 "$REPO_ROOT/etc/systemd/mintguard-daemon.service" "$BUILD_DIR/lib/systemd/system/mintguard-daemon.service"

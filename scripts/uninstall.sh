@@ -37,6 +37,7 @@ echo "== Icone, entrees de menu et autostart =="
 rm -f /usr/share/applications/mintguard.desktop
 rm -f /usr/share/icons/hicolor/scalable/apps/mintguard.svg
 rm -f /etc/xdg/autostart/mintguard-child-tray.desktop
+rm -f /etc/xdg/autostart/mintguard-parent-tray.desktop
 
 echo "== Environnement Python =="
 rm -rf /opt/mintguard

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+  <defs>
+    <linearGradient id="mg-shield-inactive" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#F0A94E"/>
+      <stop offset="1" stop-color="#B45309"/>
+    </linearGradient>
+  </defs>
+  <path d="M24 3 L41 9 V22 C41 33 34 41.5 24 45 C14 41.5 7 33 7 22 V9 Z"
+        fill="url(#mg-shield-inactive)" stroke="#7C3A0A" stroke-width="1.5" stroke-linejoin="round"/>
+  <rect x="21.5" y="14" width="5" height="16" rx="2.5" fill="#FFFFFF"/>
+  <circle cx="24" cy="34.5" r="2.8" fill="#FFFFFF"/>
+</svg>

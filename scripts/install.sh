@@ -156,6 +156,7 @@ echo "== Icone et entrees de menu =="
 install -D -m 644 "$REPO_ROOT/packaging/deb/mintguard.desktop" /usr/share/applications/mintguard.desktop
 install -D -m 644 "$REPO_ROOT/packaging/deb/mintguard.svg" /usr/share/icons/hicolor/scalable/apps/mintguard.svg
 install -D -m 644 "$REPO_ROOT/packaging/deb/mintguard-child-tray.desktop" /etc/xdg/autostart/mintguard-child-tray.desktop
+install -D -m 644 "$REPO_ROOT/packaging/deb/mintguard-parent-tray.desktop" /etc/xdg/autostart/mintguard-parent-tray.desktop
 
 echo "== Service systemd =="
 install -m 644 "$REPO_ROOT/etc/systemd/mintguard-daemon.service" /etc/systemd/system/mintguard-daemon.service

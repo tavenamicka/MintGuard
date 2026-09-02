@@ -9,6 +9,14 @@
     "warning_minutes_left": "{0} minute(s) left before your session ends.",
     "app_blocked": "{0} was closed: this application isn't allowed."
   },
+  "parent_tray": {
+    "tooltip_checking": "MintGuard: checking...",
+    "tooltip_active": "MintGuard active",
+    "tooltip_inactive": "MintGuard installed, but inactive",
+    "notif_active": "The MintGuard service is active again.",
+    "notif_inactive": "The MintGuard service can't be reached. Parental controls are no longer enforced.",
+    "open_action": "Open MintGuard"
+  },
   "common": {
     "ok": "OK",
     "cancel": "Cancel",

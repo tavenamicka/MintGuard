@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=MintGuard (indicateur parent)
+Name[en]=MintGuard (parent indicator)
+Exec=/opt/mintguard/venv/bin/mintguard-parent-tray
+Icon=mintguard
+Terminal=false
+NoDisplay=true
+OnlyShowIn=X-Cinnamon;GNOME;MATE;
+X-GNOME-Autostart-enabled=true
+Comment=S'auto-desactive silencieusement si le compte est un compte enfant MintGuard

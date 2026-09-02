@@ -29,7 +29,7 @@ setup(
     include_package_data=True,
     package_data={
         "mintguard.locales": ["*.json"],
-        "mintguard.gui": ["assets/fonts/*"],
+        "mintguard.gui": ["assets/fonts/*", "assets/icons/*"],
     },
     install_requires=[
         "PyQt6>=6.5.0",
@@ -42,6 +42,7 @@ setup(
             "mintguard=mintguard.main_gui:main",
             "mintguard-daemon=mintguard.daemon:main",
             "mintguard-child-tray=mintguard.child_tray:main",
+            "mintguard-parent-tray=mintguard.parent_tray:main",
         ]
     },
     python_requires=">=3.10",

@@ -9,6 +9,14 @@
     "warning_minutes_left": "Quedan {0} minuto(s) antes de que termine tu sesión.",
     "app_blocked": "{0} se cerró: esta aplicación no está permitida."
   },
+  "parent_tray": {
+    "tooltip_checking": "MintGuard: comprobando...",
+    "tooltip_active": "MintGuard activo",
+    "tooltip_inactive": "MintGuard instalado, pero inactivo",
+    "notif_active": "El servicio MintGuard está activo de nuevo.",
+    "notif_inactive": "No se puede contactar con el servicio MintGuard. El control parental ya no se aplica.",
+    "open_action": "Abrir MintGuard"
+  },
   "common": {
     "ok": "OK",
     "cancel": "Cancelar",
