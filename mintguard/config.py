@@ -47,6 +47,11 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "monitoring": {
         "process_check_interval": 5,
         "session_check_interval": 60,
+        # Delai entre le moment ou une session sort de sa plage horaire/depasse son quota et
+        # la fermeture reelle (loginctl terminate-user) - laisse a l'enfant le temps de
+        # sauvegarder son travail, voir Scheduler._grace_deadlines. Superieur a
+        # session_check_interval pour garantir au moins un cycle complet de battement.
+        "grace_period_seconds": 90,
     },
     "child_tray": {
         "poll_interval_seconds": 15,

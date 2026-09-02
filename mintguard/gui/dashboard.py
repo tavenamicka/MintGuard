@@ -18,11 +18,21 @@ from datetime import datetime
 from datetime import time as dt_time
 
 from PyQt6.QtCore import QTimer
-from PyQt6.QtWidgets import QComboBox, QHBoxLayout, QLabel, QProgressBar, QPushButton, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import (
+    QApplication,
+    QComboBox,
+    QHBoxLayout,
+    QLabel,
+    QProgressBar,
+    QPushButton,
+    QVBoxLayout,
+    QWidget,
+)
 
 from mintguard.backend.usage_tracker import UsageTracker
 from mintguard.db.database import get_session
 from mintguard.db.models import ActivityLog, BlockedSite, Child, TimeRule
+from mintguard.gui.daemon_control import is_daemon_active, start_daemon_via_polkit
 from mintguard.gui.widgets import Card, heading, small_label
 from mintguard.locales.loader import I18nLoader
 from mintguard.utils.formatters import format_duration, format_percentage, utc_to_local
@@ -72,6 +82,23 @@ class DashboardScreen(QWidget):
         self.add_child_button.clicked.connect(self.open_add_child)
         selector_row.addWidget(self.add_child_button)
         layout.addLayout(selector_row)
+
+        # Carte d'activation : distincte de status_card ci-dessous (qui reflète les règles en
+        # BD, pas le daemon - voir sa docstring de classe). Sans elle, l'étape "sudo systemctl
+        # start mintguard-daemon" du manuel d'installation restait une commande de terminal
+        # hors de portée d'un parent non-technique (voir SUIVI.md). Masquée dès que le daemon
+        # répond, montrée sinon - vérifié au même rythme que le reste (_live_refresh_timer).
+        self.daemon_card = Card()
+        self.daemon_title = heading(self.i18n("dashboard.daemon_inactive_title"), "h3")
+        self.daemon_card.add(self.daemon_title)
+        self.daemon_body = QLabel(self.i18n("dashboard.daemon_inactive_body"))
+        self.daemon_body.setWordWrap(True)
+        self.daemon_card.add(self.daemon_body)
+        self.daemon_activate_button = QPushButton(self.i18n("dashboard.daemon_activate_button"))
+        self.daemon_activate_button.clicked.connect(self._activate_daemon)
+        self.daemon_card.add(self.daemon_activate_button)
+        self.daemon_card.hide()
+        layout.addWidget(self.daemon_card)
 
         self.status_card = Card()
         self.status_label = heading("", "h3")
@@ -140,6 +167,7 @@ class DashboardScreen(QWidget):
         return self.child_combo.currentData()
 
     def _refresh(self) -> None:
+        self._refresh_daemon_status()
         child_id = self.selected_child_id
         if child_id is None:
             self.status_label.setText(self.i18n("dashboard.no_children"))
@@ -167,6 +195,34 @@ class DashboardScreen(QWidget):
         self.window_label.setText(self._today_window_text(window))
         self._refresh_usage(child_id, window)
         self.restriction_value.setText(self._last_restriction_text(child_id))
+
+    def _refresh_daemon_status(self) -> None:
+        # N'écrase pas la carte pendant qu'une activation est en cours (bouton désactivé,
+        # voir _activate_daemon) : un poll du timer de rafraîchissement (5s) pendant que
+        # pkexec attend une saisie ne doit pas remettre le bouton dans son état initial.
+        if not self.daemon_activate_button.isEnabled() and self.daemon_card.isVisible():
+            return
+        self.daemon_card.setVisible(not is_daemon_active())
+
+    def _activate_daemon(self) -> None:
+        self.daemon_activate_button.setEnabled(False)
+        self.daemon_activate_button.setText(self.i18n("dashboard.daemon_activating"))
+        # `pkexec` bloque le thread GUI le temps que le parent réponde à la fenêtre système
+        # (comme la réinitialisation du PIN, voir dialogs.py) - acceptable pour une action
+        # ponctuelle et volontaire déclenchée par un clic, pas un besoin d'asynchronisme ici.
+        QApplication.processEvents()
+        result = start_daemon_via_polkit()
+
+        if result is None:
+            self.daemon_body.setText(self.i18n("dashboard.daemon_activation_unavailable"))
+        elif result:
+            self.daemon_body.setText(self.i18n("dashboard.daemon_activated"))
+            self.daemon_card.hide()
+        else:
+            self.daemon_body.setText(self.i18n("dashboard.daemon_activation_failed"))
+
+        self.daemon_activate_button.setEnabled(True)
+        self.daemon_activate_button.setText(self.i18n("dashboard.daemon_activate_button"))
 
     def _is_protection_active(self, child_id: int) -> bool:
         session = get_session()
@@ -243,6 +299,8 @@ class DashboardScreen(QWidget):
             label = self.i18n("dashboard.restriction_app_blocked").format(details or "?")
         elif action == "time_limit_hit":
             label = self.i18n("dashboard.restriction_time_limit_hit")
+        elif action == "daily_budget_hit":
+            label = self.i18n("dashboard.restriction_daily_budget_hit")
         else:
             label = action
         return f"{label} ({time_str})"

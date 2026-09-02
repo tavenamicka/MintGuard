@@ -108,6 +108,73 @@ def test_start_actually_exits_the_event_loop_for_non_child_account(monkeypatch, 
     assert exit_code == 0
 
 
+def test_grace_period_shows_countdown_overlay(monkeypatch, qapp):
+    tray = ChildTray(qapp)
+    monkeypatch.setattr(
+        child_tray,
+        "query_status",
+        lambda: {"is_child": True, "minutes_remaining": 0, "grace_seconds_remaining": 45, "recent_blocks": []},
+    )
+
+    tray.poll()
+
+    assert tray.grace_overlay.isVisible()
+    assert "45" in tray.grace_overlay._body.text()
+
+
+def test_grace_overlay_hides_once_grace_clears(monkeypatch, qapp):
+    """Le parent corrige les réglages (ou un nouveau jour démarre) pendant la grâce : l'écran
+    de compte à rebours doit disparaître, pas rester affiché indéfiniment."""
+    tray = ChildTray(qapp)
+    monkeypatch.setattr(
+        child_tray,
+        "query_status",
+        lambda: {"is_child": True, "minutes_remaining": 0, "grace_seconds_remaining": 10, "recent_blocks": []},
+    )
+    tray.poll()
+    assert tray.grace_overlay.isVisible()
+
+    monkeypatch.setattr(
+        child_tray,
+        "query_status",
+        lambda: {"is_child": True, "minutes_remaining": 30, "grace_seconds_remaining": None, "recent_blocks": []},
+    )
+    tray.poll()
+
+    assert not tray.grace_overlay.isVisible()
+
+
+def test_grace_countdown_ticks_down_locally_between_polls(monkeypatch, qapp):
+    tray = ChildTray(qapp)
+    monkeypatch.setattr(
+        child_tray,
+        "query_status",
+        lambda: {"is_child": True, "minutes_remaining": 0, "grace_seconds_remaining": 30, "recent_blocks": []},
+    )
+    tray.poll()
+    assert tray._grace_seconds_left == 30
+
+    tray._tick_grace_countdown()
+
+    assert tray._grace_seconds_left == 29
+    assert "29" in tray.grace_overlay._body.text()
+
+
+def test_warning_threshold_also_shows_a_banner(monkeypatch, qapp):
+    """Le popup systray n'est pas garanti visible selon le bureau (voir manuel utilisateur) -
+    le bandeau doit s'afficher en plus, pas seulement le popup."""
+    tray = ChildTray(qapp)
+    tray.thresholds = [5]
+    monkeypatch.setattr(tray.tray, "showMessage", lambda title, msg, icon: None)
+    monkeypatch.setattr(
+        child_tray, "query_status", lambda: {"is_child": True, "minutes_remaining": 5, "recent_blocks": []}
+    )
+
+    tray.poll()
+
+    assert tray.banner.isVisible()
+
+
 def test_notifies_new_blocked_app_once(monkeypatch, qapp):
     tray = ChildTray(qapp)
     messages = []

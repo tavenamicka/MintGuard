@@ -80,6 +80,20 @@ def test_build_status_child_sees_own_minutes_remaining(monkeypatch):
     assert status["recent_blocks"] == []
 
 
+def test_build_status_includes_grace_seconds_remaining(monkeypatch):
+    add_child("emma")
+    monkeypatch.setattr(
+        "mintguard.backend.status_server.pwd.getpwuid",
+        _fake_getpwuid({FAKE_CHILD_UID: "emma"}),
+    )
+    scheduler = Scheduler()
+    monkeypatch.setattr(scheduler, "get_grace_seconds_remaining", lambda child_id: 42)
+
+    status = StatusServer(scheduler)._build_status(FAKE_CHILD_UID)
+
+    assert status["grace_seconds_remaining"] == 42
+
+
 def test_build_status_includes_only_this_childs_recent_blocks(monkeypatch):
     emma_id = add_child("emma")
     add_child("louis")
@@ -132,7 +146,12 @@ def test_real_socket_roundtrip_returns_own_status_only(tmp_path, monkeypatch):
         client.sendall((json.dumps({"cmd": "status"}) + "\n").encode("utf-8"))
         response = json.loads(client.recv(4096).decode("utf-8"))
 
-    assert response == {"is_child": True, "minutes_remaining": 5, "recent_blocks": ["minecraft"]}
+    assert response == {
+        "is_child": True,
+        "minutes_remaining": 5,
+        "grace_seconds_remaining": None,
+        "recent_blocks": ["minecraft"],
+    }
 
 
 def _fake_getpwuid(uid_to_username: dict[int, str]):

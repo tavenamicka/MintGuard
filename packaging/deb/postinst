@@ -85,14 +85,17 @@ case "$1" in
 
 == Installation terminee ==
 
-Le daemon n'est PAS encore lance. Pour le demarrer explicitement :
+La protection n'est PAS encore active (demarrage volontairement non automatique
+ici : il change la resolution DNS de toute la machine - voir SUIVI.md). Pour
+l'activer, ouvrez MintGuard (entree "MintGuard" dans le menu des applications,
+ou 'mintguard' depuis un terminal) : un bouton "Activer la protection maintenant"
+s'affiche tant qu'elle n'est pas active, et gere le demarrage a votre place (une
+seule fenetre de confirmation systeme a valider, rien a taper).
+
+Alternative pour un usage technique/scripte :
     sudo systemctl start mintguard-daemon
     sudo systemctl status mintguard-daemon
     sudo journalctl -u mintguard-daemon -f
-
-Pour l'interface graphique parent (compte utilisateur normal, pas root) :
-    /opt/mintguard/venv/bin/mintguard
-(une entree "MintGuard" est aussi disponible dans le menu des applications)
 
 IMPORTANT si vous venez d'etre ajoute au groupe $ADMIN_GROUP a l'instant :
 deconnexion/reconnexion necessaire (ou 'newgrp $ADMIN_GROUP' dans le shell

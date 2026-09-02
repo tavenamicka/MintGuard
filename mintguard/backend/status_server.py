@@ -35,8 +35,9 @@ _RECENT_BLOCKS_WINDOW_SECONDS = 30
 
 class StatusServer:
     """Socket Unix local, lecture seule : permet à un compte enfant (aucun accès à la BD
-    partagée, voir database.py) de connaître son propre temps restant et ses applis bloquées
-    récemment, sans exposer quoi que ce soit d'un autre compte.
+    partagée, voir database.py) de connaître son propre temps restant, sa période de grâce en
+    cours le cas échéant (voir Scheduler._grace_deadlines) et ses applis bloquées récemment,
+    sans exposer quoi que ce soit d'un autre compte.
 
     Pas de canal push : le client (mintguard-child-tray) interroge par polling. Une
     connexion = un échange (une ligne JSON en requête, une ligne JSON en réponse), pas de
@@ -126,5 +127,6 @@ class StatusServer:
         return {
             "is_child": True,
             "minutes_remaining": self.scheduler.get_minutes_remaining(child.id),
+            "grace_seconds_remaining": self.scheduler.get_grace_seconds_remaining(child.id),
             "recent_blocks": recent_blocks,
         }

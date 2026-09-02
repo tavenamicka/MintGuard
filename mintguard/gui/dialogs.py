@@ -47,6 +47,27 @@ def _confirm_admin_identity() -> bool | None:
         return False
 
 
+def _confirm_forgot_pin(i18n: I18nLoader, parent=None) -> bool:
+    """Confirmation avant d'ouvrir la fenêtre système polkit (voir `_confirm_admin_identity`)
+    - extrait de `PinDialog._forgot_pin` pour rester mockable isolément dans les tests, comme
+    `_confirm_admin_identity` déjà.
+
+    Boutons construits à la main plutôt que `QMessageBox.question(..., StandardButton.Yes/No)`
+    : ces boutons standards se traduisent selon la locale du SYSTÈME (traductions Qt
+    intégrées), pas selon la langue choisie dans MintGuard - un parent ayant mis l'appli en
+    français sur un système en anglais verrait un mélange des deux langues juste avant une
+    étape déjà déstabilisante (fenêtre système inconnue à suivre)."""
+    box = QMessageBox(parent)
+    box.setIcon(QMessageBox.Icon.Question)
+    box.setWindowTitle(i18n("pin_dialog.forgot_link"))
+    box.setText(i18n("pin_dialog.forgot_explain"))
+    continue_button = box.addButton(i18n("pin_dialog.forgot_continue_button"), QMessageBox.ButtonRole.YesRole)
+    box.addButton(i18n("common.cancel"), QMessageBox.ButtonRole.NoRole)
+    box.setDefaultButton(continue_button)
+    box.exec()
+    return box.clickedButton() is continue_button
+
+
 class HelpDialog(QDialog):
     """Popup d'aide contextuelle en langage simple — cf. wireframe 'Qu'est-ce que bloquer?'."""
 
@@ -175,13 +196,7 @@ class PinDialog(QDialog):
             self.pin_input.setFocus()
 
     def _forgot_pin(self) -> None:
-        proceed = QMessageBox.question(
-            self,
-            self.i18n("pin_dialog.forgot_link"),
-            self.i18n("pin_dialog.forgot_explain"),
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-        )
-        if proceed != QMessageBox.StandardButton.Yes:
+        if not _confirm_forgot_pin(self.i18n, self):
             return
 
         identity_ok = _confirm_admin_identity()

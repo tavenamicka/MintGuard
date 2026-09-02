@@ -113,7 +113,9 @@ class ReportsWindow(QDialog):
         finally:
             session.close()
 
-        time_limit_hits = sum(1 for action, _ in entries if action == "time_limit_hit")
+        time_limit_hits = sum(
+            1 for action, _ in entries if action in ("time_limit_hit", "daily_budget_hit")
+        )
         self.time_limit_label.setText(
             self.i18n("reports.time_limit_hits").format(time_limit_hits)
             if time_limit_hits > 0

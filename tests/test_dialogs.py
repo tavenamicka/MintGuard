@@ -110,9 +110,49 @@ def test_set_pin_dialog_rejects_mismatched_pins():
     assert dialog._error_label.isHidden() is False
 
 
+def _click_button_with_role(monkeypatch, role):
+    """Simule un clic sur le bouton du rôle donné dans le prochain QMessageBox.exec() appelé -
+    QMessageBox.exec() est bloquant (attend un vrai clic), impossible à automatiser autrement
+    sans faire tourner une vraie boucle d'événements."""
+
+    def fake_exec(self):
+        for button in self.buttons():
+            if self.buttonRole(button) == role:
+                button.click()
+                return
+
+    monkeypatch.setattr(QMessageBox, "exec", fake_exec)
+
+
+def test_confirm_forgot_pin_true_when_continue_clicked(monkeypatch):
+    _click_button_with_role(monkeypatch, QMessageBox.ButtonRole.YesRole)
+    assert dialogs_module._confirm_forgot_pin(I18nLoader("fr")) is True
+
+
+def test_confirm_forgot_pin_false_when_cancel_clicked(monkeypatch):
+    _click_button_with_role(monkeypatch, QMessageBox.ButtonRole.NoRole)
+    assert dialogs_module._confirm_forgot_pin(I18nLoader("fr")) is False
+
+
+def test_confirm_forgot_pin_buttons_use_app_language_not_system_locale(monkeypatch):
+    """Régression : les anciens boutons standard Oui/Non de Qt se traduisent selon la locale
+    système, pas selon la langue choisie dans MintGuard - vérifie que le texte affiché vient
+    bien de i18n, pas de Qt."""
+    captured = {}
+
+    def fake_exec(self):
+        captured["labels"] = [button.text() for button in self.buttons()]
+
+    monkeypatch.setattr(QMessageBox, "exec", fake_exec)
+    dialogs_module._confirm_forgot_pin(I18nLoader("fr"))
+
+    assert "Continuer" in captured["labels"]
+    assert "Annuler" in captured["labels"]
+
+
 def test_forgot_pin_writes_new_pin_when_authenticated(monkeypatch):
     set_parent_pin("1234")
-    monkeypatch.setattr(QMessageBox, "question", lambda *a, **k: QMessageBox.StandardButton.Yes)
+    monkeypatch.setattr(dialogs_module, "_confirm_forgot_pin", lambda i18n, parent=None: True)
     monkeypatch.setattr(dialogs_module, "_confirm_admin_identity", lambda: True)
     monkeypatch.setattr(SetPinDialog, "prompt", staticmethod(lambda i18n, parent=None: "5678"))
 
@@ -131,7 +171,7 @@ def test_forgot_pin_writes_new_pin_when_authenticated(monkeypatch):
 
 def test_forgot_pin_does_nothing_if_confirmation_declined(monkeypatch):
     set_parent_pin("1234")
-    monkeypatch.setattr(QMessageBox, "question", lambda *a, **k: QMessageBox.StandardButton.No)
+    monkeypatch.setattr(dialogs_module, "_confirm_forgot_pin", lambda i18n, parent=None: False)
     called = []
     monkeypatch.setattr(dialogs_module, "_confirm_admin_identity", lambda: called.append(1) or True)
 
@@ -144,7 +184,7 @@ def test_forgot_pin_does_nothing_if_confirmation_declined(monkeypatch):
 
 def test_forgot_pin_shows_error_when_polkit_unavailable(monkeypatch):
     set_parent_pin("1234")
-    monkeypatch.setattr(QMessageBox, "question", lambda *a, **k: QMessageBox.StandardButton.Yes)
+    monkeypatch.setattr(dialogs_module, "_confirm_forgot_pin", lambda i18n, parent=None: True)
     monkeypatch.setattr(dialogs_module, "_confirm_admin_identity", lambda: None)
 
     dialog = PinDialog(I18nLoader("fr"))
@@ -162,7 +202,7 @@ def test_forgot_pin_shows_error_when_polkit_unavailable(monkeypatch):
 
 def test_forgot_pin_shows_error_when_authentication_fails(monkeypatch):
     set_parent_pin("1234")
-    monkeypatch.setattr(QMessageBox, "question", lambda *a, **k: QMessageBox.StandardButton.Yes)
+    monkeypatch.setattr(dialogs_module, "_confirm_forgot_pin", lambda i18n, parent=None: True)
     monkeypatch.setattr(dialogs_module, "_confirm_admin_identity", lambda: False)
 
     dialog = PinDialog(I18nLoader("fr"))
@@ -174,7 +214,7 @@ def test_forgot_pin_shows_error_when_authentication_fails(monkeypatch):
 
 def test_forgot_pin_keeps_old_pin_if_new_pin_dialog_cancelled(monkeypatch):
     set_parent_pin("1234")
-    monkeypatch.setattr(QMessageBox, "question", lambda *a, **k: QMessageBox.StandardButton.Yes)
+    monkeypatch.setattr(dialogs_module, "_confirm_forgot_pin", lambda i18n, parent=None: True)
     monkeypatch.setattr(dialogs_module, "_confirm_admin_identity", lambda: True)
     monkeypatch.setattr(SetPinDialog, "prompt", staticmethod(lambda i18n, parent=None: None))
 

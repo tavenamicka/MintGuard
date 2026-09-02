@@ -295,3 +295,65 @@ def test_open_add_child_does_nothing_when_dialog_cancelled(monkeypatch):
     screen.open_add_child()
 
     assert screen.child_combo.count() == 1
+
+
+# -- Carte d'activation du daemon (voir SUIVI.md, point 2 de la revue UX) ------------------
+
+
+def test_daemon_card_hidden_when_daemon_active(monkeypatch):
+    from mintguard.gui import dashboard
+
+    monkeypatch.setattr(dashboard, "is_daemon_active", lambda: True)
+    screen = DashboardScreen(I18nLoader("fr"))
+    assert screen.daemon_card.isHidden() is True
+
+
+def test_daemon_card_shown_when_daemon_inactive(monkeypatch):
+    from mintguard.gui import dashboard
+
+    monkeypatch.setattr(dashboard, "is_daemon_active", lambda: False)
+    screen = DashboardScreen(I18nLoader("fr"))
+    screen._refresh()
+    assert screen.daemon_card.isHidden() is False
+
+
+def test_activate_daemon_success_hides_card(monkeypatch):
+    from mintguard.gui import dashboard
+
+    monkeypatch.setattr(dashboard, "is_daemon_active", lambda: False)
+    monkeypatch.setattr(dashboard, "start_daemon_via_polkit", lambda: True)
+    screen = DashboardScreen(I18nLoader("fr"))
+    screen._refresh()
+    assert screen.daemon_card.isHidden() is False
+
+    screen._activate_daemon()
+
+    assert screen.daemon_card.isHidden() is True
+    assert screen.daemon_activate_button.isEnabled() is True
+
+
+def test_activate_daemon_failure_keeps_card_with_explanation(monkeypatch):
+    from mintguard.gui import dashboard
+
+    monkeypatch.setattr(dashboard, "is_daemon_active", lambda: False)
+    monkeypatch.setattr(dashboard, "start_daemon_via_polkit", lambda: False)
+    screen = DashboardScreen(I18nLoader("fr"))
+    screen._refresh()
+
+    screen._activate_daemon()
+
+    assert screen.daemon_card.isHidden() is False
+    assert "annulée" in screen.daemon_body.text() or "autorisée" in screen.daemon_body.text()
+
+
+def test_activate_daemon_missing_pkexec_shows_unavailable_message(monkeypatch):
+    from mintguard.gui import dashboard
+
+    monkeypatch.setattr(dashboard, "is_daemon_active", lambda: False)
+    monkeypatch.setattr(dashboard, "start_daemon_via_polkit", lambda: None)
+    screen = DashboardScreen(I18nLoader("fr"))
+    screen._refresh()
+
+    screen._activate_daemon()
+
+    assert "composant manquant" in screen.daemon_body.text()

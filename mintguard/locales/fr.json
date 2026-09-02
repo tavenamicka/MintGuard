@@ -7,7 +7,11 @@
   "child_tray": {
     "tooltip_minutes": "MintGuard : {0} min restantes",
     "warning_minutes_left": "Encore {0} minute(s) avant la fin de ta session.",
-    "app_blocked": "{0} a été fermé : application non autorisée."
+    "app_blocked": "{0} a été fermé : application non autorisée.",
+    "session_ending_title": "Ton temps est terminé pour aujourd'hui",
+    "session_ending_body": "Pense à enregistrer ton travail. Fermeture dans {0} secondes.",
+    "session_ending_body_now": "Fermeture en cours...",
+    "session_ending_footer": "À demain !"
   },
   "parent_tray": {
     "tooltip_checking": "MintGuard : vérification en cours...",
@@ -48,7 +52,15 @@
     "no_children": "Aucun enfant configuré. Relancez l'assistant de configuration.",
     "restriction_app_blocked": "Application bloquée : {0}",
     "restriction_time_limit_hit": "Limite de temps atteinte",
-    "add_child": "Ajouter un enfant"
+    "restriction_daily_budget_hit": "Limite de temps quotidienne atteinte",
+    "add_child": "Ajouter un enfant",
+    "daemon_inactive_title": "La protection n'est pas encore activée",
+    "daemon_inactive_body": "Il manque une dernière étape pour que MintGuard protège réellement cet ordinateur.",
+    "daemon_activate_button": "Activer la protection maintenant",
+    "daemon_activating": "Activation en cours...",
+    "daemon_activated": "Protection activée ✓",
+    "daemon_activation_unavailable": "Impossible d'activer automatiquement (composant manquant). Contactez la personne qui a installé MintGuard.",
+    "daemon_activation_failed": "Activation annulée ou non autorisée. Réessayez, ou contactez la personne qui a installé MintGuard."
   },
   "settings": {
     "title": "Paramètres",
@@ -79,9 +91,9 @@
     "apply_whole_week": "Toute la semaine",
     "apply_weekdays": "Lundi-Vendredi",
     "apply_weekend": "Week-end",
-    "limit_daily_time": "Limiter aussi le temps d'utilisation",
+    "limit_daily_time": "Limiter le temps d'utilisation par jour",
     "minutes_per_day_suffix": " min/jour",
-    "app_quota_checkbox": "Autoriser un temps limité au lieu d'un blocage total"
+    "app_quota_checkbox": "Limiter le temps d'utilisation par jour (au lieu d'un blocage total)"
   },
   "time": {
     "monday": "Lundi",
@@ -97,7 +109,7 @@
   },
   "help": {
     "what_is_blocking": "Qu'est-ce que 'bloquer'?",
-    "blocking_explanation": "Si vous bloquez un site, votre enfant ne peut pas le visiter. Il verra un message: 'Cette page est bloquée'.",
+    "blocking_explanation": "Si vous bloquez un site, votre enfant ne peut pas le visiter. Il ne verra pas de message MintGuard, mais l'écran d'erreur habituel de son navigateur (par exemple « Impossible d'établir une connexion ») : c'est normal, ça signifie que le blocage fonctionne, pas qu'internet ne marche pas.",
     "how_it_works": "Comment ça marche?",
     "how_it_works_explanation": "L'application MintGuard voit quels sites et applications votre enfant utilise, puis applique les restrictions que vous avez configurées.",
     "what_is_category": "Qu'est-ce qu'une catégorie?",
@@ -107,7 +119,11 @@
     "what_is_time_limit": "Qu'est-ce que la limite de temps ?",
     "time_limit_explanation": "En dehors des heures autorisées, la session de votre enfant se ferme automatiquement. Vous pouvez changer ces heures à tout moment.",
     "what_is_app_blocking": "Qu'est-ce que bloquer une application ?",
-    "app_blocking_explanation": "Si vous bloquez une application, votre enfant ne pourra plus l'ouvrir. Si elle est déjà lancée, elle se ferme automatiquement."
+    "app_blocking_explanation": "Si vous bloquez une application, votre enfant ne pourra plus l'ouvrir. Si elle est déjà lancée, elle se ferme automatiquement.",
+    "what_is_daily_budget": "Qu'est-ce qu'une limite de temps quotidienne ?",
+    "daily_budget_explanation": "En plus des horaires ci-dessus, vous pouvez fixer un nombre maximal de minutes utilisées par jour. Une fois ce temps dépassé, la session de votre enfant se ferme automatiquement pour le reste de la journée.",
+    "what_is_app_quota": "Qu'est-ce qu'un temps limité pour une application ?",
+    "app_quota_explanation": "Au lieu de bloquer complètement l'application, vous autorisez votre enfant à l'utiliser jusqu'à un nombre de minutes par jour. Une fois ce temps dépassé, l'application se ferme automatiquement jusqu'au lendemain."
   },
   "messages": {
     "protection_enabled": "Protection activée ✓",
@@ -184,7 +200,8 @@
     "error": "Code PIN incorrect",
     "locked_out": "Trop d'essais incorrects. Réessayez dans {0} secondes.",
     "forgot_link": "Code PIN oublié ?",
-    "forgot_explain": "Pour définir un nouveau code, vous devrez confirmer avec le mot de passe de VOTRE compte (celui utilisé pour ouvrir une session sur cet ordinateur). Une fenêtre du système va s'ouvrir. Continuer ?",
+    "forgot_explain": "Pour définir un nouveau code, vous devrez confirmer avec le mot de passe de VOTRE compte (celui utilisé pour ouvrir une session sur cet ordinateur). Une fenêtre du système va s'ouvrir — c'est normal, ce n'est pas un piège : ce n'est pas MintGuard qui vous le demande, et ce mot de passe n'est jamais vu ni conservé par l'application.",
+    "forgot_continue_button": "Continuer",
     "forgot_unavailable": "La réinitialisation n'est pas disponible sur ce système (composant manquant). Contactez la personne qui a installé MintGuard.",
     "forgot_failed": "Authentification annulée ou incorrecte. Le code PIN n'a pas été modifié.",
     "new_pin_title": "Définir un nouveau code PIN"

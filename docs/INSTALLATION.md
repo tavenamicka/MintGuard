@@ -23,11 +23,13 @@ sudo apt install ./dist/mintguard_0.1.0-1_all.deb
 
 `apt install` (plutôt que `dpkg -i`) résout automatiquement les dépendances système (`libxcb-cursor0`, `dnsmasq`, `python3-venv`). Le `.deb` généré peut être copié tel quel sur un autre poste Linux Mint/Ubuntu et installé de la même façon, sans avoir besoin de cloner le dépôt dessus.
 
-Comme pour `install.sh`, le service n'est **pas démarré automatiquement** :
+Comme pour `install.sh`, le service n'est **pas démarré automatiquement** (démarrage volontairement laissé à une action explicite — voir `SUIVI.md`, il change la résolution DNS de toute la machine) :
 
 ```bash
 sudo systemctl start mintguard-daemon
 ```
+
+Pour un parent utilisateur final, cette commande n'est plus nécessaire : au premier lancement, le Tableau de bord affiche un bouton **« Activer la protection maintenant »** tant que le daemon ne répond pas, qui déclenche ce même démarrage via une fenêtre de confirmation système (polkit) — voir `mintguard/gui/daemon_control.py`. La commande ci-dessus reste utile pour un usage scripté/technique.
 
 Désinstallation : `sudo apt remove mintguard` (garde BD/logs/config) ou `sudo apt purge mintguard` (supprime tout — équivalent de `uninstall.sh --purge`).
 

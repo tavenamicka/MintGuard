@@ -35,7 +35,9 @@ Beim ersten Start führt Sie ein Assistent in 6 Schritten:
    Sie können später alles in den Einstellungen ändern — dies sind nur Ausgangspunkte.
 4. **PIN-Code** — ein 4-stelliger Code (bis zu 8 Stellen), der den Zugriff auf Einstellungen und Berichte schützt. **Notieren Sie ihn sicher**: siehe Abschnitt [Sicherheit und Datenschutz](#5-sicherheit-und-datenschutz), was passiert, wenn Sie ihn vergessen.
 5. **So funktioniert's** — eine visuelle Erinnerung an das Prinzip (MintGuard beobachtet, wendet Regeln an, informiert Sie).
-6. **Fertig!** — der Schutz ist aktiv, weiter geht's zum Dashboard.
+6. **Fertig!** — Ihre Einstellungen sind gespeichert, weiter geht's zum Dashboard.
+
+**Möglicher letzter Schritt**: Wenn das Dashboard das Banner **„Der Schutz ist noch nicht aktiv"** anzeigt, klicken Sie auf **„Schutz jetzt aktivieren"**. Es öffnet sich ein einziges Systemfenster zur Bestätigung (Ihr übliches Passwort) — danach läuft der Schutz wirklich, auch bei geschlossenem Hauptfenster. Dieses Banner erscheint danach normalerweise nicht mehr (der Schutz startet von selbst mit dem Computer), außer bei einem Systemproblem — klicken Sie dann einfach erneut darauf.
 
 ---
 
@@ -59,6 +61,10 @@ Ein Klick auf **Einstellungen** fragt nach Ihrem PIN-Code und öffnet dann drei 
 
 Für jeden Wochentag: ein Zeitfenster aktivieren/deaktivieren und Start- und Endzeit festlegen. Außerhalb dieses Fensters **schließt sich die Sitzung des Kindes automatisch**. Ein Symbol im Benachrichtigungsbereich des Kindes warnt einige Minuten vorher (10, 5, dann 1 Minute) und meldet geschlossene, nicht erlaubte Anwendungen — eine informative Warnung, nicht garantiert (abhängig von der Systray-Unterstützung der Arbeitsumgebung): informieren Sie Ihr Kind dennoch im Voraus über diese Regel. Ein Tag ohne aktiviertes Zeitfenster bedeutet freien Zugang an diesem Tag.
 
+In dem Moment, in dem die Zeit abgelaufen ist, wird Ihr Kind **nicht ohne Vorwarnung abgemeldet**: Ein Fenster erscheint im Vordergrund mit einem Countdown (etwa 1 bis 2 Minuten), das dazu auffordert, die Arbeit zu speichern, bevor die Sitzung tatsächlich geschlossen wird. Anders als das Systray-Popup erscheint dieses Fenster immer, unabhängig von der verwendeten Arbeitsumgebung.
+
+**Nutzungszeit pro Tag begrenzen**: Zusätzlich zum Zeitfenster können Sie „Nutzungszeit pro Tag begrenzen" aktivieren, um die insgesamt genutzten Minuten pro Tag zu begrenzen (z. B. 120 Min/Tag), selbst wenn das Zeitfenster selbst größer ist. Sobald dieses Kontingent erreicht ist, schließt sich die Sitzung des Kindes automatisch für den Rest des Tages — genau wie beim Verlassen des Zeitfensters. Am nächsten Tag beginnt das Kontingent wieder von vorn.
+
 Änderungen werden erst nach Klick auf **Speichern** wirksam.
 
 ### Reiter Webseiten
@@ -67,18 +73,22 @@ Ankreuzbare Kategorien (Soziale Netzwerke, Unterhaltung, Online-Spiele) und eine
 
 **Wichtig**: Anders als bei den Zeitplänen gilt die Seitenblockierung für den **gesamten Computer**, nicht nur für das ausgewählte Kinderkonto — da ein einziges DNS-Blockiersystem die gesamte Maschine abdeckt. Wenn sich mehrere Kinder denselben Computer teilen, teilen sie sich dieselbe Liste blockierter Seiten.
 
+**Was Ihr Kind tatsächlich sieht**: MintGuard zeigt keine Seite „Diese Seite ist gesperrt" an. Die Sperrung erfolgt auf Netzwerkebene (DNS), noch bevor die Seite überhaupt zu laden beginnt — Ihr Kind sieht daher die übliche Fehlerseite seines Browsers, etwa „Verbindung nicht möglich" oder „Diese Seite ist nicht erreichbar". Das ist normal: Es bedeutet, dass die Sperre funktioniert, nicht dass ein technisches Problem vorliegt. Es lohnt sich, dies Ihrem Kind im Voraus zu erklären, damit es versteht, dass eine solche Meldung eine von Ihnen gesetzte Grenze ist und kein Internetausfall.
+
 Änderungen in diesem Reiter werden **ohne Speichern-Schaltfläche** übernommen — rechnen Sie aber mit bis zu etwa dreißig Sekunden, bevor die Blockierung tatsächlich wirksam wird (die Zeit, die der Hintergrunddienst braucht, um die Liste neu einzulesen).
 
 ### Reiter Anwendungen
 
-Vier vorgeschlagene Anwendungen (Firefox, Chrome, Discord, Steam) zum Ankreuzen, plus eine eigene Liste für weitere Programmnamen. Eine bereits laufende blockierte Anwendung wird innerhalb weniger Sekunden automatisch geschlossen. Wie bei Webseiten gilt dies für den gesamten Computer.
+Auf dem Computer installierte Anwendungen werden automatisch erkannt und nach Kategorie zum Ankreuzen angeboten, plus eine eigene Liste für weitere Programmnamen. Eine bereits laufende blockierte Anwendung wird innerhalb weniger Sekunden automatisch geschlossen. Wie bei Webseiten gilt dies für den gesamten Computer.
+
+**Nutzungszeit pro Tag begrenzen (statt vollständiger Sperre)**: Für eine angekreuzte Anwendung können Sie „Nutzungszeit pro Tag begrenzen" aktivieren, statt sie vollständig zu sperren. Ihr Kind kann sie dann bis zu der von Ihnen festgelegten Minutenzahl pro Tag nutzen (z. B. 30 Min/Tag); sobald diese Zeit überschritten ist, schließt sich die Anwendung automatisch und lässt sich bis zum nächsten Tag nicht mehr öffnen.
 
 ---
 
 ## 5. Sicherheit und Datenschutz
 
 - **Der PIN-Code** schützt den Zugriff auf Einstellungen und Berichte. Er wird sicher gespeichert (nie im Klartext).
-- **PIN vergessen?** Klicken Sie im Eingabefenster auf „PIN vergessen?". MintGuard bittet Sie, sich mit **dem Passwort Ihres eigenen Kontos** zu bestätigen (das, mit dem Sie sich an diesem Computer anmelden) — über ein Systemfenster, wie es zum Beispiel beim Installieren eines Updates erscheint. Dieses Passwort wird niemals von MintGuard selbst verwaltet oder gespeichert. Nach der Bestätigung können Sie sofort einen neuen PIN festlegen.
+- **PIN vergessen?** Klicken Sie im Eingabefenster auf „PIN vergessen?". MintGuard zeigt zunächst eine Meldung, die erklärt, was als Nächstes passiert, bevor sich ein Systemfenster öffnet — damit dieses Fenster keine Überraschung ist. Sie müssen sich dann über dieses Systemfenster mit **dem Passwort Ihres eigenen Kontos** bestätigen (das, mit dem Sie sich an diesem Computer anmelden) — wie es zum Beispiel beim Installieren eines Updates erscheint. Dieses Passwort wird niemals von MintGuard selbst verwaltet oder gespeichert. Nach der Bestätigung können Sie sofort einen neuen PIN festlegen.
 - Die Aktivitätsprotokolle und die Datenbank von MintGuard sind nur für ein Administratorkonto lesbar — Ihr Kind hat keinen Zugriff darauf, selbst wenn es weiß, wo es suchen muss.
 
 ---
@@ -87,7 +97,7 @@ Vier vorgeschlagene Anwendungen (Firefox, Chrome, Discord, Steam) zum Ankreuzen,
 
 Der Reiter **Berichte** (PIN-geschützt) zeigt für die letzten 7 Tage und pro Kind:
 - Blockierte Anwendungen und wie oft jede geschlossen wurde.
-- Wie oft das Zeitlimit erreicht wurde (automatische Sitzungsschließung).
+- Wie oft das Zeitlimit erreicht wurde (automatische Sitzungsschließung) — ob durch Verlassen des erlaubten Zeitfensters oder durch Überschreiten eines täglichen Minutenkontingents.
 
 **MintGuard zeigt keine „insgesamt genutzte Bildschirmzeit" an**: Die Anwendung misst nicht durchgehend die Sitzungsdauer, sondern nur Blockierungsereignisse. Dies ist eine bewusste Entscheidung — anstatt eine ungefähre Zahl zu erfinden, zeigen wir lieber nichts an, was Sie nicht selbst vollständig überprüfen könnten.
 

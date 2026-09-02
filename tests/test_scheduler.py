@@ -20,7 +20,7 @@
 boucle du daemon) alors que c'est lui qui décide de fermer la session d'un enfant.
 """
 
-from datetime import datetime, time as dt_time
+from datetime import datetime, time as dt_time, timedelta
 
 import pytest
 
@@ -90,7 +90,7 @@ def test_child_inside_allowed_window_is_left_alone(manager):
 
 def test_child_outside_allowed_window_is_logged_out(manager):
     add_child()
-    assert Scheduler(manager).check_all_children(WEDNESDAY.replace(hour=22)) == ["emma"]
+    assert Scheduler(manager, grace_period_seconds=0).check_all_children(WEDNESDAY.replace(hour=22)) == ["emma"]
     assert manager.terminated == ["emma"]
 
 
@@ -132,7 +132,7 @@ def test_second_window_of_the_day_keeps_child_connected(manager):
 
 def test_logout_is_journalised_for_the_right_child(manager):
     child_id = add_child()
-    Scheduler(manager).check_all_children(WEDNESDAY.replace(hour=22))
+    Scheduler(manager, grace_period_seconds=0).check_all_children(WEDNESDAY.replace(hour=22))
 
     session = get_session()
     logs = session.query(ActivityLog).all()
@@ -145,7 +145,7 @@ def test_only_the_child_out_of_window_is_logged_out(manager):
     add_child(username="emma", start=(16, 0), end=(20, 0))
     add_child(username="louis", start=(8, 0), end=(23, 0))
 
-    assert Scheduler(manager).check_all_children(WEDNESDAY.replace(hour=22)) == ["emma"]
+    assert Scheduler(manager, grace_period_seconds=0).check_all_children(WEDNESDAY.replace(hour=22)) == ["emma"]
 
 
 def test_minutes_remaining_none_without_rule_today(manager):
@@ -169,7 +169,7 @@ def test_child_within_window_but_over_budget_is_logged_out(manager):
     now = WEDNESDAY.replace(hour=17)
     set_usage_today(child_id, seconds_used=120 * 60, now=now)
 
-    assert Scheduler(manager).check_all_children(now) == ["emma"]
+    assert Scheduler(manager, grace_period_seconds=0).check_all_children(now) == ["emma"]
     assert manager.terminated == ["emma"]
 
     session = get_session()
@@ -204,3 +204,76 @@ def test_minutes_remaining_uses_window_when_budget_not_exhausted(manager):
 
     # Fenêtre: encore 15 min. Budget: 90-10=80 min restantes. La fenêtre l'emporte.
     assert Scheduler(manager).get_minutes_remaining(child_id, now) == 15
+
+
+# -- Période de grâce (voir Scheduler._apply_grace) ----------------------------------------
+
+
+def test_first_cycle_outside_window_opens_grace_without_terminating(manager):
+    add_child()
+    scheduler = Scheduler(manager, grace_period_seconds=90)
+
+    assert scheduler.check_all_children(WEDNESDAY.replace(hour=22)) == []
+    assert manager.terminated == []
+
+
+def test_grace_seconds_remaining_reflects_time_left(manager):
+    child_id = add_child()
+    scheduler = Scheduler(manager, grace_period_seconds=90)
+    t0 = WEDNESDAY.replace(hour=22)
+
+    scheduler.check_all_children(t0)
+    assert scheduler.get_grace_seconds_remaining(child_id, t0) == 90
+    assert scheduler.get_grace_seconds_remaining(child_id, t0 + timedelta(seconds=30)) == 60
+
+
+def test_grace_seconds_remaining_is_none_when_not_in_grace(manager):
+    child_id = add_child()
+    scheduler = Scheduler(manager, grace_period_seconds=90)
+    assert scheduler.get_grace_seconds_remaining(child_id, WEDNESDAY.replace(hour=18)) is None
+
+
+def test_session_is_terminated_only_once_grace_expires(manager):
+    add_child()
+    scheduler = Scheduler(manager, grace_period_seconds=90)
+    t0 = WEDNESDAY.replace(hour=22)
+
+    assert scheduler.check_all_children(t0) == []
+    assert scheduler.check_all_children(t0 + timedelta(seconds=60)) == []  # grâce pas encore écoulée
+    assert scheduler.check_all_children(t0 + timedelta(seconds=90)) == ["emma"]
+    assert manager.terminated == ["emma"]
+
+
+def test_termination_after_grace_is_still_journalised(manager):
+    child_id = add_child()
+    scheduler = Scheduler(manager, grace_period_seconds=90)
+    t0 = WEDNESDAY.replace(hour=22)
+
+    scheduler.check_all_children(t0)
+    scheduler.check_all_children(t0 + timedelta(seconds=90))
+
+    session = get_session()
+    logs = session.query(ActivityLog).all()
+    entries = [(log.child_id, log.action) for log in logs]
+    session.close()
+    assert entries == [(child_id, "time_limit_hit")]
+
+
+def test_child_back_within_window_during_grace_is_not_terminated(manager):
+    """Le parent corrige les horaires (ou l'enfant revient dans une seconde plage le même
+    jour) pendant la grâce : la coupure ne doit pas avoir lieu, et la grâce est annulée."""
+    child_id = add_child(start=(16, 0), end=(20, 0))
+    scheduler = Scheduler(manager, grace_period_seconds=90)
+    t0 = WEDNESDAY.replace(hour=22)
+
+    scheduler.check_all_children(t0)
+    assert scheduler.get_grace_seconds_remaining(child_id, t0) == 90
+
+    session = get_session()
+    session.query(TimeRule).filter_by(child_id=child_id).update({"end_hour": dt_time(23, 0)})
+    session.commit()
+    session.close()
+
+    assert scheduler.check_all_children(t0 + timedelta(seconds=90)) == []
+    assert manager.terminated == []
+    assert scheduler.get_grace_seconds_remaining(child_id, t0 + timedelta(seconds=90)) is None

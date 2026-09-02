@@ -117,6 +117,14 @@ class TimeTab(QWidget):
         quick_buttons_row.addWidget(weekend_button)
         layout.addLayout(quick_buttons_row)
 
+        budget_intro_row = QHBoxLayout()
+        budget_intro_row.addWidget(small_label(self.i18n("settings.limit_daily_time")))
+        budget_intro_row.addWidget(
+            HelpButton(self.i18n("help.what_is_daily_budget"), self.i18n("help.daily_budget_explanation"))
+        )
+        budget_intro_row.addStretch(1)
+        layout.addLayout(budget_intro_row)
+
         for day_index in range(7):
             row = QHBoxLayout()
             checkbox = QCheckBox(self.i18n(f"time.{weekday_key(day_index)}"))
@@ -379,6 +387,14 @@ class AppsTab(QWidget):
         )
         title_row.addStretch(1)
         layout.addLayout(title_row)
+
+        quota_intro_row = QHBoxLayout()
+        quota_intro_row.addWidget(small_label(self.i18n("settings.app_quota_checkbox")))
+        quota_intro_row.addWidget(
+            HelpButton(self.i18n("help.what_is_app_quota"), self.i18n("help.app_quota_explanation"))
+        )
+        quota_intro_row.addStretch(1)
+        layout.addLayout(quota_intro_row)
 
         # Détection réelle des applications installées (fichiers .desktop) plutôt qu'une
         # liste figée de 4 applis — voir SUIVI.md. Groupées par catégorie, mêmes libellés
