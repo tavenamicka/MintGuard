@@ -28,7 +28,10 @@ cp "$REPO_ROOT/setup.py" "$REPO_ROOT/requirements.txt" "$REPO_ROOT/LICENSE" "$SR
 
 echo "== Entree de menu, icone et autostart (avertissement enfant) =="
 install -D -m 644 "$PKG_DIR/mintguard.desktop" "$BUILD_DIR/usr/share/applications/mintguard.desktop"
-install -D -m 644 "$PKG_DIR/mintguard.svg" "$BUILD_DIR/usr/share/icons/hicolor/scalable/apps/mintguard.svg"
+# Source unique avec l'icone utilisee par la fenetre elle-meme (voir main_gui.py) : evite
+# deux copies divergentes du meme bouclier (trouve en usage reel - l'ancienne copie de
+# packaging/deb/ etait restee a la palette bleue d'avant la refonte "Jardin Numerique").
+install -D -m 644 "$REPO_ROOT/mintguard/gui/assets/icons/mintguard.svg" "$BUILD_DIR/usr/share/icons/hicolor/scalable/apps/mintguard.svg"
 install -D -m 644 "$PKG_DIR/mintguard-child-tray.desktop" "$BUILD_DIR/etc/xdg/autostart/mintguard-child-tray.desktop"
 install -D -m 644 "$PKG_DIR/mintguard-parent-tray.desktop" "$BUILD_DIR/etc/xdg/autostart/mintguard-parent-tray.desktop"
 

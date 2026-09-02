@@ -153,8 +153,10 @@ fi
 
 echo "== Icone et entrees de menu =="
 # Gabarits partages avec le paquet .deb (packaging/deb/), pas dupliques - voir build-deb.sh.
+# L'icone elle-meme vit dans mintguard/gui/assets/icons/ (bundlee au paquet Python, aussi
+# utilisee comme icone de fenetre par main_gui.py), pas dans packaging/deb/.
 install -D -m 644 "$REPO_ROOT/packaging/deb/mintguard.desktop" /usr/share/applications/mintguard.desktop
-install -D -m 644 "$REPO_ROOT/packaging/deb/mintguard.svg" /usr/share/icons/hicolor/scalable/apps/mintguard.svg
+install -D -m 644 "$REPO_ROOT/mintguard/gui/assets/icons/mintguard.svg" /usr/share/icons/hicolor/scalable/apps/mintguard.svg
 install -D -m 644 "$REPO_ROOT/packaging/deb/mintguard-child-tray.desktop" /etc/xdg/autostart/mintguard-child-tray.desktop
 install -D -m 644 "$REPO_ROOT/packaging/deb/mintguard-parent-tray.desktop" /etc/xdg/autostart/mintguard-parent-tray.desktop
 
