@@ -22,7 +22,8 @@ from PyQt6.QtWidgets import QDialog, QHBoxLayout, QLabel, QLineEdit, QMessageBox
 from mintguard.backend import pin_policy
 from mintguard.db.database import get_session
 from mintguard.db.models import ParentConfig
-from mintguard.gui.widgets import NumericKeypad
+from mintguard.gui.styles import COLORS
+from mintguard.gui.widgets import NumericKeypad, heading, icon_badge, small_label
 from mintguard.locales.loader import I18nLoader, get_i18n
 from mintguard.utils.security import hash_pin, verify_pin
 from mintguard.utils.validators import is_valid_pin
@@ -88,7 +89,7 @@ class HelpDialog(QDialog):
         layout.addWidget(text_label)
 
         close_button = QPushButton(get_i18n()("common.close"))
-        close_button.setObjectName("secondary")
+        close_button.setObjectName("tertiary")
         close_button.clicked.connect(self.accept)
         layout.addWidget(close_button, alignment=Qt.AlignmentFlag.AlignRight)
 
@@ -110,11 +111,18 @@ class PinDialog(QDialog):
         self.setMinimumWidth(320)
 
         layout = QVBoxLayout(self)
-        layout.addWidget(QLabel(i18n("pin_dialog.label")))
+        layout.setSpacing(12)
+
+        layout.addWidget(icon_badge("lock", size=56, icon_size=26, color=COLORS["primary"]), alignment=Qt.AlignmentFlag.AlignHCenter)
+
+        label = heading(i18n("pin_dialog.label"), "h3")
+        label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        layout.addWidget(label)
 
         self.pin_input = QLineEdit()
         self.pin_input.setEchoMode(QLineEdit.EchoMode.Password)
         self.pin_input.setMaxLength(8)
+        self.pin_input.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         self.pin_input.returnPressed.connect(self._check)
         layout.addWidget(self.pin_input)
 
@@ -125,10 +133,12 @@ class PinDialog(QDialog):
         self._error_label = QLabel("")
         self._error_label.setObjectName("danger")
         self._error_label.setWordWrap(True)
+        self._error_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         self._error_label.hide()
         layout.addWidget(self._error_label)
 
         buttons_row = QHBoxLayout()
+        buttons_row.setSpacing(10)
         cancel_button = QPushButton(i18n("common.cancel"))
         cancel_button.setObjectName("secondary")
         cancel_button.clicked.connect(self.reject)
@@ -145,9 +155,9 @@ class PinDialog(QDialog):
         # connaît déjà : le mot de passe de sa propre session, vérifié par l'agent polkit du
         # bureau (fenêtre système native) — jamais géré ou stocké par MintGuard lui-même.
         forgot_button = QPushButton(i18n("pin_dialog.forgot_link"))
-        forgot_button.setObjectName("secondary")
+        forgot_button.setObjectName("link")
         forgot_button.clicked.connect(self._forgot_pin)
-        layout.addWidget(forgot_button, alignment=Qt.AlignmentFlag.AlignRight)
+        layout.addWidget(forgot_button, alignment=Qt.AlignmentFlag.AlignHCenter)
 
         # Un verrouillage en cours doit s'appliquer dès l'ouverture : sinon il suffisait de
         # fermer et rouvrir la fenêtre pour repartir avec un compteur neuf.
@@ -247,16 +257,21 @@ class SetPinDialog(QDialog):
         self._new_pin: str | None = None
 
         layout = QVBoxLayout(self)
-        layout.addWidget(QLabel(i18n("onboarding.pin.pin_label")))
+        layout.setSpacing(12)
+        layout.addWidget(icon_badge("lock", size=56, icon_size=26, color=COLORS["primary"]), alignment=Qt.AlignmentFlag.AlignHCenter)
+
+        layout.addWidget(small_label(i18n("onboarding.pin.pin_label")))
         self.pin_input = QLineEdit()
         self.pin_input.setEchoMode(QLineEdit.EchoMode.Password)
         self.pin_input.setMaxLength(8)
+        self.pin_input.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         layout.addWidget(self.pin_input)
 
-        layout.addWidget(QLabel(i18n("onboarding.pin.confirm_label")))
+        layout.addWidget(small_label(i18n("onboarding.pin.confirm_label")))
         self.confirm_input = QLineEdit()
         self.confirm_input.setEchoMode(QLineEdit.EchoMode.Password)
         self.confirm_input.setMaxLength(8)
+        self.confirm_input.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         self.confirm_input.returnPressed.connect(self._validate)
         layout.addWidget(self.confirm_input)
 
@@ -273,6 +288,7 @@ class SetPinDialog(QDialog):
         layout.addWidget(self._error_label)
 
         buttons_row = QHBoxLayout()
+        buttons_row.setSpacing(10)
         cancel_button = QPushButton(i18n("common.cancel"))
         cancel_button.setObjectName("secondary")
         cancel_button.clicked.connect(self.reject)

@@ -33,7 +33,18 @@ from mintguard.backend.usage_tracker import UsageTracker
 from mintguard.db.database import get_session
 from mintguard.db.models import ActivityLog, BlockedSite, Child, TimeRule
 from mintguard.gui.daemon_control import is_daemon_active, start_daemon_via_polkit
-from mintguard.gui.widgets import Card, heading, small_label
+from mintguard.gui.styles import COLORS, DISPLAY_FONT_FAMILY, FONT_SIZES
+from mintguard.gui.widgets import (
+    Card,
+    Tile,
+    growth_stem,
+    heading,
+    icon_badge,
+    icon_label,
+    set_icon_badge,
+    small_label,
+    wrap_layout,
+)
 from mintguard.locales.loader import I18nLoader
 from mintguard.utils.formatters import format_duration, format_percentage, utc_to_local
 
@@ -67,9 +78,17 @@ class DashboardScreen(QWidget):
         self._live_refresh_timer.start(_LIVE_REFRESH_INTERVAL_MS)
 
     def _build_ui(self) -> None:
-        # Thème "Néon" appliqué globalement (voir mintguard/main_gui.py, styles.py::DARK_COLORS).
+        colors = COLORS
         layout = QVBoxLayout(self)
-        layout.addWidget(heading(self.i18n("dashboard.title"), "h1"))
+        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setSpacing(14)
+
+        title_row = QHBoxLayout()
+        title_row.setSpacing(8)
+        title_row.addWidget(icon_label("shield-check", colors["primary"], 22))
+        title_row.addWidget(heading(self.i18n("dashboard.title"), "h1"))
+        title_row.addStretch(1)
+        layout.addLayout(title_row)
 
         layout.addWidget(small_label(self.i18n("dashboard.child_select")))
         selector_row = QHBoxLayout()
@@ -89,8 +108,13 @@ class DashboardScreen(QWidget):
         # hors de portée d'un parent non-technique (voir SUIVI.md). Masquée dès que le daemon
         # répond, montrée sinon - vérifié au même rythme que le reste (_live_refresh_timer).
         self.daemon_card = Card()
+        daemon_title_row = QHBoxLayout()
+        daemon_title_row.setSpacing(8)
+        daemon_title_row.addWidget(icon_badge("shield-alert", size=32, icon_size=18, color=colors["warning"]))
         self.daemon_title = heading(self.i18n("dashboard.daemon_inactive_title"), "h3")
-        self.daemon_card.add(self.daemon_title)
+        daemon_title_row.addWidget(self.daemon_title)
+        daemon_title_row.addStretch(1)
+        self.daemon_card.add(wrap_layout(daemon_title_row))
         self.daemon_body = QLabel(self.i18n("dashboard.daemon_inactive_body"))
         self.daemon_body.setWordWrap(True)
         self.daemon_card.add(self.daemon_body)
@@ -100,36 +124,67 @@ class DashboardScreen(QWidget):
         self.daemon_card.hide()
         layout.addWidget(self.daemon_card)
 
+        # Carte "héro" pleine largeur : statut de protection, le signal de confiance principal
+        # de l'appli — icône + titre + sous-titre, comme la maquette. `status_icon` change de
+        # couleur/icône selon l'état (bouclier vert coché / orange alerte) via set_icon_badge().
         self.status_card = Card()
+        status_row = QHBoxLayout()
+        status_row.setSpacing(10)
+        self.status_icon = icon_badge("shield-check", size=40, icon_size=22, color=colors["success"])
+        status_row.addWidget(self.status_icon)
+        status_text_col = QVBoxLayout()
+        status_text_col.setSpacing(2)
         self.status_label = heading("", "h3")
-        self.status_card.add(self.status_label)
+        status_text_col.addWidget(self.status_label)
+        self.status_subtitle = small_label("")
+        status_text_col.addWidget(self.status_subtitle)
+        status_row.addLayout(status_text_col, 1)
+        self.status_card.add(wrap_layout(status_row))
         layout.addWidget(self.status_card)
 
-        self.window_card = Card()
+        # Deux tuiles côte à côte (fenêtre d'accès du jour / dernière restriction) plutôt que
+        # deux cartes empilées — densité et disposition de la maquette.
+        tiles_row = QHBoxLayout()
+        tiles_row.setSpacing(10)
+
+        self.window_tile = Tile()
+        self.window_tile.add(small_label(self.i18n("dashboard.window_tile_title")))
         self.window_label = QLabel("")
         self.window_label.setWordWrap(True)
-        self.window_card.add(self.window_label)
-        layout.addWidget(self.window_card)
+        self.window_tile.add(self.window_label)
+        tiles_row.addWidget(self.window_tile, 1)
 
-        self.usage_card = Card()
-        self.usage_card.add(small_label(self.i18n("dashboard.time_today")))
-        self.usage_bar = QProgressBar()
-        self.usage_bar.setTextVisible(False)
-        self.usage_card.add(self.usage_bar)
-        self.usage_value = QLabel("")
-        self.usage_card.add(self.usage_value)
-        layout.addWidget(self.usage_card)
-
-        self.restriction_card = Card()
-        self.restriction_card.add(small_label(self.i18n("dashboard.last_restriction")))
+        self.restriction_tile = Tile()
+        self.restriction_tile.add(small_label(self.i18n("dashboard.last_restriction")))
         self.restriction_value = QLabel("")
         self.restriction_value.setWordWrap(True)
-        self.restriction_card.add(self.restriction_value)
-        layout.addWidget(self.restriction_card)
+        self.restriction_tile.add(self.restriction_value)
+        tiles_row.addWidget(self.restriction_tile, 1)
+
+        layout.addLayout(tiles_row)
+
+        # Tige en dégradé vert à côté de la barre : repère "ça pousse" de cette piste visuelle,
+        # plutôt qu'une simple barre plate.
+        self.usage_card = Card()
+        usage_row = QHBoxLayout()
+        usage_row.setSpacing(12)
+        usage_row.addWidget(growth_stem(40))
+        usage_col = QVBoxLayout()
+        usage_col.setSpacing(6)
+        usage_col.addWidget(small_label(self.i18n("dashboard.time_today")))
+        self.usage_bar = QProgressBar()
+        self.usage_bar.setTextVisible(False)
+        usage_col.addWidget(self.usage_bar)
+        self.usage_value = QLabel("")
+        usage_col.addWidget(self.usage_value)
+        usage_row.addLayout(usage_col, 1)
+        self.usage_card.add(wrap_layout(usage_row))
+        layout.addWidget(self.usage_card)
 
         layout.addStretch(1)
 
         actions_row = QHBoxLayout()
+        actions_row.setSpacing(10)
         self.settings_button = QPushButton(self.i18n("common.settings"))
         self.settings_button.clicked.connect(self.open_settings)
         actions_row.addWidget(self.settings_button)
@@ -171,9 +226,9 @@ class DashboardScreen(QWidget):
         child_id = self.selected_child_id
         if child_id is None:
             self.status_label.setText(self.i18n("dashboard.no_children"))
-            self.status_label.setObjectName("warning")
-            self.status_label.style().unpolish(self.status_label)
-            self.status_label.style().polish(self.status_label)
+            self._style_status_label(COLORS["warning"])
+            set_icon_badge(self.status_icon, "shield-alert", COLORS["warning"], 40, 22)
+            self.status_subtitle.setText("")
             self.window_label.setText("")
             self.usage_card.hide()
             self.restriction_value.setText("")
@@ -187,14 +242,27 @@ class DashboardScreen(QWidget):
         self.status_label.setText(
             self.i18n("dashboard.protection_active" if active else "dashboard.protection_inactive")
         )
-        self.status_label.setObjectName("success" if active else "warning")
-        self.status_label.style().unpolish(self.status_label)
-        self.status_label.style().polish(self.status_label)
+        self.status_subtitle.setText(
+            self.i18n("dashboard.protection_active_subtitle" if active else "dashboard.protection_inactive_subtitle")
+        )
+        status_color = COLORS["success"] if active else COLORS["warning"]
+        self._style_status_label(status_color)
+        set_icon_badge(self.status_icon, "shield-check" if active else "shield-alert", status_color, 40, 22)
 
         window = self._today_rule_window(child_id)
         self.window_label.setText(self._today_window_text(window))
         self._refresh_usage(child_id, window)
         self.restriction_value.setText(self._last_restriction_text(child_id))
+
+    def _style_status_label(self, color: str) -> None:
+        """Colore le titre de la carte statut en gardant sa taille/police h3 — appliqué en
+        style direct plutôt que via objectName pour éviter d'avoir à choisir entre le
+        sélecteur QSS `#h3` (taille) et un sélecteur de couleur (les deux ne peuvent pas
+        cohabiter proprement sur un seul objectName)."""
+        self.status_label.setStyleSheet(
+            f"font-family: {DISPLAY_FONT_FAMILY}; font-size: {FONT_SIZES['h3']}px; "
+            f"font-weight: 600; color: {color};"
+        )
 
     def _refresh_daemon_status(self) -> None:
         # N'écrase pas la carte pendant qu'une activation est en cours (bouton désactivé,

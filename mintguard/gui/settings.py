@@ -18,6 +18,7 @@ from datetime import time as dt_time
 
 from PyQt6.QtCore import QTime
 from PyQt6.QtWidgets import (
+    QButtonGroup,
     QCheckBox,
     QDialog,
     QFrame,
@@ -37,7 +38,8 @@ from mintguard.backend.installed_apps import list_installed_apps
 from mintguard.backend.site_categories import CATEGORIES
 from mintguard.db.database import get_session
 from mintguard.db.models import BlockedApp, BlockedSite, TimeRule
-from mintguard.gui.widgets import CollapsibleSection, HelpButton, heading, small_label
+from mintguard.gui.styles import COLORS
+from mintguard.gui.widgets import CollapsibleSection, HelpButton, Tile, heading, icon_label, small_label, wrap_layout
 from mintguard.locales.loader import I18nLoader
 from mintguard.utils.formatters import weekday_key
 from mintguard.utils.validators import is_valid_domain
@@ -75,9 +77,17 @@ class TimeTab(QWidget):
         self.child_id = child_id
         self._day_widgets: list[tuple[QCheckBox, QTimeEdit, QTimeEdit, QCheckBox, QSpinBox]] = []
 
-        layout = QVBoxLayout(self)
+        # Les tuiles par jour (voir Étape 3 de la refonte) rendent ce contenu bien plus haut
+        # que la fenêtre — même raison que SitesTab/AppsTab (voir `_scrollable_layout`) : sans
+        # scroll, un QTabWidget compresse un onglet plus grand que celui affiché à l'ouverture
+        # sous la hauteur minimale de ses widgets (contenu invisible), plutôt que de le tronquer
+        # proprement.
+        layout = _scrollable_layout(self)
+        layout.setSpacing(12)
 
         title_row = QHBoxLayout()
+        title_row.setSpacing(8)
+        title_row.addWidget(icon_label("clock", COLORS["primary"], 20))
         title_row.addWidget(heading(self.i18n("settings.time_limits"), "h2"))
         title_row.addWidget(
             HelpButton(self.i18n("help.what_is_time_limit"), self.i18n("help.time_limit_explanation"))
@@ -87,10 +97,30 @@ class TimeTab(QWidget):
 
         # Trouvé en usage réel (voir SUIVI.md) : configurer les 7 jours un par un est
         # répétitif quand le parent veut le même horaire toute la semaine, ou juste en
-        # semaine/le week-end. Ces boutons pré-remplissent plusieurs jours d'un coup — les
-        # cases et horaires par jour restent modifiables individuellement après coup, rien
-        # n'est retiré de la finesse existante.
+        # semaine/le week-end. Ce sélecteur segmenté pré-remplit plusieurs jours d'un coup —
+        # les cases et horaires par jour restent modifiables individuellement après coup, rien
+        # n'est retiré de la finesse existante ; c'est un raccourci, pas une portée figée.
         layout.addWidget(small_label(self.i18n("settings.quick_apply")))
+
+        segment_row = QHBoxLayout()
+        segment_row.setSpacing(0)
+        self._scope_group = QButtonGroup(self)
+        self._scope_group.setExclusive(True)
+        scopes = (
+            ("settings.apply_whole_week", range(7)),
+            ("settings.apply_weekdays", range(0, 5)),
+            ("settings.apply_weekend", range(5, 7)),
+        )
+        for i, (label_key, day_indices) in enumerate(scopes):
+            button = QPushButton(self.i18n(label_key))
+            button.setObjectName("segment")
+            button.setCheckable(True)
+            button.setChecked(i == 0)
+            button.clicked.connect(lambda _checked, indices=day_indices: self._apply_quick(indices))
+            self._scope_group.addButton(button)
+            segment_row.addWidget(button)
+        layout.addLayout(segment_row)
+
         quick_row = QHBoxLayout()
         self.quick_start = QTimeEdit(QTime(16, 0))
         self.quick_start.setDisplayFormat("HH:mm")
@@ -99,23 +129,6 @@ class TimeTab(QWidget):
         quick_row.addWidget(self.quick_start)
         quick_row.addWidget(self.quick_end)
         layout.addLayout(quick_row)
-
-        quick_buttons_row = QHBoxLayout()
-        whole_week_button = QPushButton(self.i18n("settings.apply_whole_week"))
-        whole_week_button.setObjectName("secondary")
-        whole_week_button.clicked.connect(lambda: self._apply_quick(range(7)))
-        quick_buttons_row.addWidget(whole_week_button)
-
-        weekdays_button = QPushButton(self.i18n("settings.apply_weekdays"))
-        weekdays_button.setObjectName("secondary")
-        weekdays_button.clicked.connect(lambda: self._apply_quick(range(0, 5)))
-        quick_buttons_row.addWidget(weekdays_button)
-
-        weekend_button = QPushButton(self.i18n("settings.apply_weekend"))
-        weekend_button.setObjectName("secondary")
-        weekend_button.clicked.connect(lambda: self._apply_quick(range(5, 7)))
-        quick_buttons_row.addWidget(weekend_button)
-        layout.addLayout(quick_buttons_row)
 
         budget_intro_row = QHBoxLayout()
         budget_intro_row.addWidget(small_label(self.i18n("settings.limit_daily_time")))
@@ -126,30 +139,38 @@ class TimeTab(QWidget):
         layout.addLayout(budget_intro_row)
 
         for day_index in range(7):
+            tile = Tile()
             row = QHBoxLayout()
+            row.setSpacing(10)
             checkbox = QCheckBox(self.i18n(f"time.{weekday_key(day_index)}"))
             start_edit = QTimeEdit(QTime(16, 0))
             start_edit.setDisplayFormat("HH:mm")
             end_edit = QTimeEdit(QTime(20, 0))
             end_edit.setDisplayFormat("HH:mm")
             row.addWidget(checkbox)
+            row.addStretch(1)
             row.addWidget(start_edit)
             row.addWidget(end_edit)
+            tile.add(wrap_layout(row))
 
             # Quota cumulé (minutes) à l'intérieur de la plage horaire, en plus des bornes
             # start/end ci-dessus — cf. TimeRule.daily_budget_minutes. Décoché = comportement
             # historique (seule la plage compte, pas de quota).
-            budget_checkbox = QCheckBox(self.i18n("settings.limit_daily_time"))
+            budget_row = QHBoxLayout()
+            budget_row.setSpacing(10)
+            budget_checkbox = QCheckBox(self.i18n("settings.daily_budget_checkbox"))
             budget_spin = QSpinBox()
             budget_spin.setRange(1, 1440)
             budget_spin.setValue(120)
             budget_spin.setSuffix(self.i18n("settings.minutes_per_day_suffix"))
             budget_spin.setEnabled(False)
             budget_checkbox.toggled.connect(budget_spin.setEnabled)
-            row.addWidget(budget_checkbox)
-            row.addWidget(budget_spin)
+            budget_row.addWidget(budget_checkbox)
+            budget_row.addStretch(1)
+            budget_row.addWidget(budget_spin)
+            tile.add(wrap_layout(budget_row))
 
-            layout.addLayout(row)
+            layout.addWidget(tile)
             self._day_widgets.append((checkbox, start_edit, end_edit, budget_checkbox, budget_spin))
 
         layout.addStretch(1)
@@ -245,6 +266,8 @@ class SitesTab(QWidget):
         layout = _scrollable_layout(self)
 
         title_row = QHBoxLayout()
+        title_row.setSpacing(8)
+        title_row.addWidget(icon_label("globe", COLORS["primary"], 20))
         title_row.addWidget(heading(self.i18n("settings.blocked_sites"), "h2"))
         title_row.addWidget(HelpButton(self.i18n("help.what_is_blocking"), self.i18n("help.blocking_explanation")))
         title_row.addStretch(1)
@@ -381,6 +404,8 @@ class AppsTab(QWidget):
         layout = _scrollable_layout(self)
 
         title_row = QHBoxLayout()
+        title_row.setSpacing(8)
+        title_row.addWidget(icon_label("app-window", COLORS["primary"], 20))
         title_row.addWidget(heading(self.i18n("settings.blocked_apps"), "h2"))
         title_row.addWidget(
             HelpButton(self.i18n("help.what_is_app_blocking"), self.i18n("help.app_blocking_explanation"))
@@ -410,12 +435,17 @@ class AppsTab(QWidget):
                 continue
             layout.addWidget(heading(self.i18n(f"settings.category_{category}"), "h3"))
             for process_name, label in apps:
-                row = QHBoxLayout()
+                # Coche + quota sur deux lignes empilées dans une tuile plutôt que trois
+                # contrôles sur une seule ligne (trouvé en usage réel : ça débordait de la
+                # fenêtre) — même schéma que les tuiles jour de TimeTab.
+                tile = Tile()
                 checkbox = QCheckBox(label)
                 checkbox.toggled.connect(lambda checked, p=process_name: self._toggle_app(p, checked))
-                row.addWidget(checkbox)
+                tile.add(checkbox)
 
-                budget_checkbox = QCheckBox(self.i18n("settings.app_quota_checkbox"))
+                budget_row = QHBoxLayout()
+                budget_row.setSpacing(10)
+                budget_checkbox = QCheckBox(self.i18n("settings.daily_budget_checkbox"))
                 budget_spin = QSpinBox()
                 budget_spin.setRange(1, 1440)
                 budget_spin.setValue(30)
@@ -430,10 +460,12 @@ class AppsTab(QWidget):
                 budget_spin.valueChanged.connect(
                     lambda _value, p=process_name: self._set_app_budget(p, self._app_budget_checkboxes[p].isChecked())
                 )
-                row.addWidget(budget_checkbox)
-                row.addWidget(budget_spin)
+                budget_row.addWidget(budget_checkbox)
+                budget_row.addStretch(1)
+                budget_row.addWidget(budget_spin)
+                tile.add(wrap_layout(budget_row))
 
-                layout.addLayout(row)
+                layout.addWidget(tile)
                 self._app_checkboxes[process_name] = checkbox
                 self._app_budget_checkboxes[process_name] = budget_checkbox
                 self._app_budget_spins[process_name] = budget_spin
@@ -574,7 +606,7 @@ class SettingsWindow(QDialog):
         super().__init__(parent)
         self.i18n = i18n
         self.setWindowTitle(self.i18n("settings.title"))
-        self.setMinimumSize(420, 560)
+        self.setMinimumSize(500, 580)
 
         layout = QVBoxLayout(self)
         self.tabs = QTabWidget()
@@ -590,6 +622,6 @@ class SettingsWindow(QDialog):
         self.tabs.addTab(self.apps_tab, self.i18n("settings.blocked_apps"))
 
         close_button = QPushButton(self.i18n("common.close"))
-        close_button.setObjectName("secondary")
+        close_button.setObjectName("tertiary")
         close_button.clicked.connect(self.accept)
         layout.addWidget(close_button)

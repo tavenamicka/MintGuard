@@ -74,7 +74,7 @@ def test_child_combo_populated():
 def test_no_rule_today_shows_free_access():
     make_child()
     screen = DashboardScreen(I18nLoader("fr"))
-    assert screen.window_label.text() == "Accès libre aujourd'hui"
+    assert screen.window_label.text() == "Libre aujourd'hui"
 
 
 def test_rule_today_shows_window():
@@ -90,7 +90,7 @@ def test_rule_today_shows_window():
         session.close()
 
     screen = DashboardScreen(I18nLoader("fr"))
-    assert screen.window_label.text() == "Aujourd'hui : accès autorisé de 16:00 à 18:00"
+    assert screen.window_label.text() == "16:00 – 18:00"
 
 
 def test_protection_active_when_time_rule_exists():
@@ -106,13 +106,13 @@ def test_protection_active_when_time_rule_exists():
         session.close()
 
     screen = DashboardScreen(I18nLoader("fr"))
-    assert screen.status_label.text() == "Protection: ACTIVE ✓"
+    assert screen.status_label.text() == "Protection active"
 
 
 def test_protection_inactive_when_no_rules_or_sites():
     make_child()
     screen = DashboardScreen(I18nLoader("fr"))
-    assert screen.status_label.text() == "Protection: INACTIVE"
+    assert screen.status_label.text() == "Protection inactive"
 
 
 def test_last_restriction_shows_app_blocked():
@@ -144,7 +144,7 @@ def test_protection_active_from_global_blocked_site():
         session.close()
 
     screen = DashboardScreen(I18nLoader("fr"))
-    assert screen.status_label.text() == "Protection: ACTIVE ✓"
+    assert screen.status_label.text() == "Protection active"
 
 
 # Trouvé à l'audit de sécurité (voir SUIVI.md) : Settings/Reports s'ouvraient sans jamais

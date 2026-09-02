@@ -65,7 +65,7 @@ class ReportsWindow(QDialog):
         layout.addWidget(self.blocks_card)
 
         close_button = QPushButton(self.i18n("common.close"))
-        close_button.setObjectName("secondary")
+        close_button.setObjectName("tertiary")
         close_button.clicked.connect(self.accept)
         layout.addWidget(close_button)
 

@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from PyQt6.QtGui import QAction, QActionGroup
+from PyQt6.QtGui import QAction
 from PyQt6.QtWidgets import QApplication, QMainWindow, QStackedWidget
 
 from mintguard.config import get_config
@@ -22,7 +22,7 @@ from mintguard.db.database import get_session
 from mintguard.db.models import ParentConfig
 from mintguard.gui.dashboard import DashboardScreen
 from mintguard.gui.onboarding import OnboardingWizard
-from mintguard.gui.styles import DEFAULT_THEME, THEMES, load_display_font
+from mintguard.gui.styles import build_stylesheet, load_fonts
 from mintguard.locales.loader import get_i18n
 
 
@@ -36,14 +36,14 @@ class MainWindow(QMainWindow):
         self.dashboard: DashboardScreen | None = None
 
         self.setWindowTitle(self.i18n("app.name"))
-        self.setMinimumSize(480, 640)
+        # Resserré pour coller à la densité compacte de la maquette "Jardin Numérique".
+        self.setMinimumSize(420, 580)
 
         # Appliqué sur QApplication, pas sur self : un QDialog (Settings, HelpDialog...) est
         # une fenêtre top-level distincte et n'hériterait pas d'un style posé ici (voir aussi
-        # main_gui.py). set_theme() re-pose ce même style à la volée, sans relancer l'appli.
-        load_display_font()
-        self.theme = self._load_theme()
-        QApplication.instance().setStyleSheet(THEMES[self.theme]())
+        # main_gui.py).
+        load_fonts()
+        QApplication.instance().setStyleSheet(build_stylesheet())
 
         self.stack = QStackedWidget()
         self.setCentralWidget(self.stack)
@@ -57,10 +57,9 @@ class MainWindow(QMainWindow):
 
     def _build_menu(self) -> None:
         # Trouvé en test manuel : un menu intitulé du nom de l'application ("MintGuard")
-        # ressemble à du texte de marque, pas à un menu cliquable - le sélecteur de thème
-        # (clair/sombre), pourtant déjà fonctionnel, restait introuvable. L'icône ☰
-        # ("hamburger", convention universelle de menu) et le mot "Menu" rendent le bouton
-        # reconnaissable comme tel au premier coup d'œil.
+        # ressemble à du texte de marque, pas à un menu cliquable. L'icône ☰ ("hamburger",
+        # convention universelle de menu) et le mot "Menu" rendent le bouton reconnaissable
+        # comme tel au premier coup d'œil.
         menu = self.menuBar().addMenu(self.i18n("app_shell.menu_button"))
 
         self.settings_action = QAction(self.i18n("common.settings"), self)
@@ -75,18 +74,6 @@ class MainWindow(QMainWindow):
 
         menu.addSeparator()
 
-        theme_menu = menu.addMenu(self.i18n("app_shell.menu_theme"))
-        theme_group = QActionGroup(self)
-        theme_group.setExclusive(True)
-        for name, label_key in (("light", "app_shell.theme_light"), ("dark", "app_shell.theme_dark")):
-            action = QAction(self.i18n(label_key), self, checkable=True)
-            action.setChecked(name == self.theme)
-            action.triggered.connect(lambda _checked, n=name: self.set_theme(n))
-            theme_group.addAction(action)
-            theme_menu.addAction(action)
-
-        menu.addSeparator()
-
         help_action = QAction(self.i18n("app_shell.menu_help"), self)
         help_action.triggered.connect(self._show_help)
         menu.addAction(help_action)
@@ -94,32 +81,6 @@ class MainWindow(QMainWindow):
         quit_action = QAction(self.i18n("app_shell.menu_quit"), self)
         quit_action.triggered.connect(self.close)
         menu.addAction(quit_action)
-
-    # -- Thème ----------------------------------------------------------------
-
-    def _load_theme(self) -> str:
-        session = get_session()
-        try:
-            stored = session.query(ParentConfig).filter_by(key="theme").first()
-            return stored.value if stored is not None and stored.value in THEMES else DEFAULT_THEME
-        finally:
-            session.close()
-
-    def set_theme(self, name: str) -> None:
-        """Change de thème immédiatement (pas de redémarrage) et le mémorise pour la prochaine
-        ouverture. Posé sur QApplication : les QDialog déjà ouverts (Settings, Rapports...)
-        sont re-stylés eux aussi, pas seulement MainWindow."""
-        if name not in THEMES or name == self.theme:
-            return
-        self.theme = name
-        QApplication.instance().setStyleSheet(THEMES[name]())
-
-        session = get_session()
-        try:
-            session.merge(ParentConfig(key="theme", value=name))
-            session.commit()
-        finally:
-            session.close()
 
     def _show_help(self) -> None:
         from mintguard.gui.dialogs import HelpDialog

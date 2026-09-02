@@ -14,100 +14,116 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-"""Système de design MintGuard (palette, typographie, feuille de style QSS)
-conforme à STRATEGIE_UX_UI.html section "Design Graphique"."""
+"""Système de design MintGuard — piste "Jardin Numérique" (palette, typographie, feuille de
+style QSS). Thème unique, pas de mode sombre (demande explicite de l'utilisateur : une appli de
+contrôle parental n'a pas besoin d'un sélecteur de thème, un seul rendu chaleureux/rassurant
+suffit)."""
 
 from pathlib import Path
 
 from PyQt6.QtGui import QFontDatabase
 
 COLORS = {
-    # Trouvé à l'audit d'accessibilité Phase 4 (voir SUIVI.md) : la palette d'origine
-    # (#0EA5E9/#10B981/#F59E0B/#EF4444, cf. STRATEGIE_UX_UI.html) ne passait pas le contraste
-    # WCAG AA (4.5:1) requis — explicitement listé comme "point critique" du projet pour des
-    # parents âgés (CLAUDE_CODE_BRIEFING.md). Le pire cas : texte blanc sur "primary" (boutons
-    # principaux, partout dans l'app) ne faisait que 2.77:1. Nuances assombries en conservant
-    # la même famille de teinte (bleu/vert/ambre/rouge reste reconnaissable) ; toutes vérifiées
-    # ≥4.5:1 à la fois en texte sur fond clair ET en texte blanc sur fond coloré (boutons).
-    "primary": "#0369A1",
-    "primary_hover": "#075985",
-    "success": "#047857",
-    "warning": "#B45309",
-    "danger": "#DC2626",
-    "bg": "#F9FAFB",
-    "surface": "#FFFFFF",
-    "border": "#E5E7EB",
-    "text": "#111827",
-    "text_muted": "#4B5563",
+    # Palette crème/vert de la maquette, réassombrie sur `primary`/`warning` pour rester
+    # ≥4.5:1 (WCAG AA) contre `bg` et en texte blanc sur bouton — vérifié dans
+    # tests/test_styles.py (parents non-techniques/âgés, contrainte explicite du projet).
+    "primary": "#447250",
+    "primary_hover": "#396044",
+    "success": "#447250",
+    "warning": "#95591C",
+    "danger": "#A5432F",
+    "bg": "#F1F0E2",
+    "surface": "#FAF9EE",
+    "tile": "#E7E5D2",
+    "border": "#D3D2BC",
+    "text": "#2B3328",
+    "text_muted": "#616B57",
+    "on_primary": "#F7F6EA",
+    # Purement décoratif (tige de croissance, badges) — jamais utilisé comme couleur de texte,
+    # donc hors du périmètre du test de contraste WCAG.
+    "accent": "#D98E5A",
 }
 
-FONT_FAMILY = "Inter, Roboto, 'Segoe UI', system-ui, sans-serif"
+# Serif chaleureux pour les titres + sans-serif humaniste pour le texte courant. Bundlées (voir
+# assets/fonts/) car Qt ne charge pas les Google Fonts par lien CSS comme un navigateur ;
+# téléchargement approuvé par l'utilisateur (SIL OFL, voir assets/fonts/OFL-Fraunces.txt et
+# OFL-Karla.txt).
+BODY_FONT_FAMILY = "'Karla', system-ui, sans-serif"
+DISPLAY_FONT_FAMILY = f"'Fraunces', Georgia, {BODY_FONT_FAMILY}"
+FONT_FAMILY = BODY_FONT_FAMILY  # alias : la plupart du QSS ci-dessous vise le texte courant
 
-# Police display des titres (h1/h2) du thème sombre uniquement — le thème clair garde
-# FONT_FAMILY partout, inchangé. Bundlée (voir assets/fonts/) car Qt ne charge pas les Google
-# Fonts par lien CSS comme un navigateur ; approuvé par l'utilisateur avant téléchargement
-# (Archivo Black, licence SIL OFL, cf. assets/fonts/OFL.txt).
-DISPLAY_FONT_FAMILY = f"'Archivo Black', {FONT_FAMILY}"
 _FONT_DIR = Path(__file__).parent / "assets" / "fonts"
-_display_font_loaded = False
+_fonts_loaded = False
+
+# Échelle de rayons organique (coins généreux, boutons en pilule) — cf. maquette.
+#
+# `pill` n'est PAS 999 (l'idiome CSS web habituel) : trouvé en testant sur le vrai bureau
+# (capture d'écran réelle, pas juste le QSS relu) que Qt n'arrondit QUE deux conditions à la
+# fois réunies : (1) le widget a un `border` réel non "none" (même transparent/de la même
+# couleur que le fond — un `border: none` fait tomber Qt en retour au rendu natif carré du
+# style de base, border-radius entièrement ignoré) ET (2) le rayon ne dépasse pas nettement la
+# moitié de la plus petite dimension du widget (un rayon disproportionné comme 999 fait aussi
+# échouer l'arrondi, silencieusement — pas de clamp comme en CSS web). 16px reste sous la
+# moitié de la hauteur des boutons de l'appli (~37-40px) avec une marge de sécurité.
+RADII = {"control": 14, "card": 20, "pill": 16}
 
 
-def load_display_font() -> None:
-    """Enregistre la police display auprès de Qt (QFontDatabase) — idempotent, sans effet si
-    déjà chargée. À appeler après la création de QApplication et avant toute mise en forme
-    QSS qui la référence (voir MainWindow.__init__)."""
-    global _display_font_loaded
-    if _display_font_loaded:
+def load_fonts() -> None:
+    """Enregistre les polices Fraunces/Karla auprès de Qt (QFontDatabase) — idempotent, sans
+    effet si déjà chargées. À appeler après la création de QApplication et avant toute mise en
+    forme QSS qui les référence (voir MainWindow.__init__)."""
+    global _fonts_loaded
+    if _fonts_loaded:
         return
-    font_path = _FONT_DIR / "ArchivoBlack-Regular.ttf"
-    if font_path.exists():
-        QFontDatabase.addApplicationFont(str(font_path))
-    _display_font_loaded = True
+    for filename in (
+        "Fraunces-SemiBold.ttf",
+        "Fraunces-Bold.ttf",
+        "Karla-Regular.ttf",
+        "Karla-Medium.ttf",
+        "Karla-Bold.ttf",
+    ):
+        font_path = _FONT_DIR / filename
+        if font_path.exists():
+            QFontDatabase.addApplicationFont(str(font_path))
+    _fonts_loaded = True
 
-# Piste "Néon" proposée via /innovative-design (voir historique de conversation) : thème sombre
-# dégradé cyan/magenta pour un rendu plus actuel. Choisi par l'utilisateur parmi 3 pistes, avec
-# contrainte dure : rester conforme WCAG AA malgré le fond quasi noir. Chaque couleur ci-dessous
-# a été vérifiée à la main (ratios calculés, voir tests/test_styles.py::test_dark_*) contre bg
-# ET surface — un fond sombre "safe" sur bg peut ne plus l'être sur une carte plus claire.
-# Appliqué pour l'instant uniquement sur DashboardScreen (setStyleSheet local, pas
-# app.setStyleSheet) : les autres écrans n'ont pas encore été validés dans cette direction.
-DARK_COLORS = {
-    "bg": "#0B0B14",
-    "surface": "#1B1E29",
-    "border": "#33364A",
-    "text": "#EDEFF6",
-    "text_muted": "#9CA0D6",
-    "primary_from": "#00F0FF",
-    "primary_to": "#FF2E9A",
-    "primary_text": "#0B0B14",
-    "success": "#00FFC2",
-    "warning": "#FFD23F",
-    "danger": "#FF3B5C",
-}
 
+# Resserrée pour coller à la densité de la maquette (compacte, tuiles rapprochées) plutôt qu'à
+# une échelle "SaaS aéré".
 FONT_SIZES = {
-    "h1": 28,
-    "h2": 22,
-    "h3": 18,
-    "body": 16,
-    "small": 14,
+    "h1": 22,
+    "h2": 18,
+    "h3": 16,
+    "body": 14,
+    "small": 13,
 }
 
 
 def build_stylesheet() -> str:
-    """Génère la feuille de style QSS globale de l'application."""
+    """Génère la feuille de style QSS globale de l'application (thème unique)."""
     c = COLORS
     f = FONT_SIZES
+    r = RADII
+    gradient_bar = f"qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #6E9C6A, stop:1 {c['primary']})"
     return f"""
+        /* `background` volontairement absent de la règle QWidget générique : Qt peint alors
+        chaque widget (chaque QLabel y compris) avec ce fond, sur son propre rectangle — visible
+        comme un rectangle à coins droits derrière chaque texte dès qu'il est posé sur une Card
+        ou une tuile (fond différent de `bg`), au lieu de laisser transparaître le fond du parent.
+        Seules les fenêtres de premier niveau peignent `bg` ; tout le reste en hérite par
+        transparence. `color`/`font-*` restent sur QWidget : ces propriétés s'héritent
+        normalement, sans cet effet de bord. */
         QWidget {{
-            background: {c['bg']};
             color: {c['text']};
-            font-family: {FONT_FAMILY};
+            font-family: {BODY_FONT_FAMILY};
             font-size: {f['body']}px;
         }}
-        QLabel#h1 {{ font-size: {f['h1']}px; font-weight: 700; color: {c['primary']}; }}
-        QLabel#h2 {{ font-size: {f['h2']}px; font-weight: 700; }}
-        QLabel#h3 {{ font-size: {f['h3']}px; font-weight: 600; }}
+        QMainWindow, QDialog {{
+            background: {c['bg']};
+        }}
+        QLabel#h1 {{ font-family: {DISPLAY_FONT_FAMILY}; font-size: {f['h1']}px; font-weight: 700; color: {c['text']}; }}
+        QLabel#h2 {{ font-family: {DISPLAY_FONT_FAMILY}; font-size: {f['h2']}px; font-weight: 700; color: {c['text']}; }}
+        QLabel#h3 {{ font-family: {DISPLAY_FONT_FAMILY}; font-size: {f['h3']}px; font-weight: 600; color: {c['text']}; }}
         QLabel#small {{ font-size: {f['small']}px; color: {c['text_muted']}; }}
         QLabel#success {{ color: {c['success']}; font-weight: 600; }}
         QLabel#warning {{ color: {c['warning']}; font-weight: 600; }}
@@ -115,233 +131,205 @@ def build_stylesheet() -> str:
 
         QPushButton {{
             background: {c['primary']};
-            color: white;
-            border: none;
-            border-radius: 6px;
-            padding: 10px 22px;
+            color: {c['on_primary']};
+            border: 2px solid {c['primary']};
+            border-radius: {r['pill']}px;
+            padding: 8px 16px;
             font-size: {f['body']}px;
-            font-weight: 600;
+            font-weight: 700;
         }}
-        QPushButton:hover {{ background: {c['primary_hover']}; }}
-        QPushButton:disabled {{ background: {c['border']}; color: {c['text_muted']}; }}
+        QPushButton:hover {{ background: {c['primary_hover']}; border-color: {c['primary_hover']}; }}
+        QPushButton:pressed {{ background: {c['primary_hover']}; border-color: {c['primary_hover']}; padding-top: 9px; padding-bottom: 7px; }}
+        QPushButton:disabled {{ background: {c['border']}; color: {c['text_muted']}; border-color: {c['border']}; }}
         QPushButton#secondary {{
             background: {c['surface']};
             color: {c['primary']};
             border: 2px solid {c['primary']};
-            padding: 8px 20px;
+            padding: 8px 16px;
         }}
-        QPushButton#secondary:hover {{ background: #F0F9FF; }}
-        QPushButton#help {{
-            background: {c['border']};
+        QPushButton#secondary:hover {{ background: {c['tile']}; }}
+        QPushButton#secondary:pressed {{ background: {c['tile']}; }}
+        QPushButton#secondary:disabled {{ background: {c['surface']}; color: {c['text_muted']}; border-color: {c['border']}; }}
+        /* Boutons "Fermer" (quitter un écran sans agir sur des données) — délibérément plus
+        neutre que #secondary (Supprimer, Annuler...) : trouvé en usage réel, les deux se
+        confondaient en bas de l'onglet Sites à éviter (même forme, même vert) alors que
+        Fermer n'a pas les mêmes conséquences que Supprimer. */
+        QPushButton#tertiary {{
+            background: transparent;
             color: {c['text_muted']};
-            border-radius: 12px;
-            min-width: 24px;
-            max-width: 24px;
-            min-height: 24px;
-            max-height: 24px;
-            padding: 0;
-            font-weight: 700;
+            border: 2px solid {c['border']};
+            padding: 8px 16px;
         }}
-        QPushButton#help:hover {{ background: {c['primary']}; color: white; }}
+        QPushButton#tertiary:hover {{ background: {c['tile']}; border-color: {c['text_muted']}; }}
+        QPushButton#tertiary:pressed {{ background: {c['tile']}; }}
+        QPushButton#segment {{
+            background: {c['surface']};
+            color: {c['text_muted']};
+            border: 2px solid {c['border']};
+            padding: 8px 16px;
+        }}
+        QPushButton#segment:hover {{ background: {c['tile']}; }}
+        QPushButton#segment:checked {{ background: {c['primary']}; color: {c['on_primary']}; border-color: {c['primary']}; }}
+        QPushButton#help {{
+            background: {c['tile']};
+            border: 2px solid {c['tile']};
+            border-radius: 12px;
+            min-width: 28px;
+            max-width: 28px;
+            min-height: 28px;
+            max-height: 28px;
+            padding: 0;
+        }}
+        QPushButton#help:hover {{ background: {c['border']}; border-color: {c['border']}; }}
+        QPushButton#link {{
+            background: transparent;
+            color: {c['text_muted']};
+            border: none;
+            padding: 4px;
+            font-weight: 600;
+        }}
+        QPushButton#link:hover {{ color: {c['primary']}; }}
 
         QFrame#card {{
             background: {c['surface']};
             border: 1px solid {c['border']};
-            border-radius: 10px;
+            border-radius: {r['card']}px;
+        }}
+        QFrame#tile {{
+            background: {c['tile']};
+            border: 1px solid {c['border']};
+            border-radius: {r['control']}px;
         }}
 
         QProgressBar {{
-            background: {c['border']};
-            border-radius: 4px;
-            max-height: 8px;
+            background: {c['tile']};
+            border: none;
+            border-radius: 7px;
+            min-height: 14px;
+            max-height: 14px;
             text-align: center;
         }}
-        QProgressBar::chunk {{ background: {c['primary']}; border-radius: 4px; }}
+        QProgressBar::chunk {{ background: {gradient_bar}; border-radius: 7px; }}
 
         QLineEdit {{
             border: 1px solid {c['border']};
-            border-radius: 6px;
-            padding: 8px 10px;
+            border-radius: {r['control']}px;
+            padding: 8px 12px;
             background: {c['surface']};
             font-size: {f['body']}px;
         }}
+        QLineEdit:hover {{ border-color: {c['primary']}; }}
         QLineEdit:focus {{ border-color: {c['primary']}; }}
-    """
-
-
-def build_dark_stylesheet() -> str:
-    """Feuille de style QSS de la piste "Néon" (cf. DARK_COLORS). À appliquer localement sur
-    un écran (widget.setStyleSheet), jamais sur QApplication tant que seul le Dashboard a été
-    validé dans cette direction."""
-    c = DARK_COLORS
-    f = FONT_SIZES
-    gradient = f"qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 {c['primary_from']}, stop:1 {c['primary_to']})"
-
-    def pill(color_key: str) -> str:
-        return f"""
-        QLabel#{color_key} {{
-            background: rgba({_rgba(c[color_key])}, 0.12);
-            color: {c[color_key]};
-            border: 1px solid rgba({_rgba(c[color_key])}, 0.35);
-            border-radius: 11px;
-            padding: 4px 14px;
-            font-weight: 700;
-        }}"""
-
-    return f"""
-        QWidget {{
-            background: {c['bg']};
-            color: {c['text']};
-            font-family: {FONT_FAMILY};
-            font-size: {f['body']}px;
-        }}
-        QLabel#h1 {{ font-family: {DISPLAY_FONT_FAMILY}; font-size: {f['h1']}px; font-weight: 700; color: {c['text']}; }}
-        QLabel#h2 {{ font-family: {DISPLAY_FONT_FAMILY}; font-size: {f['h2']}px; font-weight: 700; color: {c['text']}; }}
-        QLabel#h3 {{ font-size: {f['h3']}px; font-weight: 600; color: {c['text']}; }}
-        QLabel#small {{ font-size: {f['small']}px; color: {c['text_muted']}; }}
-        {pill('success')}
-        {pill('warning')}
-        {pill('danger')}
-
-        QPushButton {{
-            background: {gradient};
-            color: {c['primary_text']};
-            border: none;
-            border-radius: 10px;
-            padding: 10px 22px;
-            font-size: {f['body']}px;
-            font-weight: 700;
-        }}
-        QPushButton:disabled {{ background: {c['border']}; color: {c['text_muted']}; }}
-        QPushButton#secondary {{
-            background: transparent;
-            color: {c['text']};
-            border: 1px solid {c['border']};
-            padding: 9px 20px;
-        }}
-        QPushButton#secondary:hover {{ border-color: {c['primary_from']}; }}
-
-        QFrame#card {{
-            background: {c['surface']};
-            border: 1px solid {c['border']};
-            border-radius: 16px;
-        }}
-
-        QProgressBar {{
-            background: {c['border']};
-            border-radius: 6px;
-            min-height: 12px;
-            max-height: 12px;
-        }}
-        QProgressBar::chunk {{ background: {gradient}; border-radius: 6px; }}
 
         QComboBox {{
             background: {c['surface']};
             color: {c['text']};
             border: 1px solid {c['border']};
-            border-radius: 8px;
-            padding: 8px 12px;
+            border-radius: {r['control']}px;
+            padding: 7px 12px;
+            min-height: 18px;
         }}
-        QComboBox:hover {{ border-color: {c['primary_from']}; }}
+        QComboBox:hover, QComboBox:focus {{ border-color: {c['primary']}; }}
+        QComboBox::drop-down {{ border: none; width: 26px; }}
         QComboBox QAbstractItemView {{
             background: {c['surface']};
-            color: {c['text']};
-            selection-background-color: {c['border']};
+            border: 1px solid {c['border']};
+            border-radius: {r['control']}px;
+            padding: 4px;
+            outline: none;
+            selection-background-color: {c['tile']};
+            selection-color: {c['primary']};
         }}
 
-        QPushButton#help {{
-            background: {c['border']};
-            color: {c['text_muted']};
-            border-radius: 12px;
-            min-width: 24px;
-            max-width: 24px;
-            min-height: 24px;
-            max-height: 24px;
-            padding: 0;
-            font-weight: 700;
-        }}
-        QPushButton#help:hover {{ background: {c['primary_from']}; color: {c['primary_text']}; }}
-
-        QCheckBox, QRadioButton {{ color: {c['text']}; spacing: 8px; }}
+        QCheckBox, QRadioButton {{ color: {c['text']}; spacing: 10px; padding: 2px 0; }}
         QCheckBox::indicator {{
-            width: 18px; height: 18px;
-            border: 1px solid {c['border']};
-            border-radius: 5px;
+            width: 20px; height: 20px;
+            border: 2px solid {c['border']};
+            border-radius: 8px;
             background: {c['surface']};
         }}
-        QCheckBox::indicator:checked {{ background: {c['primary_from']}; border-color: {c['primary_from']}; }}
-        QCheckBox::indicator:hover {{ border-color: {c['primary_from']}; }}
+        QCheckBox::indicator:hover {{ border-color: {c['primary']}; }}
+        QCheckBox::indicator:checked {{ background: {c['primary']}; border-color: {c['primary']}; }}
         QRadioButton::indicator {{
-            width: 18px; height: 18px;
-            border: 1px solid {c['border']};
-            border-radius: 9px;
+            width: 20px; height: 20px;
+            border: 2px solid {c['border']};
+            border-radius: 10px;
             background: {c['surface']};
         }}
-        QRadioButton::indicator:checked {{ background: {c['primary_from']}; border-color: {c['primary_from']}; }}
-        QRadioButton::indicator:hover {{ border-color: {c['primary_from']}; }}
+        QRadioButton::indicator:hover {{ border-color: {c['primary']}; }}
+        QRadioButton::indicator:checked {{ background: {c['primary']}; border-color: {c['primary']}; }}
 
         QSpinBox, QTimeEdit {{
             background: {c['surface']};
             color: {c['text']};
             border: 1px solid {c['border']};
-            border-radius: 8px;
-            padding: 6px 8px;
+            border-radius: {r['control']}px;
+            padding: 7px 10px;
+            min-height: 20px;
         }}
-        QSpinBox:focus, QTimeEdit:focus {{ border-color: {c['primary_from']}; }}
+        QSpinBox:hover, QTimeEdit:hover {{ border-color: {c['primary']}; }}
+        QSpinBox:focus, QTimeEdit:focus {{ border-color: {c['primary']}; }}
 
         QTabWidget::pane {{
             border: 1px solid {c['border']};
-            border-radius: 12px;
+            border-radius: {r['card']}px;
             top: -1px;
             background: {c['surface']};
+            padding: 6px;
         }}
         QTabBar::tab {{
             background: transparent;
             color: {c['text_muted']};
-            padding: 9px 18px;
-            border: none;
+            padding: 10px 18px;
+            margin: 4px 3px;
+            border: 2px solid transparent;
+            border-radius: {r['pill']}px;
             font-weight: 600;
         }}
-        QTabBar::tab:selected {{ color: {c['text']}; border-bottom: 2px solid {c['primary_from']}; }}
-        QTabBar::tab:hover {{ color: {c['text']}; }}
+        QTabBar::tab:selected {{ background: {c['tile']}; color: {c['primary']}; }}
+        QTabBar::tab:hover:!selected {{ background: {c['bg']}; color: {c['text']}; }}
 
         QToolButton {{
             color: {c['text']};
             background: transparent;
-            border: none;
+            border: 2px solid transparent;
+            border-radius: {r['pill']}px;
+            padding: 6px 10px;
             font-weight: 600;
         }}
-        QToolButton:hover {{ color: {c['primary_from']}; }}
+        QToolButton:hover {{ background: {c['tile']}; color: {c['primary']}; }}
 
         QListWidget {{
             background: {c['surface']};
-            color: {c['text']};
             border: 1px solid {c['border']};
-            border-radius: 10px;
+            border-radius: {r['control']}px;
             padding: 4px;
         }}
-        QListWidget::item {{ padding: 6px 8px; border-radius: 6px; }}
-        QListWidget::item:selected {{ background: rgba({_rgba(c['primary_from'])}, 0.18); color: {c['text']}; }}
+        QListWidget::item {{ padding: 8px 10px; border-radius: 10px; }}
+        QListWidget::item:selected {{ background: {c['tile']}; color: {c['primary']}; }}
+        QListWidget::item:hover {{ background: {c['bg']}; }}
 
-        QLineEdit {{
-            border: 1px solid {c['border']};
-            border-radius: 6px;
-            padding: 8px 10px;
+        QMenuBar {{ background: transparent; padding: 4px; }}
+        QMenuBar::item {{ padding: 6px 12px; border-radius: {r['control']}px; }}
+        QMenuBar::item:selected {{ background: {c['tile']}; color: {c['primary']}; }}
+        QMenu {{
             background: {c['surface']};
-            color: {c['text']};
-            font-size: {f['body']}px;
+            border: 1px solid {c['border']};
+            border-radius: {r['control']}px;
+            padding: 6px;
         }}
-        QLineEdit:focus {{ border-color: {c['primary_from']}; }}
+        QMenu::item {{ padding: 8px 16px; border-radius: 10px; }}
+        QMenu::item:selected {{ background: {c['tile']}; color: {c['primary']}; }}
+        QMenu::separator {{ height: 1px; background: {c['border']}; margin: 6px 4px; }}
+
+        QScrollBar:vertical {{ background: transparent; width: 10px; margin: 4px 2px 4px 0; }}
+        QScrollBar::handle:vertical {{ background: {c['border']}; border-radius: 5px; min-height: 24px; }}
+        QScrollBar::handle:vertical:hover {{ background: {c['text_muted']}; }}
+        QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{ height: 0; }}
+        QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {{ background: none; }}
+        QScrollBar:horizontal {{ background: transparent; height: 10px; margin: 0 4px 2px 4px; }}
+        QScrollBar::handle:horizontal {{ background: {c['border']}; border-radius: 5px; min-width: 24px; }}
+        QScrollBar::handle:horizontal:hover {{ background: {c['text_muted']}; }}
+        QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {{ width: 0; }}
+        QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {{ background: none; }}
     """
-
-
-def _rgba(hex_color: str) -> str:
-    """'#00FFC2' -> '0, 255, 194' pour les rgba() de build_dark_stylesheet()."""
-    h = hex_color.lstrip("#")
-    return ", ".join(str(int(h[i : i + 2], 16)) for i in (0, 2, 4))
-
-
-# Registre pour le sélecteur de thème (voir MainWindow.set_theme) : "light"/"dark" sont les
-# seules valeurs valides stockées dans ParentConfig(key="theme").
-THEMES = {"light": build_stylesheet, "dark": build_dark_stylesheet}
-DEFAULT_THEME = "dark"

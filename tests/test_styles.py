@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from mintguard.gui.styles import COLORS, DARK_COLORS, build_dark_stylesheet, build_stylesheet
+from mintguard.gui.styles import COLORS, build_stylesheet
 
 
 def test_stylesheet_contains_primary_color():
@@ -30,7 +30,8 @@ def test_stylesheet_defines_heading_classes():
 
 # Trouvé à l'audit d'accessibilité Phase 4 (voir SUIVI.md) : la palette d'origine ne passait
 # pas le contraste WCAG AA (4.5:1), un "point critique" explicite du projet (parents âgés).
-# Ces tests évitent une régression silencieuse si la palette est retouchée plus tard.
+# Ces tests évitent une régression silencieuse si la palette est retouchée plus tard — y compris
+# lors du changement complet de palette pour la piste "Jardin Numérique" (voir styles.py).
 
 WCAG_AA_NORMAL_TEXT = 4.5
 
@@ -58,33 +59,7 @@ def test_status_colors_meet_wcag_aa_against_background():
 
 
 def test_button_text_meets_wcag_aa_against_primary_backgrounds():
-    # QPushButton texte blanc sur fond {primary,primary_hover} (boutons principaux, partout).
+    # QPushButton texte sur fond {primary,primary_hover} (boutons principaux, partout dans l'app).
     for key in ("primary", "primary_hover"):
-        ratio = _contrast_ratio("#FFFFFF", COLORS[key])
-        assert ratio >= WCAG_AA_NORMAL_TEXT, f"white on {key}: {ratio:.2f}:1 < {WCAG_AA_NORMAL_TEXT}:1"
-
-
-# Piste "Néon" (DashboardScreen, voir styles.py::DARK_COLORS) : même contrainte dure WCAG AA,
-# choisie explicitement malgré le fond quasi noir. Un fond "safe" sur bg peut ne plus l'être sur
-# une carte plus claire (surface) — les deux sont donc vérifiés séparément.
-
-
-def test_dark_status_colors_meet_wcag_aa_against_background_and_surface():
-    for key in ("success", "warning", "danger", "text_muted"):
-        for bg_key in ("bg", "surface"):
-            ratio = _contrast_ratio(DARK_COLORS[key], DARK_COLORS[bg_key])
-            assert ratio >= WCAG_AA_NORMAL_TEXT, f"{key} on {bg_key}: {ratio:.2f}:1 < {WCAG_AA_NORMAL_TEXT}:1"
-
-
-def test_dark_button_text_meets_wcag_aa_against_gradient_stops():
-    # QPushButton texte {primary_text} sur le dégradé {primary_from} -> {primary_to} : les deux
-    # extrémités doivent passer (le dégradé n'est pas garanti monotone en luminance au milieu).
-    for key in ("primary_from", "primary_to"):
-        ratio = _contrast_ratio(DARK_COLORS["primary_text"], DARK_COLORS[key])
-        assert ratio >= WCAG_AA_NORMAL_TEXT, f"{DARK_COLORS['primary_text']} on {key}: {ratio:.2f}:1"
-
-
-def test_dark_stylesheet_contains_gradient_and_card_rules():
-    css = build_dark_stylesheet()
-    for selector in ("QLabel#h1", "QPushButton", "QFrame#card", "QComboBox", "qlineargradient"):
-        assert selector in css
+        ratio = _contrast_ratio(COLORS["on_primary"], COLORS[key])
+        assert ratio >= WCAG_AA_NORMAL_TEXT, f"on_primary on {key}: {ratio:.2f}:1 < {WCAG_AA_NORMAL_TEXT}:1"

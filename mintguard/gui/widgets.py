@@ -14,19 +14,22 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from PyQt6.QtCore import QEvent, QObject, Qt
+from PyQt6.QtCore import QEvent, QObject, QSize, Qt
 from PyQt6.QtWidgets import (
     QCheckBox,
     QFrame,
     QGridLayout,
     QHBoxLayout,
     QLabel,
+    QLayout,
     QLineEdit,
     QPushButton,
     QToolButton,
     QVBoxLayout,
     QWidget,
 )
+
+from mintguard.gui.icons import icon
 
 
 def heading(text: str, level: str = "h1") -> QLabel:
@@ -42,6 +45,54 @@ def small_label(text: str) -> QLabel:
     return label
 
 
+def icon_label(name: str, color: str, size: int = 20) -> QLabel:
+    """QLabel affichant une icône seule (pas un bouton) — ex. à côté d'un titre h1."""
+    label = QLabel()
+    label.setPixmap(icon(name, color, size).pixmap(QSize(size, size)))
+    return label
+
+
+def set_icon_badge(label: QLabel, name: str, color: str, size: int, icon_size: int | None = None) -> None:
+    """(Re)peint un médaillon rond icône+fond teinté (14% opacité de `color`) sur un QLabel
+    existant — permet de changer l'icône/couleur d'un `icon_badge()` déjà posé dans un layout
+    (ex. bouclier vert/orange selon le statut de protection), sans reconstruire le layout."""
+    icon_size = icon_size or int(size * 0.55)
+    label.setFixedSize(size, size)
+    label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+    h = color.lstrip("#")
+    r, g, b = (int(h[i : i + 2], 16) for i in (0, 2, 4))
+    label.setStyleSheet(f"background: rgba({r}, {g}, {b}, 0.14); border-radius: {size // 2}px;")
+    label.setPixmap(icon(name, color, icon_size).pixmap(QSize(icon_size, icon_size)))
+
+
+def icon_badge(name: str, size: int = 36, icon_size: int | None = None, color: str = "#447250") -> QLabel:
+    """Icône dans un médaillon rond de fond teinté — le signal visuel de statut principal de la
+    maquette (bouclier de protection, cadenas du PIN...)."""
+    label = QLabel()
+    set_icon_badge(label, name, color, size, icon_size)
+    return label
+
+
+def growth_stem(height: int, width: int = 6) -> QFrame:
+    """Tige verticale en dégradé vert — repère décoratif "ça pousse" à côté d'une barre de
+    progression, plutôt qu'une simple barre plate. Purement visuel, pas de valeur portée."""
+    stem = QFrame()
+    stem.setFixedSize(width, height)
+    stem.setStyleSheet(
+        "background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #6E9C6A, stop:1 #447250);"
+        f"border-radius: {width // 2}px;"
+    )
+    return stem
+
+
+def wrap_layout(layout: QLayout) -> QWidget:
+    """Enveloppe un layout déjà construit dans un QWidget — utile pour l'ajouter à `Card.add()`,
+    qui n'accepte que des widgets."""
+    container = QWidget()
+    container.setLayout(layout)
+    return container
+
+
 class Card(QFrame):
     """Conteneur visuel type 'carte' (fond blanc, bordure arrondie) — cf. wireframes mockup-item."""
 
@@ -51,6 +102,22 @@ class Card(QFrame):
         self._layout = QVBoxLayout(self)
         self._layout.setContentsMargins(16, 16, 16, 16)
         self._layout.setSpacing(8)
+
+    def add(self, widget) -> None:
+        self._layout.addWidget(widget)
+
+
+class Tile(QFrame):
+    """Bloc plus discret qu'une `Card` (fond teinté, pas de bordure de carte pleine largeur) —
+    pour des informations secondaires groupées côte à côte (fenêtre d'accès du jour, dernière
+    restriction...) ou une ligne d'une liste (jour de la semaine dans l'onglet Limite de temps)."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setObjectName("tile")
+        self._layout = QVBoxLayout(self)
+        self._layout.setContentsMargins(14, 12, 14, 12)
+        self._layout.setSpacing(4)
 
     def add(self, widget) -> None:
         self._layout.addWidget(widget)
