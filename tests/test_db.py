@@ -41,6 +41,7 @@ def test_create_tables(tmp_path):
         "blocked_sites",
         "blocked_apps",
         "activity_logs",
+        "app_daily_usage",
         "parent_config",
         "daily_usage",
     }

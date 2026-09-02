@@ -26,6 +26,7 @@ from PyQt6.QtWidgets import (
     QListWidget,
     QPushButton,
     QScrollArea,
+    QSpinBox,
     QTabWidget,
     QTimeEdit,
     QVBoxLayout,
@@ -72,7 +73,7 @@ class TimeTab(QWidget):
         super().__init__(parent)
         self.i18n = i18n
         self.child_id = child_id
-        self._day_widgets: list[tuple[QCheckBox, QTimeEdit, QTimeEdit]] = []
+        self._day_widgets: list[tuple[QCheckBox, QTimeEdit, QTimeEdit, QCheckBox, QSpinBox]] = []
 
         layout = QVBoxLayout(self)
 
@@ -126,8 +127,22 @@ class TimeTab(QWidget):
             row.addWidget(checkbox)
             row.addWidget(start_edit)
             row.addWidget(end_edit)
+
+            # Quota cumulé (minutes) à l'intérieur de la plage horaire, en plus des bornes
+            # start/end ci-dessus — cf. TimeRule.daily_budget_minutes. Décoché = comportement
+            # historique (seule la plage compte, pas de quota).
+            budget_checkbox = QCheckBox(self.i18n("settings.limit_daily_time"))
+            budget_spin = QSpinBox()
+            budget_spin.setRange(1, 1440)
+            budget_spin.setValue(120)
+            budget_spin.setSuffix(self.i18n("settings.minutes_per_day_suffix"))
+            budget_spin.setEnabled(False)
+            budget_checkbox.toggled.connect(budget_spin.setEnabled)
+            row.addWidget(budget_checkbox)
+            row.addWidget(budget_spin)
+
             layout.addLayout(row)
-            self._day_widgets.append((checkbox, start_edit, end_edit))
+            self._day_widgets.append((checkbox, start_edit, end_edit, budget_checkbox, budget_spin))
 
         layout.addStretch(1)
 
@@ -146,7 +161,7 @@ class TimeTab(QWidget):
         start_time = self.quick_start.time()
         end_time = self.quick_end.time()
         for day_index in day_indices:
-            checkbox, start_edit, end_edit = self._day_widgets[day_index]
+            checkbox, start_edit, end_edit, _budget_checkbox, _budget_spin = self._day_widgets[day_index]
             checkbox.setChecked(True)
             start_edit.setTime(start_time)
             end_edit.setTime(end_time)
@@ -158,19 +173,26 @@ class TimeTab(QWidget):
         session = get_session()
         try:
             rules_by_day = {
-                r.day_of_week: (r.enabled, r.start_hour, r.end_hour)
+                r.day_of_week: (r.enabled, r.start_hour, r.end_hour, r.daily_budget_minutes)
                 for r in session.query(TimeRule).filter_by(child_id=self.child_id).all()
             }
         finally:
             session.close()
 
-        for day_index, (checkbox, start_edit, end_edit) in enumerate(self._day_widgets):
+        for day_index, (checkbox, start_edit, end_edit, budget_checkbox, budget_spin) in enumerate(
+            self._day_widgets
+        ):
             rule = rules_by_day.get(day_index)
             checkbox.setChecked(rule is not None and rule[0])
             if rule is not None:
-                _, start_hour, end_hour = rule
+                _, start_hour, end_hour, daily_budget_minutes = rule
                 start_edit.setTime(QTime(start_hour.hour, start_hour.minute))
                 end_edit.setTime(QTime(end_hour.hour, end_hour.minute))
+                budget_checkbox.setChecked(daily_budget_minutes is not None)
+                if daily_budget_minutes is not None:
+                    budget_spin.setValue(daily_budget_minutes)
+            else:
+                budget_checkbox.setChecked(False)
 
     def _save(self) -> None:
         if self.child_id is None:
@@ -178,7 +200,9 @@ class TimeTab(QWidget):
         session = get_session()
         try:
             session.query(TimeRule).filter_by(child_id=self.child_id).delete()
-            for day_index, (checkbox, start_edit, end_edit) in enumerate(self._day_widgets):
+            for day_index, (checkbox, start_edit, end_edit, budget_checkbox, budget_spin) in enumerate(
+                self._day_widgets
+            ):
                 if checkbox.isChecked():
                     start_time = start_edit.time()
                     end_time = end_edit.time()
@@ -189,6 +213,7 @@ class TimeTab(QWidget):
                             start_hour=dt_time(start_time.hour(), start_time.minute()),
                             end_hour=dt_time(end_time.hour(), end_time.minute()),
                             enabled=True,
+                            daily_budget_minutes=budget_spin.value() if budget_checkbox.isChecked() else None,
                         )
                     )
             session.commit()
@@ -329,12 +354,21 @@ class SitesTab(QWidget):
 
 
 class AppsTab(QWidget):
-    """Onglet 'Applications à Bloquer' — apps suggérées + liste personnalisée, cf. 'Écran 3'."""
+    """Onglet 'Applications à Bloquer' — apps suggérées + liste personnalisée, cf. 'Écran 3'.
 
-    def __init__(self, i18n: I18nLoader, parent=None):
+    Scopé par enfant (`child_id`) comme TimeTab : `BlockedApp` a une portée par enfant
+    (`child_id`), une ligne `child_id=None` restant une règle globale (compat arrière, voir
+    migration dans database.py). Seules les applications détectées (cases à cocher) ont un
+    quota configurable ; la liste personnalisée (texte libre) reste en blocage total.
+    """
+
+    def __init__(self, i18n: I18nLoader, child_id: int | None, parent=None):
         super().__init__(parent)
         self.i18n = i18n
+        self.child_id = child_id
         self._app_checkboxes: dict[str, QCheckBox] = {}
+        self._app_budget_checkboxes: dict[str, QCheckBox] = {}
+        self._app_budget_spins: dict[str, QSpinBox] = {}
 
         layout = _scrollable_layout(self)
 
@@ -360,10 +394,33 @@ class AppsTab(QWidget):
                 continue
             layout.addWidget(heading(self.i18n(f"settings.category_{category}"), "h3"))
             for process_name, label in apps:
+                row = QHBoxLayout()
                 checkbox = QCheckBox(label)
                 checkbox.toggled.connect(lambda checked, p=process_name: self._toggle_app(p, checked))
-                layout.addWidget(checkbox)
+                row.addWidget(checkbox)
+
+                budget_checkbox = QCheckBox(self.i18n("settings.app_quota_checkbox"))
+                budget_spin = QSpinBox()
+                budget_spin.setRange(1, 1440)
+                budget_spin.setValue(30)
+                budget_spin.setSuffix(self.i18n("settings.minutes_per_day_suffix"))
+                budget_checkbox.setEnabled(False)
+                budget_spin.setEnabled(False)
+                checkbox.toggled.connect(budget_checkbox.setEnabled)
+                budget_checkbox.toggled.connect(budget_spin.setEnabled)
+                budget_checkbox.toggled.connect(
+                    lambda checked, p=process_name: self._set_app_budget(p, checked)
+                )
+                budget_spin.valueChanged.connect(
+                    lambda _value, p=process_name: self._set_app_budget(p, self._app_budget_checkboxes[p].isChecked())
+                )
+                row.addWidget(budget_checkbox)
+                row.addWidget(budget_spin)
+
+                layout.addLayout(row)
                 self._app_checkboxes[process_name] = checkbox
+                self._app_budget_checkboxes[process_name] = budget_checkbox
+                self._app_budget_spins[process_name] = budget_spin
 
         layout.addWidget(small_label(self.i18n("settings.custom_apps")))
         self.custom_list = QListWidget()
@@ -392,34 +449,70 @@ class AppsTab(QWidget):
         self._load()
 
     def _load(self) -> None:
+        if self.child_id is None:
+            self.setEnabled(False)
+            return
         session = get_session()
         try:
-            blocked_names = {a.app_name for a in session.query(BlockedApp).filter_by(enabled=True).all()}
+            apps = session.query(BlockedApp).filter_by(child_id=self.child_id, enabled=True).all()
+            blocked_by_name = {a.app_name: a.daily_budget_minutes for a in apps}
         finally:
             session.close()
 
         for process_name, checkbox in self._app_checkboxes.items():
+            budget_checkbox = self._app_budget_checkboxes[process_name]
+            budget_spin = self._app_budget_spins[process_name]
+            is_blocked = process_name in blocked_by_name
             checkbox.blockSignals(True)
-            checkbox.setChecked(process_name in blocked_names)
+            checkbox.setChecked(is_blocked)
             checkbox.blockSignals(False)
+            budget_checkbox.setEnabled(is_blocked)
+
+            daily_budget_minutes = blocked_by_name.get(process_name)
+            budget_checkbox.blockSignals(True)
+            budget_checkbox.setChecked(daily_budget_minutes is not None)
+            budget_checkbox.blockSignals(False)
+            budget_spin.setEnabled(is_blocked and daily_budget_minutes is not None)
+            if daily_budget_minutes is not None:
+                budget_spin.blockSignals(True)
+                budget_spin.setValue(daily_budget_minutes)
+                budget_spin.blockSignals(False)
 
         self.custom_list.clear()
-        for name in sorted(blocked_names - self._detected_process_names):
+        for name in sorted(set(blocked_by_name) - self._detected_process_names):
             self.custom_list.addItem(name)
 
     def _toggle_app(self, process_name: str, checked: bool) -> None:
+        if self.child_id is None:
+            return
         session = get_session()
         try:
-            existing = session.query(BlockedApp).filter_by(app_name=process_name).first()
+            existing = session.query(BlockedApp).filter_by(child_id=self.child_id, app_name=process_name).first()
             if checked and existing is None:
-                session.add(BlockedApp(app_name=process_name, enabled=True))
+                session.add(BlockedApp(app_name=process_name, enabled=True, child_id=self.child_id))
             elif not checked and existing is not None:
                 session.delete(existing)
             session.commit()
         finally:
             session.close()
 
+    def _set_app_budget(self, process_name: str, quota_enabled: bool) -> None:
+        """Bascule ou met à jour le quota (minutes/jour) d'une application déjà bloquée."""
+        if self.child_id is None:
+            return
+        minutes = self._app_budget_spins[process_name].value() if quota_enabled else None
+        session = get_session()
+        try:
+            existing = session.query(BlockedApp).filter_by(child_id=self.child_id, app_name=process_name).first()
+            if existing is not None:
+                existing.daily_budget_minutes = minutes
+                session.commit()
+        finally:
+            session.close()
+
     def _add_custom_app(self) -> None:
+        if self.child_id is None:
+            return
         name = self.add_input.text().strip().lower()
         # `split() != [name]` couvre tous les blancs (tabulation, saut de ligne collé depuis
         # un autre document), pas seulement l'espace : un nom contenant un blanc ne
@@ -432,8 +525,8 @@ class AppsTab(QWidget):
 
         session = get_session()
         try:
-            if session.query(BlockedApp).filter_by(app_name=name).first() is None:
-                session.add(BlockedApp(app_name=name, enabled=True))
+            if session.query(BlockedApp).filter_by(child_id=self.child_id, app_name=name).first() is None:
+                session.add(BlockedApp(app_name=name, enabled=True, child_id=self.child_id))
                 session.commit()
         finally:
             session.close()
@@ -442,12 +535,14 @@ class AppsTab(QWidget):
         self._load()
 
     def _remove_selected_app(self) -> None:
+        if self.child_id is None:
+            return
         item = self.custom_list.currentItem()
         if item is None:
             return
         session = get_session()
         try:
-            existing = session.query(BlockedApp).filter_by(app_name=item.text()).first()
+            existing = session.query(BlockedApp).filter_by(child_id=self.child_id, app_name=item.text()).first()
             if existing is not None:
                 session.delete(existing)
                 session.commit()
@@ -475,7 +570,7 @@ class SettingsWindow(QDialog):
         self.sites_tab = SitesTab(i18n)
         self.tabs.addTab(self.sites_tab, self.i18n("settings.blocked_sites"))
 
-        self.apps_tab = AppsTab(i18n)
+        self.apps_tab = AppsTab(i18n, child_id)
         self.tabs.addTab(self.apps_tab, self.i18n("settings.blocked_apps"))
 
         close_button = QPushButton(self.i18n("common.close"))

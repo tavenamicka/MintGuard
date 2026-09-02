@@ -78,7 +78,10 @@
     "quick_apply": "Zeitplan schnell anwenden:",
     "apply_whole_week": "Ganze Woche",
     "apply_weekdays": "Montag-Freitag",
-    "apply_weekend": "Wochenende"
+    "apply_weekend": "Wochenende",
+    "limit_daily_time": "Nutzungszeit auch begrenzen",
+    "minutes_per_day_suffix": " Min/Tag",
+    "app_quota_checkbox": "Begrenzte Zeit statt vollständiger Sperre erlauben"
   },
   "time": {
     "monday": "Montag",

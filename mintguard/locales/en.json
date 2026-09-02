@@ -78,7 +78,10 @@
     "quick_apply": "Quickly apply a schedule:",
     "apply_whole_week": "Whole week",
     "apply_weekdays": "Monday-Friday",
-    "apply_weekend": "Weekend"
+    "apply_weekend": "Weekend",
+    "limit_daily_time": "Also limit usage time",
+    "minutes_per_day_suffix": " min/day",
+    "app_quota_checkbox": "Allow limited time instead of a total block"
   },
   "time": {
     "monday": "Monday",

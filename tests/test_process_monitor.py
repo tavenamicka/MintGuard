@@ -14,11 +14,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+from datetime import date
+
 import pytest
 
 from mintguard.backend.process_monitor import ProcessMonitor
 from mintguard.db.database import get_session, init_db
-from mintguard.db.models import ActivityLog, BlockedApp, Child
+from mintguard.db.models import ActivityLog, AppDailyUsage, BlockedApp, Child
 
 
 @pytest.fixture(autouse=True)
@@ -26,10 +28,12 @@ def db(tmp_path):
     init_db(tmp_path / "test.db")
 
 
-def add_blocked_app(name: str) -> None:
+def add_blocked_app(name: str, child_id: int | None = None, daily_budget_minutes: int | None = None) -> None:
     session = get_session()
     try:
-        session.add(BlockedApp(app_name=name, enabled=True))
+        session.add(
+            BlockedApp(app_name=name, enabled=True, child_id=child_id, daily_budget_minutes=daily_budget_minutes)
+        )
         session.commit()
     finally:
         session.close()
@@ -123,6 +127,71 @@ def test_logs_activity_with_correct_child_id(monkeypatch):
         log = session.query(ActivityLog).first()
         assert log.child_id == child_id
         assert log.action == "app_blocked"
-        assert log.details == "discord"
+        assert log.details == "Application bloquée : discord"
     finally:
         session.close()
+
+
+def test_budgeted_app_not_killed_while_under_quota(monkeypatch):
+    child_id = add_child("Test", "mintguard-test-child")
+    add_blocked_app("discord", child_id=child_id, daily_budget_minutes=10)
+
+    procs = [FakeProcess(1, "discord", "mintguard-test-child")]
+    monkeypatch.setattr("mintguard.backend.process_monitor.psutil.process_iter", lambda *_: procs)
+
+    killed = ProcessMonitor().check_and_kill(elapsed_seconds=60)
+
+    assert killed == []
+    assert procs[0].killed is False
+
+    session = get_session()
+    try:
+        row = session.query(AppDailyUsage).filter_by(child_id=child_id, app_name="discord").first()
+        assert row.seconds_used == 60
+    finally:
+        session.close()
+
+
+def test_budgeted_app_killed_once_quota_exceeded(monkeypatch):
+    child_id = add_child("Test", "mintguard-test-child")
+    add_blocked_app("discord", child_id=child_id, daily_budget_minutes=1)
+
+    session = get_session()
+    try:
+        session.add(AppDailyUsage(child_id=child_id, app_name="discord", date=date.today().isoformat(), seconds_used=55))
+        session.commit()
+    finally:
+        session.close()
+
+    procs = [FakeProcess(1, "discord", "mintguard-test-child")]
+    monkeypatch.setattr("mintguard.backend.process_monitor.psutil.process_iter", lambda *_: procs)
+
+    killed = ProcessMonitor().check_and_kill(elapsed_seconds=10)
+
+    assert killed == ["discord"]
+    assert procs[0].killed is True
+
+    session = get_session()
+    try:
+        log = session.query(ActivityLog).first()
+        assert log.child_id == child_id
+        assert log.action == "app_blocked"
+        assert log.details == "Quota atteint : discord (1 min/jour)"
+    finally:
+        session.close()
+
+
+def test_child_specific_rule_takes_priority_over_global(monkeypatch):
+    child_id = add_child("Test", "mintguard-test-child")
+    add_blocked_app("discord", child_id=None, daily_budget_minutes=None)  # règle globale: bloquée totalement
+    add_blocked_app("discord", child_id=child_id, daily_budget_minutes=30)  # règle enfant: quota
+
+    procs = [FakeProcess(1, "discord", "mintguard-test-child")]
+    monkeypatch.setattr("mintguard.backend.process_monitor.psutil.process_iter", lambda *_: procs)
+
+    killed = ProcessMonitor().check_and_kill(elapsed_seconds=60)
+
+    # La règle enfant-spécifique (quota) l'emporte sur la règle globale (blocage total) :
+    # l'appli n'est pas tuée immédiatement.
+    assert killed == []
+    assert procs[0].killed is False

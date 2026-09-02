@@ -51,7 +51,9 @@ def run_cycle(
     au même rythme que la blocklist DNS : même but (empêcher un contournement du blocage DNS),
     et la liste des enfants change rarement.
     """
-    process_monitor.check_and_kill()
+    # `elapsed_seconds` sert aussi à ProcessMonitor pour accumuler le temps des applications à
+    # quota (AppDailyUsage), même principe que DailyUsage ci-dessous.
+    process_monitor.check_and_kill(process_interval)
     # Même cadence que check_and_kill() (un tick = process_interval secondes) : c'est cette
     # écriture périodique dans DailyUsage, relue par le Dashboard, qui tient lieu d'"IPC temps
     # réel" GUI<->daemon pour la barre de progression (cf. décision d'architecture ci-dessus).

@@ -26,7 +26,7 @@ import pytest
 
 from mintguard.backend.scheduler import Scheduler
 from mintguard.db.database import get_session, init_db
-from mintguard.db.models import ActivityLog, Child, TimeRule
+from mintguard.db.models import ActivityLog, Child, DailyUsage, TimeRule
 
 # Mercredi 1er juillet 2026 (weekday() == 2)
 WEDNESDAY = datetime(2026, 7, 1)
@@ -51,7 +51,9 @@ def manager():
     return FakeSessionManager()
 
 
-def add_child(username="emma", day=WEDNESDAY.weekday(), start=(16, 0), end=(20, 0), enabled=True):
+def add_child(
+    username="emma", day=WEDNESDAY.weekday(), start=(16, 0), end=(20, 0), enabled=True, daily_budget_minutes=None
+):
     session = get_session()
     child = Child(name=username.capitalize(), username=username)
     session.add(child)
@@ -64,12 +66,20 @@ def add_child(username="emma", day=WEDNESDAY.weekday(), start=(16, 0), end=(20, 
                 start_hour=dt_time(*start),
                 end_hour=dt_time(*end),
                 enabled=enabled,
+                daily_budget_minutes=daily_budget_minutes,
             )
         )
     session.commit()
     child_id = child.id
     session.close()
     return child_id
+
+
+def set_usage_today(child_id: int, seconds_used: int, now: datetime) -> None:
+    session = get_session()
+    session.add(DailyUsage(child_id=child_id, date=now.date().isoformat(), seconds_used=seconds_used))
+    session.commit()
+    session.close()
 
 
 def test_child_inside_allowed_window_is_left_alone(manager):
@@ -152,3 +162,45 @@ def test_minutes_remaining_inside_window(manager):
 def test_minutes_remaining_zero_outside_window(manager):
     child_id = add_child(start=(16, 0), end=(20, 0))
     assert Scheduler(manager).get_minutes_remaining(child_id, WEDNESDAY.replace(hour=22)) == 0
+
+
+def test_child_within_window_but_over_budget_is_logged_out(manager):
+    child_id = add_child(start=(16, 0), end=(20, 0), daily_budget_minutes=120)
+    now = WEDNESDAY.replace(hour=17)
+    set_usage_today(child_id, seconds_used=120 * 60, now=now)
+
+    assert Scheduler(manager).check_all_children(now) == ["emma"]
+    assert manager.terminated == ["emma"]
+
+    session = get_session()
+    logs = session.query(ActivityLog).all()
+    entries = [(log.child_id, log.action) for log in logs]
+    session.close()
+    assert entries == [(child_id, "daily_budget_hit")]
+
+
+def test_child_within_window_and_under_budget_is_left_alone(manager):
+    child_id = add_child(start=(16, 0), end=(20, 0), daily_budget_minutes=120)
+    now = WEDNESDAY.replace(hour=17)
+    set_usage_today(child_id, seconds_used=60 * 60, now=now)
+
+    assert Scheduler(manager).check_all_children(now) == []
+    assert manager.terminated == []
+
+
+def test_minutes_remaining_capped_by_budget(manager):
+    child_id = add_child(start=(16, 0), end=(20, 0), daily_budget_minutes=90)
+    now = WEDNESDAY.replace(hour=17)
+    set_usage_today(child_id, seconds_used=70 * 60, now=now)
+
+    # Fenêtre: encore 3h. Budget: 90-70=20 min restantes. Le budget l'emporte.
+    assert Scheduler(manager).get_minutes_remaining(child_id, now) == 20
+
+
+def test_minutes_remaining_uses_window_when_budget_not_exhausted(manager):
+    child_id = add_child(start=(16, 0), end=(17, 0), daily_budget_minutes=90)
+    now = WEDNESDAY.replace(hour=16, minute=45)
+    set_usage_today(child_id, seconds_used=10 * 60, now=now)
+
+    # Fenêtre: encore 15 min. Budget: 90-10=80 min restantes. La fenêtre l'emporte.
+    assert Scheduler(manager).get_minutes_remaining(child_id, now) == 15

@@ -55,14 +55,14 @@ def make_child() -> int:
 def test_time_tab_starts_with_no_days_checked():
     child_id = make_child()
     tab = TimeTab(I18nLoader("fr"), child_id)
-    assert all(not checkbox.isChecked() for checkbox, _, _ in tab._day_widgets)
+    assert all(not checkbox.isChecked() for checkbox, _, _, _, _ in tab._day_widgets)
 
 
 def test_time_tab_save_persists_checked_days():
     child_id = make_child()
     tab = TimeTab(I18nLoader("fr"), child_id)
 
-    checkbox, start_edit, end_edit = tab._day_widgets[0]
+    checkbox, start_edit, end_edit, _budget_checkbox, _budget_spin = tab._day_widgets[0]
     checkbox.setChecked(True)
     start_edit.setTime(QTime(10, 0))
     end_edit.setTime(QTime(12, 0))
@@ -75,9 +75,28 @@ def test_time_tab_save_persists_checked_days():
         assert rules[0].day_of_week == 0
         assert rules[0].start_hour.hour == 10
         assert rules[0].end_hour.hour == 12
+        assert rules[0].daily_budget_minutes is None
     finally:
         session.close()
     assert tab.saved_label.isHidden() is False
+
+
+def test_time_tab_save_persists_daily_budget_when_checked():
+    child_id = make_child()
+    tab = TimeTab(I18nLoader("fr"), child_id)
+
+    checkbox, _start_edit, _end_edit, budget_checkbox, budget_spin = tab._day_widgets[0]
+    checkbox.setChecked(True)
+    budget_checkbox.setChecked(True)
+    budget_spin.setValue(120)
+    tab._save()
+
+    session = get_session()
+    try:
+        rule = session.query(TimeRule).filter_by(child_id=child_id).first()
+        assert rule.daily_budget_minutes == 120
+    finally:
+        session.close()
 
 
 def test_time_tab_save_removes_unchecked_days():
@@ -92,7 +111,7 @@ def test_time_tab_save_removes_unchecked_days():
         session.close()
 
     tab = TimeTab(I18nLoader("fr"), child_id)  # loads existing rule
-    checkbox, _, _ = tab._day_widgets[2]
+    checkbox, _, _, _, _ = tab._day_widgets[2]
     assert checkbox.isChecked() is True
     checkbox.setChecked(False)
     tab._save()
@@ -121,7 +140,7 @@ def test_apply_whole_week_checks_and_sets_all_seven_days():
 
     tab._apply_quick(range(7))
 
-    for checkbox, start_edit, end_edit in tab._day_widgets:
+    for checkbox, start_edit, end_edit, _budget_checkbox, _budget_spin in tab._day_widgets:
         assert checkbox.isChecked() is True
         assert start_edit.time() == QTime(9, 0)
         assert end_edit.time() == QTime(18, 0)
@@ -135,7 +154,7 @@ def test_apply_weekdays_only_affects_monday_to_friday():
 
     tab._apply_quick(range(0, 5))
 
-    for day_index, (checkbox, _, _) in enumerate(tab._day_widgets):
+    for day_index, (checkbox, _, _, _, _) in enumerate(tab._day_widgets):
         assert checkbox.isChecked() == (day_index < 5)
 
 
@@ -147,7 +166,7 @@ def test_apply_weekend_only_affects_saturday_and_sunday():
 
     tab._apply_quick(range(5, 7))
 
-    for day_index, (checkbox, _, _) in enumerate(tab._day_widgets):
+    for day_index, (checkbox, _, _, _, _) in enumerate(tab._day_widgets):
         assert checkbox.isChecked() == (day_index >= 5)
 
 
@@ -157,7 +176,7 @@ def test_quick_apply_still_allows_individual_day_adjustment_afterwards():
     tab = TimeTab(I18nLoader("fr"), child_id)
     tab._apply_quick(range(7))
 
-    friday_checkbox, friday_start, friday_end = tab._day_widgets[4]
+    friday_checkbox, friday_start, friday_end, _friday_budget_checkbox, _friday_budget_spin = tab._day_widgets[4]
     friday_start.setTime(QTime(20, 0))
     friday_end.setTime(QTime(23, 0))
     tab._save()
@@ -295,33 +314,52 @@ def fake_installed_apps(monkeypatch):
 
 
 def test_apps_tab_groups_detected_apps_by_category():
-    tab = AppsTab(I18nLoader("fr"))
+    child_id = make_child()
+    tab = AppsTab(I18nLoader("fr"), child_id)
     assert set(tab._app_checkboxes) == {"thunderbird", "rhythmbox", "supertux"}
 
 
 def test_apps_tab_toggle_detected_app_creates_row():
-    tab = AppsTab(I18nLoader("fr"))
+    child_id = make_child()
+    tab = AppsTab(I18nLoader("fr"), child_id)
     tab._app_checkboxes["supertux"].setChecked(True)
 
     session = get_session()
     try:
-        app = session.query(BlockedApp).filter_by(app_name="supertux").first()
+        app = session.query(BlockedApp).filter_by(child_id=child_id, app_name="supertux").first()
     finally:
         session.close()
     assert app is not None
     assert app.enabled is True
+    assert app.daily_budget_minutes is None
 
 
 def test_apps_tab_untoggle_detected_app_removes_row():
-    tab = AppsTab(I18nLoader("fr"))
+    child_id = make_child()
+    tab = AppsTab(I18nLoader("fr"), child_id)
     tab._app_checkboxes["supertux"].setChecked(True)
     tab._app_checkboxes["supertux"].setChecked(False)
 
     session = get_session()
     try:
-        assert session.query(BlockedApp).filter_by(app_name="supertux").first() is None
+        assert session.query(BlockedApp).filter_by(child_id=child_id, app_name="supertux").first() is None
     finally:
         session.close()
+
+
+def test_apps_tab_quota_checkbox_sets_daily_budget():
+    child_id = make_child()
+    tab = AppsTab(I18nLoader("fr"), child_id)
+    tab._app_checkboxes["supertux"].setChecked(True)
+    tab._app_budget_spins["supertux"].setValue(45)
+    tab._app_budget_checkboxes["supertux"].setChecked(True)
+
+    session = get_session()
+    try:
+        app = session.query(BlockedApp).filter_by(child_id=child_id, app_name="supertux").first()
+    finally:
+        session.close()
+    assert app.daily_budget_minutes == 45
 
 
 def test_apps_tab_no_apps_detected_shows_no_checkboxes(monkeypatch):
@@ -330,18 +368,20 @@ def test_apps_tab_no_apps_detected_shows_no_checkboxes(monkeypatch):
     monkeypatch.setattr(
         settings_module, "list_installed_apps", lambda: {"social": [], "entertainment": [], "gaming": []}
     )
-    tab = AppsTab(I18nLoader("fr"))
+    child_id = make_child()
+    tab = AppsTab(I18nLoader("fr"), child_id)
     assert tab._app_checkboxes == {}
 
 
 def test_apps_tab_add_valid_custom_app():
-    tab = AppsTab(I18nLoader("fr"))
+    child_id = make_child()
+    tab = AppsTab(I18nLoader("fr"), child_id)
     tab.add_input.setText("telegram-desktop")
     tab._add_custom_app()
 
     session = get_session()
     try:
-        app = session.query(BlockedApp).filter_by(app_name="telegram-desktop").first()
+        app = session.query(BlockedApp).filter_by(child_id=child_id, app_name="telegram-desktop").first()
     finally:
         session.close()
     assert app is not None
@@ -349,7 +389,8 @@ def test_apps_tab_add_valid_custom_app():
 
 
 def test_apps_tab_rejects_name_with_spaces():
-    tab = AppsTab(I18nLoader("fr"))
+    child_id = make_child()
+    tab = AppsTab(I18nLoader("fr"), child_id)
     tab.add_input.setText("not a process")
     tab._add_custom_app()
 
@@ -362,7 +403,8 @@ def test_apps_tab_rejects_name_with_spaces():
 
 
 def test_apps_tab_remove_custom_app():
-    tab = AppsTab(I18nLoader("fr"))
+    child_id = make_child()
+    tab = AppsTab(I18nLoader("fr"), child_id)
     tab.add_input.setText("telegram-desktop")
     tab._add_custom_app()
     tab.custom_list.setCurrentRow(0)
@@ -370,10 +412,15 @@ def test_apps_tab_remove_custom_app():
 
     session = get_session()
     try:
-        assert session.query(BlockedApp).filter_by(app_name="telegram-desktop").first() is None
+        assert session.query(BlockedApp).filter_by(child_id=child_id, app_name="telegram-desktop").first() is None
     finally:
         session.close()
     assert tab.custom_list.count() == 0
+
+
+def test_apps_tab_disabled_without_child():
+    tab = AppsTab(I18nLoader("fr"), None)
+    assert tab.isEnabled() is False
 
 
 # -- SettingsWindow ---------------------------------------------------------

@@ -58,6 +58,10 @@ class TimeRule(Base):
     start_hour: Mapped[dt_time] = mapped_column(Time)
     end_hour: Mapped[dt_time] = mapped_column(Time)
     enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    # Quota cumule (minutes) a l'interieur de la plage horaire, en plus de start_hour/end_hour.
+    # None = pas de quota, seule la plage compte (comportement historique). Verifie contre
+    # DailyUsage.seconds_used par Scheduler, pas par ce modele.
+    daily_budget_minutes: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
     child: Mapped["Child"] = relationship(back_populates="time_rules")
 
@@ -78,6 +82,11 @@ class BlockedApp(Base):
     app_name: Mapped[str] = mapped_column(String(255))
     binary_path: Mapped[str | None] = mapped_column(String(500), nullable=True)
     enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    # None = s'applique a tous les enfants (compat arriere, voir migration dans database.py).
+    child_id: Mapped[int | None] = mapped_column(ForeignKey("children.id"), nullable=True)
+    # None = blocage total (comportement historique). Sinon, quota quotidien en minutes avant
+    # blocage - verifie contre AppDailyUsage.seconds_used par ProcessMonitor.
+    daily_budget_minutes: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
 
 class ActivityLog(Base):
@@ -104,6 +113,21 @@ class DailyUsage(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     child_id: Mapped[int] = mapped_column(ForeignKey("children.id"))
     date: Mapped[str] = mapped_column(String(10))  # "AAAA-MM-JJ", jour local (cohérent avec TimeRule)
+    seconds_used: Mapped[int] = mapped_column(Integer, default=0)
+
+
+class AppDailyUsage(Base):
+    """Cumul du temps d'execution (en secondes) par enfant, application et jour local - meme
+    principe que DailyUsage, alimente par ProcessMonitor.check_and_kill() pour les applications
+    a quota (BlockedApp.daily_budget_minutes non None)."""
+
+    __tablename__ = "app_daily_usage"
+    __table_args__ = (UniqueConstraint("child_id", "app_name", "date", name="uq_app_daily_usage_child_app_date"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    child_id: Mapped[int] = mapped_column(ForeignKey("children.id"))
+    app_name: Mapped[str] = mapped_column(String(255))
+    date: Mapped[str] = mapped_column(String(10))  # "AAAA-MM-JJ", jour local (cohérent avec DailyUsage)
     seconds_used: Mapped[int] = mapped_column(Integer, default=0)
 
 

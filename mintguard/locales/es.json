@@ -78,7 +78,10 @@
     "quick_apply": "Aplicar un horario rápidamente:",
     "apply_whole_week": "Toda la semana",
     "apply_weekdays": "Lunes-Viernes",
-    "apply_weekend": "Fin de semana"
+    "apply_weekend": "Fin de semana",
+    "limit_daily_time": "Limitar también el tiempo de uso",
+    "minutes_per_day_suffix": " min/día",
+    "app_quota_checkbox": "Permitir un tiempo limitado en lugar de un bloqueo total"
   },
   "time": {
     "monday": "Lunes",

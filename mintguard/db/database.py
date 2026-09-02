@@ -18,7 +18,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Iterator
 
-from sqlalchemy import Engine, create_engine, event
+from sqlalchemy import Engine, create_engine, event, text
 from sqlalchemy.orm import Session, sessionmaker
 
 from mintguard.config import get_config
@@ -26,6 +26,36 @@ from mintguard.db.models import Base
 
 _engine: Engine | None = None
 _SessionLocal: sessionmaker | None = None
+
+# (table, colonne, type SQL) a ajouter si absente d'une BD existante. `create_all()` ne cree
+# que les tables manquantes, jamais une colonne manquante sur une table deja presente - une BD
+# de production deja peuplee (BlockedApp, TimeRule...) ne recoit donc jamais les nouvelles
+# colonnes sans cette migration explicite.
+_COLUMN_MIGRATIONS = [
+    ("time_rules", "daily_budget_minutes", "INTEGER"),
+    ("blocked_apps", "child_id", "INTEGER REFERENCES children(id)"),
+    ("blocked_apps", "daily_budget_minutes", "INTEGER"),
+]
+
+
+def _migrate_schema(engine: Engine) -> None:
+    with engine.begin() as conn:
+        for table, column, sql_type in _COLUMN_MIGRATIONS:
+            existing = {row[1] for row in conn.execute(text(f"PRAGMA table_info({table})"))}
+            if column not in existing:
+                conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {column} {sql_type}"))
+
+        # blocked_apps.child_id vient d'etre ajoutee : les lignes existantes sont NULL
+        # ("s'applique a tous les enfants"). Avec un seul enfant en base (cas courant), on les
+        # rattache explicitement pour qu'elles restent visibles/editables dans l'onglet
+        # Applications, desormais filtre par enfant - une base multi-enfants est ambigue, on
+        # n'y touche pas (la ligne reste globale).
+        children = conn.execute(text("SELECT id FROM children")).fetchall()
+        if len(children) == 1:
+            conn.execute(
+                text("UPDATE blocked_apps SET child_id = :child_id WHERE child_id IS NULL"),
+                {"child_id": children[0][0]},
+            )
 
 
 def get_db_path() -> Path:
@@ -58,6 +88,7 @@ def init_db(db_path: Path | None = None) -> Engine:
             cursor.close()
 
     Base.metadata.create_all(_engine)
+    _migrate_schema(_engine)
     _SessionLocal = sessionmaker(bind=_engine)
 
     # Le daemon (root) et la GUI (utilisateur normal, groupe mintguard-admin)

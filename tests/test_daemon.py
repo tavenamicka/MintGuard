@@ -43,7 +43,7 @@ def make_controllers(tmp_path):
 def test_process_monitor_runs_every_cycle(tmp_path, monkeypatch):
     process_monitor, scheduler, dns_controller, firewall_controller, usage_tracker = make_controllers(tmp_path)
     calls = []
-    monkeypatch.setattr(process_monitor, "check_and_kill", lambda: calls.append(1))
+    monkeypatch.setattr(process_monitor, "check_and_kill", lambda seconds: calls.append(1))
     monkeypatch.setattr(dns_controller, "apply", lambda: False)
     monkeypatch.setattr(firewall_controller, "sync_child_dns_restriction", lambda: True)
     monkeypatch.setattr(usage_tracker, "record_tick", lambda seconds: None)
@@ -63,7 +63,7 @@ def test_process_monitor_runs_every_cycle(tmp_path, monkeypatch):
 
 def test_usage_tracker_ticks_every_cycle(tmp_path, monkeypatch):
     process_monitor, scheduler, dns_controller, firewall_controller, usage_tracker = make_controllers(tmp_path)
-    monkeypatch.setattr(process_monitor, "check_and_kill", lambda: None)
+    monkeypatch.setattr(process_monitor, "check_and_kill", lambda seconds: None)
     monkeypatch.setattr(dns_controller, "apply", lambda: False)
     monkeypatch.setattr(firewall_controller, "sync_child_dns_restriction", lambda: True)
 
@@ -85,7 +85,7 @@ def test_usage_tracker_ticks_every_cycle(tmp_path, monkeypatch):
 
 def test_scheduler_runs_only_after_session_interval_elapsed(tmp_path, monkeypatch):
     process_monitor, scheduler, dns_controller, firewall_controller, usage_tracker = make_controllers(tmp_path)
-    monkeypatch.setattr(process_monitor, "check_and_kill", lambda: None)
+    monkeypatch.setattr(process_monitor, "check_and_kill", lambda seconds: None)
     monkeypatch.setattr(dns_controller, "apply", lambda: False)
     monkeypatch.setattr(firewall_controller, "sync_child_dns_restriction", lambda: True)
     monkeypatch.setattr(usage_tracker, "record_tick", lambda seconds: None)
@@ -118,7 +118,7 @@ def test_scheduler_runs_only_after_session_interval_elapsed(tmp_path, monkeypatc
 
 def test_dns_and_firewall_refresh_only_after_interval_elapsed(tmp_path, monkeypatch):
     process_monitor, scheduler, dns_controller, firewall_controller, usage_tracker = make_controllers(tmp_path)
-    monkeypatch.setattr(process_monitor, "check_and_kill", lambda: None)
+    monkeypatch.setattr(process_monitor, "check_and_kill", lambda seconds: None)
     monkeypatch.setattr(scheduler, "check_all_children", lambda: None)
     monkeypatch.setattr(usage_tracker, "record_tick", lambda seconds: None)
 
