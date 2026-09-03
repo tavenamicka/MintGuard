@@ -55,6 +55,15 @@ FONT_FAMILY = BODY_FONT_FAMILY  # alias : la plupart du QSS ci-dessous vise le t
 _FONT_DIR = Path(__file__).parent / "assets" / "fonts"
 _fonts_loaded = False
 
+# Référencée par QComboBox::down-arrow ci-dessous : sans image explicite, ce sous-contrôle
+# ne dessine plus rien du tout une fois `border: none` posé sur ::drop-down (même famille de
+# piège Fusion que les boutons pilule, cf. refonte visuelle "Jardin Numérique" dans SUIVI.md)
+# — le menu déroulant devenait indiscernable d'un simple champ de texte, aucun indice visuel
+# qu'une liste de comptes existe derrière (trouvé en usage réel : onboarding/ajout d'enfant).
+# Couleur figée en dur dans le fichier (comme mintguard.svg/tray-*.svg) plutôt que recolorée
+# à l'exécution comme icons.py : thème unique, pas de variante à gérer.
+_CHEVRON_DOWN_ICON = (Path(__file__).parent / "assets" / "icons" / "chevron-down.svg").as_posix()
+
 # Échelle de rayons organique (coins généreux, boutons en pilule) — cf. maquette.
 #
 # `pill` n'est PAS 999 (l'idiome CSS web habituel) : trouvé en testant sur le vrai bureau
@@ -230,7 +239,13 @@ def build_stylesheet() -> str:
             min-height: 18px;
         }}
         QComboBox:hover, QComboBox:focus {{ border-color: {c['primary']}; }}
-        QComboBox::drop-down {{ border: none; width: 26px; }}
+        QComboBox::drop-down {{ border: none; width: 30px; }}
+        QComboBox::down-arrow {{
+            image: url({_CHEVRON_DOWN_ICON});
+            width: 14px;
+            height: 14px;
+            margin-right: 10px;
+        }}
         QComboBox QAbstractItemView {{
             background: {c['surface']};
             border: 1px solid {c['border']};
