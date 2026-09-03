@@ -14,8 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import json
 from collections import namedtuple
 
+import psutil
 import pytest
 
 from mintguard.backend.usage_tracker import UsageTracker
@@ -25,9 +27,30 @@ from mintguard.db.models import Child, DailyUsage
 FakeSession = namedtuple("FakeSession", ["name", "terminal", "host", "started", "pid"])
 
 
+class _FakeCompletedProcess:
+    def __init__(self, stdout: str):
+        self.stdout = stdout
+
+
 @pytest.fixture(autouse=True)
 def db(tmp_path):
     init_db(tmp_path / "test.db")
+
+
+@pytest.fixture(autouse=True)
+def loginctl_matches_psutil(monkeypatch):
+    """Par défaut, loginctl "confirme" active tout utilisateur déjà listé par
+    `psutil.users()` (patché par chaque test individuellement) — isole les tests qui ne
+    portent que sur le filtrage utmp du filtrage loginctl ajouté depuis (voir
+    test_record_tick_ignores_child_whose_logind_session_is_closing pour le scénario que ce
+    second filtrage couvre spécifiquement)."""
+
+    def fake_run(cmd, **kwargs):
+        usernames = {UsageTracker._plain_username(u.name) for u in psutil.users()}
+        sessions = [{"user": name, "state": "active"} for name in usernames]
+        return _FakeCompletedProcess(stdout=json.dumps(sessions))
+
+    monkeypatch.setattr("mintguard.backend.usage_tracker.subprocess.run", fake_run)
 
 
 def add_child(name: str, username: str) -> int:
@@ -103,3 +126,41 @@ def test_daily_usage_unique_per_child_and_date():
         assert row.seconds_used == 120
     finally:
         session.close()
+
+
+# Trouvé en usage réel (voir SUIVI.md) : après une fermeture forcée de session
+# (SessionManager.terminate_user_session, ex. fin de plage horaire), l'entrée utmp du
+# compte enfant peut rester "connectée" alors que systemd-logind marque déjà la session
+# "closing" — le Dashboard continuait alors à faire défiler le temps d'un enfant qui
+# n'était plus réellement connecté.
+
+
+def test_record_tick_ignores_child_whose_logind_session_is_closing(monkeypatch):
+    child_id = add_child("Test", "mintguard-test-child")
+    sessions = [FakeSession("mintguard-test-child", "tty1", "", 0.0, 1)]
+    monkeypatch.setattr("mintguard.backend.usage_tracker.psutil.users", lambda: sessions)
+    monkeypatch.setattr(
+        "mintguard.backend.usage_tracker.subprocess.run",
+        lambda cmd, **kwargs: _FakeCompletedProcess(
+            stdout=json.dumps([{"user": "mintguard-test-child", "state": "closing"}])
+        ),
+    )
+
+    UsageTracker().record_tick(5)
+
+    assert UsageTracker().get_seconds_used_today(child_id) == 0
+
+
+def test_record_tick_falls_back_to_utmp_when_loginctl_unavailable(monkeypatch):
+    child_id = add_child("Test", "mintguard-test-child")
+    sessions = [FakeSession("mintguard-test-child", "tty1", "", 0.0, 1)]
+    monkeypatch.setattr("mintguard.backend.usage_tracker.psutil.users", lambda: sessions)
+
+    def raise_missing(cmd, **kwargs):
+        raise FileNotFoundError("loginctl introuvable")
+
+    monkeypatch.setattr("mintguard.backend.usage_tracker.subprocess.run", raise_missing)
+
+    UsageTracker().record_tick(5)
+
+    assert UsageTracker().get_seconds_used_today(child_id) == 5

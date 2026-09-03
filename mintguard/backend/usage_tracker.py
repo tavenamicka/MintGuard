@@ -14,7 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import json
 import logging
+import subprocess
 from datetime import date
 
 import psutil
@@ -23,6 +25,10 @@ from mintguard.db.database import get_session
 from mintguard.db.models import Child, DailyUsage
 
 logger = logging.getLogger("mintguard.backend.usage_tracker")
+
+# États loginctl (systemd-logind) correspondant à une session réellement en cours — par
+# opposition à "closing"/"closed", une session qui n'a pas fini de se terminer proprement.
+_LOGIND_ACTIVE_STATES = {"active", "online"}
 
 
 class UsageTracker:
@@ -34,8 +40,45 @@ class UsageTracker:
     """
 
     def get_active_usernames(self) -> set[str]:
-        """Comptes actuellement connectés au système (toutes sessions confondues)."""
-        return {self._plain_username(u.name) for u in psutil.users()}
+        """Comptes actuellement connectés au système (toutes sessions confondues).
+
+        Croise psutil (utmp) avec loginctl/systemd-logind : trouvé en usage réel qu'après une
+        fermeture forcée (`SessionManager.terminate_user_session`, ex: fin de plage horaire),
+        l'entrée utmp du compte enfant peut rester "connectée" alors que la session
+        systemd-logind est déjà "closing" — le Dashboard continuait alors à faire défiler le
+        temps d'utilisation d'un enfant qui n'était plus réellement connecté. loginctl reflète
+        l'état réel de la session, utmp seul ne suffit pas dans ce cas.
+        """
+        utmp_usernames = {self._plain_username(u.name) for u in psutil.users()}
+        if not utmp_usernames:
+            return utmp_usernames
+        logind_usernames = self._logind_active_usernames()
+        if logind_usernames is None:
+            # loginctl indisponible (hors Linux, erreur, systemd absent) : retombe sur utmp
+            # seul plutôt que de ne plus jamais compter aucun temps.
+            return utmp_usernames
+        return utmp_usernames & logind_usernames
+
+    @staticmethod
+    def _logind_active_usernames() -> set[str] | None:
+        try:
+            result = subprocess.run(
+                ["loginctl", "list-sessions", "--output=json"],
+                capture_output=True,
+                text=True,
+                check=True,
+                timeout=5,
+            )
+            sessions = json.loads(result.stdout)
+        except (
+            subprocess.CalledProcessError,
+            FileNotFoundError,
+            subprocess.TimeoutExpired,
+            json.JSONDecodeError,
+        ) as e:
+            logger.warning("loginctl indisponible, filtrage par état de session ignoré: %s", e)
+            return None
+        return {s["user"] for s in sessions if s.get("state") in _LOGIND_ACTIVE_STATES}
 
     @staticmethod
     def _plain_username(username: str | None) -> str | None:
