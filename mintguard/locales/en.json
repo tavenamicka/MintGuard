@@ -4,6 +4,10 @@
     "tagline": "Help your children explore the internet safely",
     "version": "0.1.0"
   },
+  "startup_error": {
+    "permission_title": "One more step before you can use MintGuard",
+    "permission_body": "MintGuard needs your session to be restarted to access its protected data.\n\nLog out and log back in (or restart the computer), then open MintGuard again.\n\nIf that doesn't help, ask whoever installed the app to run this in a terminal:\nsudo usermod -aG mintguard-admin <your_username>"
+  },
   "child_tray": {
     "tooltip_minutes": "MintGuard: {0} min left",
     "warning_minutes_left": "{0} minute(s) left before your session ends.",

@@ -4,6 +4,10 @@
     "tagline": "Para que sus hijos exploren Internet con seguridad",
     "version": "0.1.0"
   },
+  "startup_error": {
+    "permission_title": "Un último paso antes de usar MintGuard",
+    "permission_body": "MintGuard necesita que se reinicie su sesión para acceder a sus datos protegidos.\n\nCierre sesión y vuelva a iniciarla (o reinicie el ordenador), y abra MintGuard de nuevo.\n\nSi no es suficiente, pida a quien instaló la aplicación que ejecute esto en una terminal:\nsudo usermod -aG mintguard-admin <su_usuario>"
+  },
   "child_tray": {
     "tooltip_minutes": "MintGuard: quedan {0} min",
     "warning_minutes_left": "Quedan {0} minuto(s) antes de que termine tu sesión.",

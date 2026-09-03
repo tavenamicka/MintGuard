@@ -21,7 +21,7 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from mintguard.db.database import init_db
+from mintguard.db.database import has_data_dir_access, init_db
 from mintguard.db.models import ActivityLog, Base, BlockedApp, BlockedSite, Child, ParentConfig, TimeRule
 
 
@@ -116,6 +116,23 @@ def test_parent_config_key_value(tmp_path):
 
     fetched = session.query(ParentConfig).filter_by(key="pin_hash").one()
     assert fetched.value == "abc123"
+
+
+@pytest.mark.skipif(os.name == "nt", reason="chmod n'a pas d'effet POSIX sous Windows")
+def test_has_data_dir_access_true_when_readable_and_writable(tmp_path, monkeypatch):
+    monkeypatch.setattr("mintguard.db.database.get_db_path", lambda: tmp_path / "mintguard.db")
+    assert has_data_dir_access() is True
+
+
+@pytest.mark.skipif(os.name == "nt", reason="chmod n'a pas d'effet POSIX sous Windows")
+def test_has_data_dir_access_false_when_dir_not_accessible(tmp_path, monkeypatch):
+    locked_dir = tmp_path / "locked"
+    locked_dir.mkdir(mode=0o000)
+    monkeypatch.setattr("mintguard.db.database.get_db_path", lambda: locked_dir / "mintguard.db")
+    try:
+        assert has_data_dir_access() is False
+    finally:
+        locked_dir.chmod(0o700)  # nettoyage tmp_path
 
 
 @pytest.mark.skipif(os.name == "nt", reason="chmod n'a pas d'effet POSIX sous Windows")

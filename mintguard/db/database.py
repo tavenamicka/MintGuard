@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import os
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Iterator
@@ -60,6 +61,19 @@ def _migrate_schema(engine: Engine) -> None:
 
 def get_db_path() -> Path:
     return Path(get_config().get("database.path", "/var/lib/mintguard/mintguard.db"))
+
+
+def has_data_dir_access() -> bool:
+    """Vrai si l'utilisateur courant peut lire/écrire le dossier de la BD partagée.
+
+    À vérifier *avant* toute connexion SQLite : sans ce garde-fou explicite, un parent
+    pas encore dans le groupe mintguard-admin (ex. juste après l'installation du .deb,
+    avant la reconnexion de session requise) voit l'appli planter sur un
+    `sqlite3.OperationalError: unable to open database file` — trace Python illisible,
+    et invisible de toute façon puisque l'appli est lancée depuis le menu, pas un
+    terminal (trouvé en usage réel, voir SUIVI.md).
+    """
+    return os.access(get_db_path().parent, os.R_OK | os.W_OK | os.X_OK)
 
 
 def init_db(db_path: Path | None = None) -> Engine:

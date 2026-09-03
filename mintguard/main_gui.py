@@ -18,11 +18,24 @@ import sys
 from pathlib import Path
 
 from PyQt6.QtGui import QIcon
-from PyQt6.QtWidgets import QApplication
+from PyQt6.QtWidgets import QApplication, QMessageBox
 
+from mintguard.config import get_config
+from mintguard.db.database import has_data_dir_access
 from mintguard.gui.main_window import MainWindow
+from mintguard.locales.loader import get_i18n
 
 _ICON_PATH = Path(__file__).parent / "gui" / "assets" / "icons" / "mintguard.svg"
+
+
+def _show_permission_error() -> None:
+    lang = get_config().get("app.language", "auto")
+    i18n = get_i18n(None if lang == "auto" else lang)
+    box = QMessageBox()
+    box.setIcon(QMessageBox.Icon.Critical)
+    box.setWindowTitle(i18n("startup_error.permission_title"))
+    box.setText(i18n("startup_error.permission_body"))
+    box.exec()
 
 
 def main() -> None:
@@ -35,6 +48,14 @@ def main() -> None:
     # en session de développement, sans installation système.
     if _ICON_PATH.exists():
         app.setWindowIcon(QIcon(str(_ICON_PATH)))
+
+    if not has_data_dir_access():
+        # Cas attendu juste après l'installation du .deb, pas une erreur à investiguer
+        # plus loin : le groupe mintguard-admin (ajouté par postinst) n'est actif qu'après
+        # une nouvelle session (voir SUIVI.md).
+        _show_permission_error()
+        sys.exit(1)
+
     window = MainWindow()
     window.show()
     sys.exit(app.exec())

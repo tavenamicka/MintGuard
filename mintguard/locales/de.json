@@ -4,6 +4,10 @@
     "tagline": "Damit Ihre Kinder das Internet sicher entdecken können",
     "version": "0.1.0"
   },
+  "startup_error": {
+    "permission_title": "Noch ein Schritt vor der Nutzung",
+    "permission_body": "MintGuard benötigt einen Neustart Ihrer Sitzung, um auf seine geschützten Daten zuzugreifen.\n\nMelden Sie sich ab und wieder an (oder starten Sie den Computer neu) und öffnen Sie MintGuard erneut.\n\nHilft das nicht, bitten Sie die Person, die die App installiert hat, in einem Terminal auszuführen:\nsudo usermod -aG mintguard-admin <ihr_benutzername>"
+  },
   "child_tray": {
     "tooltip_minutes": "MintGuard: noch {0} Min.",
     "warning_minutes_left": "Noch {0} Minute(n) bis zum Ende deiner Sitzung.",

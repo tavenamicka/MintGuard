@@ -12,13 +12,29 @@ VENV_DIR=/opt/mintguard/venv
 SRC_DIR=/opt/mintguard/src
 ADMIN_GROUP=mintguard-admin
 
+# $SUDO_USER n'est definie que par `sudo apt install ...` en terminal. Un parent
+# non-technique installe plus souvent via un gestionnaire de paquets graphique
+# (double-clic sur le .deb, "Installateur de paquets"...) : dpkg/postinst tourne alors
+# directement en root, sans cette variable - trouve en usage reel, voir SUIVI.md. Repli
+# sur l'utilisateur de la session graphique active (meme source que `who`/`w`, table
+# utmp) : moins fiable que $SUDO_USER dans l'absolu, mais bien plus fiable que de ne
+# jamais detecter personne.
+detect_parent_user() {
+  if [ -n "${SUDO_USER:-}" ] && [ "$SUDO_USER" != "root" ]; then
+    echo "$SUDO_USER"
+    return 0
+  fi
+  who | awk '{print $1}' | sort -u | grep -vx root | head -n1
+}
+
 case "$1" in
   configure)
     echo "== Groupe parent =="
     groupadd -f "$ADMIN_GROUP"
-    if [ -n "${SUDO_USER:-}" ] && [ "$SUDO_USER" != "root" ]; then
-      usermod -aG "$ADMIN_GROUP" "$SUDO_USER"
-      echo "Utilisateur '$SUDO_USER' ajoute au groupe $ADMIN_GROUP (deconnexion/reconnexion necessaire pour que ca prenne effet)"
+    PARENT_USER="$(detect_parent_user)"
+    if [ -n "$PARENT_USER" ]; then
+      usermod -aG "$ADMIN_GROUP" "$PARENT_USER"
+      echo "Utilisateur '$PARENT_USER' ajoute au groupe $ADMIN_GROUP (deconnexion/reconnexion necessaire pour que ca prenne effet)"
     else
       echo "Aucun utilisateur parent detecte - ajoutez-le manuellement :"
       echo "  sudo usermod -aG $ADMIN_GROUP <votre_compte>"

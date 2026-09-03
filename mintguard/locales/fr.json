@@ -4,6 +4,10 @@
     "tagline": "Pour que vos enfants explorent Internet en toute sécurité",
     "version": "0.1.0"
   },
+  "startup_error": {
+    "permission_title": "Dernière étape avant utilisation",
+    "permission_body": "MintGuard a besoin que votre session soit redémarrée pour accéder à ses données protégées.\n\nDéconnectez-vous puis reconnectez-vous (ou redémarrez l'ordinateur), puis rouvrez MintGuard.\n\nSi ça ne suffit pas, demandez à la personne qui a installé l'application d'exécuter dans un terminal :\nsudo usermod -aG mintguard-admin <votre_compte>"
+  },
   "child_tray": {
     "tooltip_minutes": "MintGuard : {0} min restantes",
     "warning_minutes_left": "Encore {0} minute(s) avant la fin de ta session.",
