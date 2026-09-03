@@ -17,6 +17,7 @@
 import sys
 from pathlib import Path
 
+from PyQt6.QtCore import QTimer
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QApplication, QMessageBox
 
@@ -58,6 +59,14 @@ def main() -> None:
 
     window = MainWindow()
     window.show()
+    # Trouvé en usage réel (voir SUIVI.md) : au tout premier affichage, les cartes stylées
+    # QSS (bords arrondis, `Card`/`Tile`) apparaissent parfois écrasées/superposées sous
+    # Cinnamon — corrigé manuellement par un redimensionnement de la fenêtre, jamais par
+    # simple attente. `resize(size())` (redimensionnement à l'identique, invisible pour le
+    # parent) refait faire à Qt le même calcul de mise en page qu'un redimensionnement
+    # manuel ; différé d'un tour de boucle d'événements (`singleShot(0, ...)`) pour agir
+    # une fois la fenêtre réellement mappée par le gestionnaire de fenêtres, pas avant.
+    QTimer.singleShot(0, lambda: window.resize(window.size()))
     sys.exit(app.exec())
 
 
