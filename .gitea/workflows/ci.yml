@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      # Beaucoup de tests instancient des widgets PyQt6 (dashboard, onboarding,
+      # dialogs...) : evite d'avoir besoin d'un vrai serveur X.
+      QT_QPA_PLATFORM: offscreen
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Dependances systeme (Qt6 headless)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libegl1 libgl1 libxkbcommon0
+      - run: pip install -r requirements.txt
+      - run: pytest -q
