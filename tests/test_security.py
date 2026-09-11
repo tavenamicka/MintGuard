@@ -24,7 +24,10 @@ from mintguard.utils.validators import (
 
 
 def test_hash_pin_is_not_plaintext():
-    stored = hash_pin("1234")
+    # Sel fixe : avec un sel aleatoire, "1234" a une (faible mais reelle)
+    # probabilite d'apparaitre par hasard dans le hash hexadecimal, rendant
+    # le test flaky. Un sel fixe rend la sortie deterministe et verifiable.
+    stored = hash_pin("1234", salt=bytes(16))
     assert "1234" not in stored
     assert ":" in stored
 
