@@ -57,4 +57,4 @@ export MINTGUARD_CONFIG_PATH=/tmp/mintguard-config.json   # Windows: $env:MINTGU
 
 ## 7. Étapes suivantes
 
-Voir [SUIVI.md](../SUIVI.md) pour l'état d'avancement courant et [PROJECT_BRIEF.md](../PROJECT_BRIEF.md) pour le plan de phases complet.
+Voir [PROJECT_BRIEF.md](../PROJECT_BRIEF.md) pour le plan de phases complet.
