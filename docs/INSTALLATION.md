@@ -23,7 +23,7 @@ sudo apt install ./dist/mintguard_0.1.0-1_all.deb
 
 `apt install` (plutôt que `dpkg -i`) résout automatiquement les dépendances système (`libxcb-cursor0`, `dnsmasq`, `python3-venv`). Le `.deb` généré peut être copié tel quel sur un autre poste Linux Mint/Ubuntu et installé de la même façon, sans avoir besoin de cloner le dépôt dessus.
 
-Comme pour `install.sh`, le service n'est **pas démarré automatiquement** (démarrage volontairement laissé à une action explicite — voir `SUIVI.md`, il change la résolution DNS de toute la machine) :
+Comme pour `install.sh`, le service n'est **pas démarré automatiquement** (démarrage volontairement laissé à une action explicite : il change la résolution DNS de toute la machine) :
 
 ```bash
 sudo systemctl start mintguard-daemon
@@ -41,11 +41,11 @@ Pour tester en conditions réelles sur cette même machine, en éditant le code 
 sudo bash scripts/install.sh
 ```
 
-Installe : venv dédié (`/opt/mintguard/venv`), config (`/etc/mintguard/config.json`), BD/logs (`/var/lib/mintguard`, `/var/log/mintguard`, permissions restrictives), service systemd (`/etc/systemd/system/mintguard-daemon.service`, activé au démarrage), config dnsmasq (`/etc/dnsmasq.d/mintguard.conf`), et `libxcb-cursor0` (dépendance système de la GUI PyQt6 — sans elle, `mintguard` échoue au démarrage avec `Could not load the Qt platform plugin "xcb"`, voir `SUIVI.md`).
+Installe : venv dédié (`/opt/mintguard/venv`), config (`/etc/mintguard/config.json`), BD/logs (`/var/lib/mintguard`, `/var/log/mintguard`, permissions restrictives), service systemd (`/etc/systemd/system/mintguard-daemon.service`, activé au démarrage), config dnsmasq (`/etc/dnsmasq.d/mintguard.conf`), et `libxcb-cursor0` (dépendance système de la GUI PyQt6 — sans elle, `mintguard` échoue au démarrage avec `Could not load the Qt platform plugin "xcb"`).
 
 Le service n'est **pas démarré automatiquement** — le script affiche la commande à lancer explicitement (`sudo systemctl start mintguard-daemon`).
 
-**Pas de profil AppArmor ni de règles sudoers** : voir `SUIVI.md` (entrée Phase 3) pour la justification — le confinement par utilisateur via AppArmor est écarté du MVP (risque disproportionné vs. bénéfice, `ProcessMonitor` couvre déjà le blocage d'applications), et le daemon tournant déjà en root via systemd, aucune délégation sudo n'est nécessaire pour la GUI (elle n'écrit qu'en SQLite).
+**Pas de profil AppArmor ni de règles sudoers** : le confinement par utilisateur via AppArmor est écarté du MVP (risque disproportionné vs. bénéfice, `ProcessMonitor` couvre déjà le blocage d'applications), et le daemon tournant déjà en root via systemd, aucune délégation sudo n'est nécessaire pour la GUI (elle n'écrit qu'en SQLite).
 
 Désinstallation : `sudo bash scripts/uninstall.sh` (ajouter `--purge` pour aussi supprimer BD/logs/config).
 
