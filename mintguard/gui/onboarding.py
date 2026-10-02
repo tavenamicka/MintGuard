@@ -161,7 +161,7 @@ class OnboardingWizard(QWidget):
             self._child_error.setText(self.i18n("onboarding.child.error_required"))
             self._child_error.show()
             return False
-        # Trouve en usage reel (voir SUIVI.md) : sans cette verification, un nom de compte
+        # Trouve en usage reel : sans cette verification, un nom de compte
         # deja utilise par un autre enfant provoquait une IntegrityError SQLite non rattrapee
         # au moment de _persist() (page Succes), plantant toute l'application.
         if self._username_already_used(username):
@@ -255,7 +255,7 @@ class OnboardingWizard(QWidget):
         layout.addWidget(self.pin_confirm_input)
 
         # Pavé numérique cliquable, ajouté à la demande de l'utilisateur en complément de la
-        # saisie clavier (voir SUIVI.md) — bascule automatiquement entre les deux champs.
+        # saisie clavier — bascule automatiquement entre les deux champs.
         keypad = NumericKeypad(self.pin_input)
         keypad.bind_focus(self.pin_input, self.pin_confirm_input)
         layout.addWidget(keypad, alignment=Qt.AlignmentFlag.AlignHCenter)

@@ -128,7 +128,7 @@ def test_daily_usage_unique_per_child_and_date():
         session.close()
 
 
-# Trouvé en usage réel (voir SUIVI.md) : après une fermeture forcée de session
+# Trouvé en usage réel : après une fermeture forcée de session
 # (SessionManager.terminate_user_session, ex. fin de plage horaire), l'entrée utmp du
 # compte enfant peut rester "connectée" alors que systemd-logind marque déjà la session
 # "closing" — le Dashboard continuait alors à faire défiler le temps d'un enfant qui

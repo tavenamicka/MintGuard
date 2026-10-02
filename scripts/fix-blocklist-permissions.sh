@@ -4,7 +4,7 @@
 # Debian/Ubuntu) et ne peut pas traverser /var/lib/mintguard (2770,
 # reserve BD/PIN) pour lire blocklist.hosts - meme si le fichier lui
 # meme est lisible. Resultat : aucun site n'etait jamais bloque malgre
-# une blocklist generee correctement (voir SUIVI.md Phase 3).
+# une blocklist generee correctement.
 #
 # Ce script deplace la blocklist dans un repertoire separe et
 # mondialement traversable (/var/lib/mintguard-dns, sans donnees

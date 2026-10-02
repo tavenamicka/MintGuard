@@ -38,7 +38,7 @@ from mintguard.locales.loader import I18nLoader
 class AddChildDialog(QDialog):
     """Ajoute un enfant supplémentaire après l'onboarding initial.
 
-    Trouvé en usage réel (voir SUIVI.md) : la BD et le sélecteur du Dashboard supportaient
+    Trouvé en usage réel : la BD et le sélecteur du Dashboard supportaient
     déjà plusieurs enfants, mais rien dans l'interface ne permettait d'en ajouter un second —
     seul `OnboardingWizard` créait un enfant, une seule fois. Réutilise le même préréglage
     d'âge que l'onboarding (`create_child_with_age_preset`), pas de nouvelle étape PIN

@@ -28,7 +28,7 @@ def test_stylesheet_defines_heading_classes():
         assert selector in css
 
 
-# Trouvé à l'audit d'accessibilité Phase 4 (voir SUIVI.md) : la palette d'origine ne passait
+# Trouvé à l'audit d'accessibilité Phase 4 : la palette d'origine ne passait
 # pas le contraste WCAG AA (4.5:1), un "point critique" explicite du projet (parents âgés).
 # Ces tests évitent une régression silencieuse si la palette est retouchée plus tard — y compris
 # lors du changement complet de palette pour la piste "Jardin Numérique" (voir styles.py).

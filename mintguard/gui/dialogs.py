@@ -97,7 +97,7 @@ class HelpDialog(QDialog):
 class PinDialog(QDialog):
     """Demande le code PIN parent avant d'ouvrir Réglages/Rapports.
 
-    Trouvé à l'audit de sécurité (voir SUIVI.md) : le PIN était collecté et hashé à
+    Trouvé à l'audit de sécurité : le PIN était collecté et hashé à
     l'onboarding mais jamais revérifié nulle part — Settings/Reports étaient accessibles
     sans aucune protection. `prompt()` boucle sur les mauvais essais (comme l'écran de
     saisie à l'onboarding) plutôt que de fermer au premier échec, pour ne pas punir une
@@ -127,7 +127,7 @@ class PinDialog(QDialog):
         layout.addWidget(self.pin_input)
 
         # Pavé numérique cliquable, ajouté à la demande de l'utilisateur en complément de la
-        # saisie clavier (voir SUIVI.md) — un seul champ ici, pas besoin de bascule de focus.
+        # saisie clavier — un seul champ ici, pas besoin de bascule de focus.
         layout.addWidget(NumericKeypad(self.pin_input), alignment=Qt.AlignmentFlag.AlignHCenter)
 
         self._error_label = QLabel("")
@@ -149,7 +149,7 @@ class PinDialog(QDialog):
         buttons_row.addWidget(self._ok_button)
         layout.addLayout(buttons_row)
 
-        # Trouvé en rédigeant le guide utilisateur (voir SUIVI.md) : un PIN oublié rendait
+        # Trouvé en rédigeant le guide utilisateur : un PIN oublié rendait
         # Settings/Reports définitivement inaccessibles, aucun reset n'existait. Plutôt qu'un
         # second secret à retenir, la réinitialisation s'appuie sur une identité que le parent
         # connaît déjà : le mot de passe de sa propre session, vérifié par l'agent polkit du
@@ -276,7 +276,7 @@ class SetPinDialog(QDialog):
         layout.addWidget(self.confirm_input)
 
         # Un seul pavé pour les deux champs : bascule automatiquement sur celui qui a le
-        # focus (voir SUIVI.md).
+        # focus.
         keypad = NumericKeypad(self.pin_input)
         keypad.bind_focus(self.pin_input, self.confirm_input)
         layout.addWidget(keypad, alignment=Qt.AlignmentFlag.AlignHCenter)

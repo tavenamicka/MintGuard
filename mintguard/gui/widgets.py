@@ -130,7 +130,7 @@ class HelpButton(QPushButton):
         super().__init__("?", parent)
         self.setObjectName("help")
         self.setCursor(Qt.CursorShape.PointingHandCursor)
-        # Trouvé à l'audit d'accessibilité (voir SUIVI.md) : le texte visible "?" seul est
+        # Trouvé à l'audit d'accessibilité : le texte visible "?" seul est
         # annoncé par un lecteur d'écran (NVDA) comme "point d'interrogation, bouton", sans
         # indiquer sur quoi porte l'aide avant activation. Le titre réel (déjà fourni pour le
         # HelpDialog) sert aussi de nom accessible.
@@ -163,7 +163,7 @@ class _KeypadFocusRouter(QObject):
 class NumericKeypad(QWidget):
     """Pavé numérique cliquable pour saisir un code PIN, en complément du clavier (pas un
     remplacement — le champ associé reste éditable normalement). Ajouté à la demande de
-    l'utilisateur après la mise en place du PIN (voir SUIVI.md)."""
+    l'utilisateur après la mise en place du PIN."""
 
     def __init__(self, target: QLineEdit, parent=None):
         super().__init__(parent)
@@ -228,7 +228,7 @@ class _SelectAllCheckBox(QCheckBox):
 class CollapsibleSection(QWidget):
     """Section repliable avec une case "Tout sélectionner" toujours visible dans l'en-tête —
     même repliée, on peut cocher/décocher toute la catégorie sans l'ouvrir. Ajouté à la
-    demande de l'utilisateur pour l'onglet Sites à Bloquer (voir SUIVI.md)."""
+    demande de l'utilisateur pour l'onglet Sites à Bloquer."""
 
     def __init__(self, title: str, select_all_label: str, parent=None):
         super().__init__(parent)

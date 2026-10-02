@@ -57,7 +57,7 @@ _fonts_loaded = False
 
 # Référencée par QComboBox::down-arrow ci-dessous : sans image explicite, ce sous-contrôle
 # ne dessine plus rien du tout une fois `border: none` posé sur ::drop-down (même famille de
-# piège Fusion que les boutons pilule, cf. refonte visuelle "Jardin Numérique" dans SUIVI.md)
+# piège Fusion que les boutons pilule, cf. refonte visuelle "Jardin Numérique")
 # — le menu déroulant devenait indiscernable d'un simple champ de texte, aucun indice visuel
 # qu'une liste de comptes existe derrière (trouvé en usage réel : onboarding/ajout d'enfant).
 # Couleur figée en dur dans le fichier (comme mintguard.svg/tray-*.svg) plutôt que recolorée

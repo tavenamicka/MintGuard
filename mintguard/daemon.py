@@ -43,8 +43,8 @@ def run_cycle(
 ) -> None:
     """Un tour de boucle du daemon. Isolé de `main()` pour être testable sans horloge réelle.
 
-    Pas de bus D-Bus/IPC pour propager les changements Réglages -> daemon (voir SUIVI.md pour la
-    justification) : le daemon relit périodiquement la BD partagée, comme ProcessMonitor et
+    Pas de bus D-Bus/IPC pour propager les changements Réglages -> daemon (choix
+    d'architecture assumé) : le daemon relit périodiquement la BD partagée, comme ProcessMonitor et
     Scheduler le font déjà à chaque cycle. `dns_refresh_interval` évite de relancer
     `systemctl reload dnsmasq` à chaque cycle process (par défaut 5s) alors que rien n'a changé.
     Les règles firewall (défense en profondeur, voir FirewallController) sont resynchronisées

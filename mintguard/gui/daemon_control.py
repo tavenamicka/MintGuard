@@ -34,7 +34,7 @@ def start_daemon_via_polkit() -> bool | None:
     """Démarre `mintguard-daemon` via l'agent polkit du bureau (même fenêtre système native
     que la réinitialisation du PIN, voir dialogs.py::_confirm_admin_identity) - remplace la
     commande de terminal `sudo systemctl start mintguard-daemon` que l'installation demandait
-    jusqu'ici, hors de portée d'un parent non-technique (voir SUIVI.md).
+    jusqu'ici, hors de portée d'un parent non-technique.
 
     Retourne `None` si `pkexec` est absent du système (action indisponible), `True`/`False`
     selon que le démarrage a réussi ou a été annulé/a échoué.

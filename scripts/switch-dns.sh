@@ -10,7 +10,7 @@
 # soyez prudent).
 #
 # Avant cette bascule : dnsmasq (MintGuard) tourne sur 127.0.0.1:5354,
-# aucun impact reseau (voir SUIVI.md, install.sh). Ce script :
+# aucun impact reseau (install.sh). Ce script :
 #   1. Recupere les serveurs DNS amont actuels (ceux fournis par le
 #      resolveur systeme, typiquement via DHCP) pour que dnsmasq puisse
 #      continuer a relayer les domaines non bloques.

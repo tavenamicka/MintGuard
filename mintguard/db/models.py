@@ -104,7 +104,7 @@ class ActivityLog(Base):
 class DailyUsage(Base):
     """Cumul du temps de session (en secondes) par enfant et par jour local — alimenté par
     `UsageTracker.record_tick()` à chaque cycle du daemon, lu par le Dashboard pour la barre de
-    progression. Pas de vrai bus D-Bus/IPC (voir SUIVI.md, décision d'architecture Semaine 5) :
+    progression. Pas de vrai bus D-Bus/IPC (décision d'architecture Semaine 5) :
     même principe de BD partagée que le reste (TimeRule, BlockedApp...)."""
 
     __tablename__ = "daily_usage"

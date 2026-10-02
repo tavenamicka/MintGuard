@@ -49,7 +49,7 @@ from mintguard.locales.loader import I18nLoader
 from mintguard.utils.formatters import format_duration, format_percentage, utc_to_local
 
 # Cadence de rafraîchissement du Dashboard pendant qu'il reste affiché — même principe que le
-# daemon (voir SUIVI.md, décision d'architecture Semaine 5) : la BD partagée tient lieu de canal
+# daemon (décision d'architecture Semaine 5) : la BD partagée tient lieu de canal
 # GUI<->daemon, un délai de quelques secondes est imperceptible pour ce besoin.
 _LIVE_REFRESH_INTERVAL_MS = 5000
 
@@ -60,7 +60,7 @@ class DashboardScreen(QWidget):
     Note d'architecture : le blocage de sites (BlockedSite) est global à la machine, pas par
     enfant (un seul résolveur DNS pour tout le poste) — seule la limite de temps (TimeRule) est
     propre à l'enfant sélectionné. Le statut « Protection: ACTIVE » reflète la présence de règles
-    configurées en BD, pas un signal live du daemon (pas de bus D-Bus — voir SUIVI.md). Le temps
+    configurées en BD, pas un signal live du daemon (pas de bus D-Bus). Le temps
     utilisé aujourd'hui, lui, vient bien du daemon (`UsageTracker`, table `DailyUsage`) : un
     QTimer relit la BD toutes les `_LIVE_REFRESH_INTERVAL_MS` pour que la barre avance pendant
     que le parent regarde l'écran, sans canal IPC dédié.
@@ -105,7 +105,7 @@ class DashboardScreen(QWidget):
         # Carte d'activation : distincte de status_card ci-dessous (qui reflète les règles en
         # BD, pas le daemon - voir sa docstring de classe). Sans elle, l'étape "sudo systemctl
         # start mintguard-daemon" du manuel d'installation restait une commande de terminal
-        # hors de portée d'un parent non-technique (voir SUIVI.md). Masquée dès que le daemon
+        # hors de portée d'un parent non-technique. Masquée dès que le daemon
         # répond, montrée sinon - vérifié au même rythme que le reste (_live_refresh_timer).
         self.daemon_card = Card()
         daemon_title_row = QHBoxLayout()

@@ -15,7 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 """ParentTray : confirme visuellement que MintGuard tourne (demande utilisateur apres
-l'installation du .deb, voir SUIVI.md), mais doit s'auto-desactiver silencieusement pour un
+l'installation du .deb), mais doit s'auto-desactiver silencieusement pour un
 compte enfant (deja couvert par ChildTray - aucun marqueur OS pour distinguer les deux)."""
 
 from pathlib import Path

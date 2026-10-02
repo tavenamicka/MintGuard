@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Construit le paquet .deb de MintGuard (installation "release", copie de
 # code figee -- par opposition a scripts/install.sh qui installe en editable
-# depuis ce checkout, pour le workflow de dev actif, voir SUIVI.md).
+# depuis ce checkout, pour le workflow de dev actif).
 #
 # Usage : bash scripts/build-deb.sh
 # Produit : dist/mintguard_<version>-1_all.deb

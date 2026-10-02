@@ -53,13 +53,13 @@ def main() -> None:
     if not has_data_dir_access():
         # Cas attendu juste après l'installation du .deb, pas une erreur à investiguer
         # plus loin : le groupe mintguard-admin (ajouté par postinst) n'est actif qu'après
-        # une nouvelle session (voir SUIVI.md).
+        # une nouvelle session.
         _show_permission_error()
         sys.exit(1)
 
     window = MainWindow()
     window.show()
-    # Trouvé en usage réel (voir SUIVI.md) : au tout premier affichage, les cartes stylées
+    # Trouvé en usage réel : au tout premier affichage, les cartes stylées
     # QSS (bords arrondis, `Card`/`Tile`) apparaissent parfois écrasées/superposées sous
     # Cinnamon — corrigé manuellement par un redimensionnement de la fenêtre, jamais par
     # simple attente. `resize(size())` (redimensionnement à l'identique, invisible pour le

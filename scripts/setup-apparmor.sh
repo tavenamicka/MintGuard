@@ -8,8 +8,7 @@
 # ProcessMonitor (mintguard/backend/process_monitor.py), coherent avec
 # l'hypothese deja actee du projet : un ordinateur = un enfant.
 #
-# Voir SUIVI.md (entree Phase 3) pour le detail de cette decision.
 # etc/apparmor/mintguard-restrict-child reste dans le depot comme reference
 # pour une eventuelle integration PAM future, non chargee par install.sh.
-echo "setup-apparmor.sh : confinement par utilisateur volontairement differe (voir SUIVI.md)."
+echo "setup-apparmor.sh : confinement par utilisateur volontairement differe."
 exit 0

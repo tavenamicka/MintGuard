@@ -73,7 +73,7 @@ def test_child_page_accepts_valid_input():
 
 
 def test_child_page_rejects_username_already_used_by_another_child():
-    # Trouve en usage reel (voir SUIVI.md) : sans cette verification, l'onboarding plantait
+    # Trouve en usage reel : sans cette verification, l'onboarding plantait
     # (IntegrityError SQLite non rattrapee) en tentant de reutiliser un nom de compte deja
     # associe a un autre enfant.
     session = get_session()

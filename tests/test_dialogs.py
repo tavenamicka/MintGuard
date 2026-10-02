@@ -77,7 +77,7 @@ def test_no_pin_configured_always_fails_closed():
     assert dialog.result() != QDialog.DialogCode.Accepted
 
 
-# "Code PIN oublié ?" : trouvé en rédigeant le guide utilisateur (voir SUIVI.md) qu'un PIN
+# "Code PIN oublié ?" : trouvé en rédigeant le guide utilisateur qu'un PIN
 # oublié rendait Settings/Reports définitivement inaccessibles. L'identité est confirmée via
 # l'agent polkit du bureau (`_confirm_admin_identity`, mockée ici — impossible de simuler une
 # vraie authentification système en test), jamais par un secret géré par MintGuard.

@@ -71,7 +71,7 @@ def has_data_dir_access() -> bool:
     avant la reconnexion de session requise) voit l'appli planter sur un
     `sqlite3.OperationalError: unable to open database file` — trace Python illisible,
     et invisible de toute façon puisque l'appli est lancée depuis le menu, pas un
-    terminal (trouvé en usage réel, voir SUIVI.md).
+    terminal (trouvé en usage réel).
     """
     return os.access(get_db_path().parent, os.R_OK | os.W_OK | os.X_OK)
 

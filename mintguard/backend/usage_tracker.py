@@ -34,7 +34,7 @@ _LOGIND_ACTIVE_STATES = {"active", "online"}
 class UsageTracker:
     """Cumule le temps de session des enfants dans `DailyUsage`, lu ensuite par le Dashboard.
 
-    Même principe que ProcessMonitor/Scheduler (voir SUIVI.md, décision d'architecture
+    Même principe que ProcessMonitor/Scheduler (décision d'architecture
     Semaine 5) : pas de vrai canal IPC, le daemon écrit dans la BD partagée à chaque cycle et
     la GUI la relit — un délai de quelques secondes est imperceptible pour ce besoin.
     """

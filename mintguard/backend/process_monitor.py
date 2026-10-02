@@ -52,8 +52,8 @@ class ProcessMonitor:
         """Termine les applications bloquées tournant sous un compte enfant. Retourne les
         noms tués.
 
-        Filtré par utilisateur, pas seulement par nom : trouvé à l'audit de sécurité (voir
-        SUIVI.md) — sans ce filtre, un processus du même nom tournant sous le compte PARENT (ou
+        Filtré par utilisateur, pas seulement par nom : trouvé à l'audit de sécurité —
+        sans ce filtre, un processus du même nom tournant sous le compte PARENT (ou
         tout autre compte du système) était tué aussi, dommage collatéral non intentionnel.
 
         `elapsed_seconds` (temps écoulé depuis le cycle précédent, cf. `daemon.py::run_cycle`)

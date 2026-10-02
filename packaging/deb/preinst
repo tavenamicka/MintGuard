@@ -6,7 +6,7 @@
 # s'execute -- y compris quand scripts/switch-dns.sh a deja reecrit ce meme
 # fichier en resolveur systeme reel (port 53 + serveurs amont detectes).
 # On sauvegarde donc la version live ici pour que postinst la restaure une
-# fois le depaquetage termine (voir SUIVI.md, entree "Paquet .deb").
+# fois le depaquetage termine.
 set -euo pipefail
 
 case "$1" in

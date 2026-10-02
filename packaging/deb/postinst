@@ -15,7 +15,7 @@ ADMIN_GROUP=mintguard-admin
 # $SUDO_USER n'est definie que par `sudo apt install ...` en terminal. Un parent
 # non-technique installe plus souvent via un gestionnaire de paquets graphique
 # (double-clic sur le .deb, "Installateur de paquets"...) : dpkg/postinst tourne alors
-# directement en root, sans cette variable - trouve en usage reel, voir SUIVI.md. Repli
+# directement en root, sans cette variable - trouve en usage reel. Repli
 # sur l'utilisateur de la session graphique active (meme source que `who`/`w`, table
 # utmp) : moins fiable que $SUDO_USER dans l'absolu, mais bien plus fiable que de ne
 # jamais detecter personne.
@@ -65,7 +65,7 @@ case "$1" in
       # reel (port 53, /etc/resolv.conf -> 127.0.0.1) : c'est le service qui
       # fait fonctionner tout le reseau de la machine, pas juste une conf par
       # defaut inutilisee. L'arreter ici casserait la resolution DNS de la
-      # machine entiere (constat direct : voir SUIVI.md, entree "Paquet .deb").
+      # machine entiere.
       echo "Bascule DNS deja active (dns-switch-backup present) - dnsmasq non touche."
       STASH=/var/lib/mintguard/dns-switch-backup/mintguard.conf.preinst-stash
       if [ -f "$STASH" ]; then
@@ -102,7 +102,7 @@ case "$1" in
 == Installation terminee ==
 
 La protection n'est PAS encore active (demarrage volontairement non automatique
-ici : il change la resolution DNS de toute la machine - voir SUIVI.md). Pour
+ici : il change la resolution DNS de toute la machine). Pour
 l'activer, ouvrez MintGuard (entree "MintGuard" dans le menu des applications,
 ou 'mintguard' depuis un terminal) : un bouton "Activer la protection maintenant"
 s'affiche tant qu'elle n'est pas active, et gere le demarrage a votre place (une

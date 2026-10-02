@@ -31,13 +31,12 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "dns": {
         "enabled": True,
         # 5354, PAS 5353 (port mDNS/Avahi standard, deja utilise par
-        # avahi-daemon sur Linux Mint) - voir SUIVI.md Phase 3.
+        # avahi-daemon sur Linux Mint).
         "listen_port": 5354,
         # Repertoire separe de /var/lib/mintguard (verrouille 2770 pour la
         # BD/PIN) : dnsmasq tourne en utilisateur non-privilegie et ne
         # pourrait pas traverser un repertoire dont il n'a pas le droit
-        # d'execution, meme si le fichier lui-meme etait lisible - voir
-        # SUIVI.md Phase 3 (5e defaut de conception).
+        # d'execution, meme si le fichier lui-meme etait lisible.
         # ".conf" et non ".hosts" : fragment de configuration dnsmasq
         # (`address=/domaine/0.0.0.0`), seul format qui bloque aussi les
         # sous-domaines - voir DNSController.

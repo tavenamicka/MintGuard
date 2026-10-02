@@ -16,8 +16,7 @@
 
 """ChildTray : purement informatif (voir status_server.py pour l'application des règles),
 mais doit s'auto-désactiver silencieusement pour un compte non-enfant (déployé en autostart
-pour toutes les sessions, y compris le parent - aucun marqueur OS pour distinguer les deux,
-voir SUIVI.md)."""
+pour toutes les sessions, y compris le parent - aucun marqueur OS pour distinguer les deux)."""
 
 import pytest
 
@@ -93,7 +92,7 @@ def test_warns_once_per_threshold_crossed(monkeypatch, qapp):
 def test_start_actually_exits_the_event_loop_for_non_child_account(monkeypatch, qapp):
     """Régression : `start()` appelait `poll()` directement, donc `QApplication.quit()`
     s'exécutait avant que `app.exec()` ne démarre la boucle d'événements - un `quit()` appelé
-    trop tôt est ignoré (constaté en conditions réelles, voir SUIVI.md), et le process ne se
+    trop tôt est ignoré (constaté en conditions réelles), et le process ne se
     terminait jamais. `start()` doit différer le premier `poll()` via `QTimer.singleShot`."""
     from PyQt6.QtCore import QTimer
 

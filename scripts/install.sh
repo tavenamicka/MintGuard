@@ -8,10 +8,10 @@
 #     voir le message final)
 #   - dnsmasq.conf installe en l'etat (port 5354, PAS le resolveur
 #     systeme - aucun impact reseau tant que la bascule n'est pas faite
-#     separement, voir SUIVI.md)
+#     separement)
 #   - repertoires de donnees/logs/config avec permissions restrictives
 #
-# PAS dans ce script (voir SUIVI.md pour la justification) :
+# PAS dans ce script (choix assume) :
 #   - profil AppArmor (confinement par utilisateur ecarte du MVP)
 #   - regles iptables (n'ont de sens qu'apres la bascule du resolveur
 #     DNS systeme, decision separee et explicite de l'utilisateur)
@@ -51,7 +51,7 @@ install -d -m 700 -o root -g root /var/log/mintguard
 # Repertoire separe pour la blocklist DNS (pas de donnees sensibles) :
 # dnsmasq tourne en utilisateur non-privilegie et ne peut pas traverser
 # /var/lib/mintguard (2770, reserve BD/PIN) meme si le fichier lui-meme
-# etait lisible - voir SUIVI.md Phase 3 (5e defaut de conception).
+# etait lisible.
 install -d -m 755 -o root -g root /var/lib/mintguard-dns
 # dnsmasq REFUSE de demarrer si un `conf-file=` pointe sur un fichier absent.
 # Le daemon regenere ce fichier a son premier cycle, mais dnsmasq peut demarrer
@@ -86,7 +86,7 @@ if [ ! -d "$VENV_DIR" ]; then
   python3 -m venv "$VENV_DIR"
 fi
 "$VENV_DIR/bin/pip" install --upgrade pip -q
-# ATTENTION (constat d'audit de securite Phase 3, voir SUIVI.md) : install editable = le
+# ATTENTION (constat d'audit de securite Phase 3) : install editable = le
 # daemon root execute du code Python directement depuis $REPO_ROOT, qui appartient a un
 # compte utilisateur normal (pas root). Volontairement conserve ainsi pour l'instant : ce
 # script sert au developpement/test actif sur cible reelle (modifier le code, relancer le
@@ -114,7 +114,7 @@ if [ -d /var/lib/mintguard/dns-switch-backup ]; then
   # inutilisee. L'arreter, ou ecraser sa conf (port 53 + serveurs amont
   # detectes a la bascule) par le gabarit de test (port 5354), casserait la
   # resolution DNS de la machine entiere (constat direct lors du packaging
-  # .deb, voir SUIVI.md, entree "Paquet .deb" -- ce script partage le meme
+  # .deb -- ce script partage le meme
   # defaut, corrige ici a la meme occasion).
   echo "Bascule DNS deja active (dns-switch-backup present) - dnsmasq et mintguard.conf non touches."
 else
@@ -127,7 +127,7 @@ else
   systemctl disable dnsmasq 2>/dev/null || true
   systemctl reset-failed dnsmasq 2>/dev/null || true
   install -m 644 "$REPO_ROOT/etc/dnsmasq.d/mintguard.conf" /etc/dnsmasq.d/mintguard.conf
-  echo "mintguard.conf installe (port 5354 - resolveur systeme non touche, voir SUIVI.md)"
+  echo "mintguard.conf installe (port 5354 - resolveur systeme non touche)"
 fi
 
 # Mise a niveau d'une installation existante : l'ancien chemin de blocklist

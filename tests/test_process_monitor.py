@@ -73,7 +73,7 @@ def test_kills_blocked_app_running_under_child_account(monkeypatch):
 
 
 def test_does_not_kill_same_named_process_under_parent_account(monkeypatch):
-    """Trouvé à l'audit de sécurité (voir SUIVI.md) : sans filtrage par utilisateur, un
+    """Trouvé à l'audit de sécurité : sans filtrage par utilisateur, un
     processus du même nom tournant sous le compte parent (ou tout autre compte du système)
     était tué aussi, dommage collatéral non intentionnel."""
     add_blocked_app("discord")

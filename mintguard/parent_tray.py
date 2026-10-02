@@ -41,7 +41,7 @@ _ICON_PATH_INACTIVE = str(_ICONS_DIR / "tray-inactive.svg")
 class ParentTray:
     """Icône de zone de notification côté parent : seul moyen visuel, sans ouvrir
     l'application, de savoir que MintGuard est installé et que le daemon tourne (demande
-    utilisateur directe après l'installation du .deb, voir SUIVI.md). Purement informatif -
+    utilisateur directe après l'installation du .deb). Purement informatif -
     aucune action de contrôle parental ici, tout se fait dans la fenêtre principale
     (mintguard/main_gui.py), accessible via le menu.
 

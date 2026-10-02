@@ -15,7 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 """start_daemon_via_polkit() : remplace la commande de terminal `sudo systemctl start
-mintguard-daemon` par un clic dans la GUI (voir SUIVI.md, point 2 de la revue UX)."""
+mintguard-daemon` par un clic dans la GUI (point 2 de la revue UX)."""
 
 import subprocess
 

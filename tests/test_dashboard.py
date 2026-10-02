@@ -147,7 +147,7 @@ def test_protection_active_from_global_blocked_site():
     assert screen.status_label.text() == "Protection active"
 
 
-# Trouvé à l'audit de sécurité (voir SUIVI.md) : Settings/Reports s'ouvraient sans jamais
+# Trouvé à l'audit de sécurité : Settings/Reports s'ouvraient sans jamais
 # demander le PIN parent. Vérifie que PinDialog.prompt() est bien consulté avant d'ouvrir
 # l'un ou l'autre, et que son résultat est respecté.
 
@@ -244,7 +244,7 @@ def test_open_reports_opens_when_pin_dialog_accepted(monkeypatch):
     assert opened == [True]
 
 
-# "Ajouter un enfant" : trouvé en usage réel (voir SUIVI.md) que rien ne permettait d'ajouter
+# "Ajouter un enfant" : trouvé en usage réel que rien ne permettait d'ajouter
 # un second enfant après l'onboarding initial. PIN-protégé comme Settings/Reports.
 
 
@@ -297,7 +297,7 @@ def test_open_add_child_does_nothing_when_dialog_cancelled(monkeypatch):
     assert screen.child_combo.count() == 1
 
 
-# -- Carte d'activation du daemon (voir SUIVI.md, point 2 de la revue UX) ------------------
+# -- Carte d'activation du daemon (point 2 de la revue UX) ------------------
 
 
 def test_daemon_card_hidden_when_daemon_active(monkeypatch):

@@ -95,7 +95,7 @@ class TimeTab(QWidget):
         title_row.addStretch(1)
         layout.addLayout(title_row)
 
-        # Trouvé en usage réel (voir SUIVI.md) : configurer les 7 jours un par un est
+        # Trouvé en usage réel : configurer les 7 jours un par un est
         # répétitif quand le parent veut le même horaire toute la semaine, ou juste en
         # semaine/le week-end. Ce sélecteur segmenté pré-remplit plusieurs jours d'un coup —
         # les cases et horaires par jour restent modifiables individuellement après coup, rien
@@ -273,7 +273,7 @@ class SitesTab(QWidget):
         title_row.addStretch(1)
         layout.addLayout(title_row)
 
-        # Trouvé en usage réel (voir SUIVI.md) : une case à cocher par catégorie entière ne
+        # Trouvé en usage réel : une case à cocher par catégorie entière ne
         # montrait jamais quels sites précis elle bloquait, ni ne permettait d'en retirer un
         # seul. Une case par site (regroupées par catégorie, comme AppsTab) rend le contenu
         # visible et modifiable individuellement. Section repliable + "Tout sélectionner"
@@ -422,7 +422,7 @@ class AppsTab(QWidget):
         layout.addLayout(quota_intro_row)
 
         # Détection réelle des applications installées (fichiers .desktop) plutôt qu'une
-        # liste figée de 4 applis — voir SUIVI.md. Groupées par catégorie, mêmes libellés
+        # liste figée de 4 applis. Groupées par catégorie, mêmes libellés
         # que l'onglet Sites pour rester cohérent. Une appli qui ne correspond à aucune des
         # 3 catégories n'apparaît pas ici (ex: navigateurs) — la saisie manuelle ci-dessous
         # reste le filet de sécurité, comme pour les sites personnalisés.

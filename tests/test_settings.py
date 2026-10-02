@@ -128,7 +128,7 @@ def test_time_tab_disabled_without_child():
     assert tab.isEnabled() is False
 
 
-# Trouvé en usage réel (voir SUIVI.md) : configurer les 7 jours un par un est répétitif
+# Trouvé en usage réel : configurer les 7 jours un par un est répétitif
 # quand le parent veut le même horaire toute la semaine, ou juste en semaine/le week-end.
 
 
@@ -194,7 +194,7 @@ def test_quick_apply_still_allows_individual_day_adjustment_afterwards():
 # -- SitesTab --------------------------------------------------------------
 
 
-# Trouvé en usage réel (voir SUIVI.md) : une case par catégorie entière ne montrait jamais
+# Trouvé en usage réel : une case par catégorie entière ne montrait jamais
 # quels sites précis elle bloquait, ni ne permettait d'en retirer un seul. Remplacé par une
 # case par site, regroupées par catégorie (comme AppsTab).
 
@@ -233,7 +233,7 @@ def test_sites_tab_untoggle_single_domain_removes_row():
 
 
 def test_sites_tab_select_all_reflects_state_loaded_from_db():
-    # Bug trouve en verification visuelle (voir SUIVI.md) : le blockSignals() utilise dans
+    # Bug trouve en verification visuelle : le blockSignals() utilise dans
     # _load() pour eviter des ecritures BD au chargement empechait aussi la case "Tout
     # selectionner" de chaque section de se mettre a jour - elle restait decochee meme quand
     # tous les sites d'une categorie etaient deja bloques en BD avant l'ouverture de l'onglet.
@@ -295,7 +295,7 @@ def test_sites_tab_remove_custom_site():
 
 # -- AppsTab --------------------------------------------------------------
 #
-# Détection réelle (fichiers .desktop) plutôt qu'une liste figée (voir SUIVI.md) : les
+# Détection réelle (fichiers .desktop) plutôt qu'une liste figée : les
 # applis réellement détectées dépendent de la machine qui exécute les tests, donc
 # `list_installed_apps` est mockée ici pour un résultat déterministe.
 

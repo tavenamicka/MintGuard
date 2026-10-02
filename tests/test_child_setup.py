@@ -84,7 +84,7 @@ def test_does_not_duplicate_blocked_site_shared_between_two_children():
 
 
 def test_raises_clear_error_on_duplicate_username_instead_of_crashing():
-    # Trouve en usage reel (voir SUIVI.md) : un appelant qui oublie de verifier les doublons
+    # Trouve en usage reel : un appelant qui oublie de verifier les doublons
     # en amont (c'etait le cas de l'onboarding) provoquait une IntegrityError SQLite brute,
     # plantant toute l'application. Cette fonction doit rester sure quel que soit l'appelant.
     create_child_with_age_preset("Test", "mintguard-test-child", 10, "young")

@@ -34,7 +34,7 @@ class ReportsWindow(QDialog):
     Ne montre que des données réellement mesurées (occurrences de blocage, nombre de fois où la
     limite de temps a été atteinte) : pas de « temps utilisé / temps limite » car MintGuard ne
     trace pas encore la durée effective des sessions (aucun mécanisme de suivi en continu —
-    seul le franchissement d'une limite est journalisé). Voir SUIVI.md.
+    seul le franchissement d'une limite est journalisé).
     """
 
     def __init__(self, i18n: I18nLoader, initial_child_id: int | None = None, parent=None):

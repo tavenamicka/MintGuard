@@ -152,8 +152,8 @@ def query_status() -> dict | None:
 class ChildTray:
     """Icône de zone de notification côté enfant : avertit avant la coupure de session (temps
     écoulé) ou informe qu'une application vient d'être fermée (bloquée). Purement informatif
-    - l'application des règles reste entièrement côté daemon (Scheduler/ProcessMonitor),
-    voir SUIVI.md. S'auto-désactive si le compte courant n'est pas un compte enfant (aucun
+    - l'application des règles reste entièrement côté daemon (Scheduler/ProcessMonitor).
+    S'auto-désactive si le compte courant n'est pas un compte enfant (aucun
     marqueur OS pour "compte enfant" - déployé en autostart pour toutes les sessions, voir
     packaging/deb/mintguard-child-tray.desktop)."""
 
@@ -187,7 +187,7 @@ class ChildTray:
     def start(self) -> None:
         # Different du prochain tour de boucle (et non un appel direct) : QApplication.quit()
         # appele avant que app.exec() n'ait demarre la boucle d'evenements est ignore (constat
-        # direct - voir SUIVI.md), ce qui empechait l'auto-desactivation immediate pour un
+        # direct), ce qui empechait l'auto-desactivation immediate pour un
         # compte non-enfant de fonctionner.
         QTimer.singleShot(0, self.poll)
 
