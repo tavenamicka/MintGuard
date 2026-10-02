@@ -26,8 +26,8 @@ jobs:
       # Plusieurs tests verifient un comportement base sur les permissions
       # POSIX (dossier chmod 000 inaccessible) : sans effet si le job tourne
       # en root, qui ignore les permissions. On execute pytest sous un
-      # utilisateur non-root dedie, depuis une copie hors de /home/runner
-      # (dont les dossiers parents ne sont pas traversables par cet
+      # utilisateur non-root dedie, depuis une copie hors du dossier de travail
+      # du runner (dont les dossiers parents ne sont pas traversables par cet
       # utilisateur sur les runners GitHub-hosted).
       - name: Cree un utilisateur non-root et une copie accessible du depot
         run: |
