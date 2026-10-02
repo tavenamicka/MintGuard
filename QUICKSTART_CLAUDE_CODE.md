@@ -15,7 +15,7 @@
 ### Étape 1: Créer la structure de répertoires
 
 ```bash
-cd /home/mintguard-project  # ou votre dossier préféré
+cd ~/mintguard-project  # ou votre dossier préféré
 
 # Structure complète
 mkdir -p mintguard/{mintguard,tests,docs,scripts,etc/{systemd,dnsmasq.d,apparmor,sudoers.d},assets/{icons,images,screenshots}}

@@ -325,7 +325,7 @@ R: Phase 1-2: Utiliser `/tmp` pour test DB. Phase 3 réel: besoin de root, VM li
 
 ## 📦 Ressources Disponibles
 
-**Tous les documents fournis sont dans `/home/claude/`:**
+**Tous les documents fournis sont dans le dossier du projet :**
 - `PROJECT_BRIEF.md` - Spécifications
 - `ANALYSE_FAISABILITE_TECHNIQUE.html` - Techniques
 - `STRATEGIE_UX_UI.html` - Design UX

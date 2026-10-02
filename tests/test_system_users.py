@@ -26,7 +26,7 @@ FAKE_PASSWD_DB = [
     FakePwEntry("root", 0, "/bin/bash"),
     FakePwEntry("daemon", 1, "/usr/sbin/nologin"),
     FakePwEntry("sshd", 115, "/usr/sbin/nologin"),
-    FakePwEntry("latitude", 1000, "/bin/bash"),
+    FakePwEntry("parentuser", 1000, "/bin/bash"),
     FakePwEntry("mintguard-test-child", 1001, "/bin/bash"),
     FakePwEntry("alice", 1002, "/bin/bash"),
     FakePwEntry("nobody", 65534, "/usr/sbin/nologin"),
@@ -60,9 +60,9 @@ def test_excludes_nologin_shell_accounts(fake_pwd, monkeypatch):
 
 
 def test_excludes_current_user_running_the_gui(fake_pwd, monkeypatch):
-    monkeypatch.setattr(system_users.getpass, "getuser", lambda: "latitude")
+    monkeypatch.setattr(system_users.getpass, "getuser", lambda: "parentuser")
     result = system_users.list_candidate_usernames()
-    assert "latitude" not in result
+    assert "parentuser" not in result
     assert "mintguard-test-child" in result
     assert "alice" in result
 

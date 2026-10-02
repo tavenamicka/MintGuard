@@ -79,7 +79,7 @@ def test_does_not_kill_same_named_process_under_parent_account(monkeypatch):
     add_blocked_app("discord")
     add_child("Test", "mintguard-test-child")
 
-    procs = [FakeProcess(1, "discord", "latitude")]
+    procs = [FakeProcess(1, "discord", "parentuser")]
     monkeypatch.setattr("mintguard.backend.process_monitor.psutil.process_iter", lambda *_: procs)
 
     killed = ProcessMonitor().check_and_kill()
@@ -104,7 +104,7 @@ def test_ignores_non_blocked_app_names(monkeypatch):
 def test_no_children_configured_kills_nothing(monkeypatch):
     add_blocked_app("discord")
 
-    procs = [FakeProcess(1, "discord", "latitude")]
+    procs = [FakeProcess(1, "discord", "parentuser")]
     monkeypatch.setattr("mintguard.backend.process_monitor.psutil.process_iter", lambda *_: procs)
 
     killed = ProcessMonitor().check_and_kill()

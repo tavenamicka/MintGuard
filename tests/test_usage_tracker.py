@@ -86,7 +86,7 @@ def test_record_tick_ignores_child_not_logged_in(monkeypatch):
 
 def test_record_tick_ignores_unrelated_logged_in_user(monkeypatch):
     child_id = add_child("Test", "mintguard-test-child")
-    sessions = [FakeSession("latitude", "tty1", "", 0.0, 1)]
+    sessions = [FakeSession("parentuser", "tty1", "", 0.0, 1)]
     monkeypatch.setattr("mintguard.backend.usage_tracker.psutil.users", lambda: sessions)
 
     UsageTracker().record_tick(5)

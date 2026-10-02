@@ -190,7 +190,7 @@ Après avoir lu QUICKSTART_CLAUDE_CODE.md:
 
 ```bash
 # Créer le dossier du projet
-mkdir -p /home/mintguard-project && cd /home/mintguard-project
+mkdir -p ~/mintguard-project && cd ~/mintguard-project
 
 # Initialiser la structure
 # (Suivre les étapes dans QUICKSTART_CLAUDE_CODE.md)
@@ -256,7 +256,7 @@ python -m pytest tests/ -v
 
 ## 🎯 Prochaine Étape
 
-**Pour l'utilisateur (Mickatch):**
+**Pour l'utilisateur :**
 - Transmettre ces 5 documents à Claude Code
 - Lui dire: "Vous avez tout ce qu'il faut pour démarrer"
 - Lui demander: "Questions avant de commencer Phase 1?"
