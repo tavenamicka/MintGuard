@@ -7,6 +7,14 @@ Application de contrôle parental pour Linux Mint — simple et accessible pour 
 
 > Statut : Phase 3 (Sécurité & Intégration) terminée, Phase 4 (Testing & Release) en cours — bascule DNS, iptables, audit de sécurité et audit d'accessibilité validés. Voir [PROJECT_BRIEF.md](PROJECT_BRIEF.md) pour les spécifications complètes et [CLAUDE_CODE_BRIEFING.md](CLAUDE_CODE_BRIEFING.md) pour le plan d'implémentation par phases.
 
+## Aperçu
+
+Captures de l'interface parent, réalisées sur des données fictives.
+
+| Tableau de bord | Réglages : limite de temps | Rapports |
+|---|---|---|
+| ![Tableau de bord : protection active, plage horaire et temps utilisé aujourd'hui](docs/screenshots/tableau-de-bord.png) | ![Réglages : plage horaire et limite quotidienne par jour](docs/screenshots/reglages-temps.png) | ![Rapports des 7 derniers jours](docs/screenshots/rapports.png) |
+
 ## Guide utilisateur
 
 Pour les parents : [Français](docs/USER_MANUAL_FR.md) · [English](docs/USER_MANUAL_EN.md) · [Deutsch](docs/USER_MANUAL_DE.md) · [Español](docs/USER_MANUAL_ES.md)
