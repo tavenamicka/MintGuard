@@ -97,7 +97,16 @@ def main() -> None:
     usage_tracker = UsageTracker()
     site_usage_tracker = SiteUsageTracker()
 
+    # Écrit la blocklist ET redémarre dnsmasq inconditionnellement (pas `apply()`, qui ne
+    # redémarre que si le contenu diffère de celui déjà sur disque) : constaté en usage réel
+    # (voir SUIVI.md) qu'un dnsmasq déjà démarré (avant ce cycle, ex: resté actif d'un
+    # précédent lancement du daemon) tournait avec une configuration chargée en mémoire
+    # potentiellement plus ancienne que ce qui vient d'être (ré)écrit sur disque - le premier
+    # `apply()` du cycle ne voyait ensuite aucun changement (le fichier venait d'être écrit
+    # avec exactement ce contenu) et ne redémarrait donc jamais dnsmasq, qui restait bloqué
+    # sur son ancienne configuration indéfiniment.
     dns_controller.generate_blocklist()
+    dns_controller.restart_dnsmasq()
     firewall_controller.sync_child_dns_restriction()
     StatusServer(scheduler).start()
     state = {"last_session_check": 0.0, "last_dns_refresh": time.monotonic()}
