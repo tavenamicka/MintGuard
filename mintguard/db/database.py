@@ -36,7 +36,61 @@ _COLUMN_MIGRATIONS = [
     ("time_rules", "daily_budget_minutes", "INTEGER"),
     ("blocked_apps", "child_id", "INTEGER REFERENCES children(id)"),
     ("blocked_apps", "daily_budget_minutes", "INTEGER"),
+    ("blocked_sites", "child_id", "INTEGER REFERENCES children(id)"),
+    ("blocked_sites", "daily_budget_minutes", "INTEGER"),
 ]
+
+# Tables dont la colonne child_id ci-dessus doit etre rattachee a l'unique enfant de la BD
+# quand il n'y en a qu'un (cas courant) - ambigu avec plusieurs enfants, la ligne reste
+# globale (child_id NULL).
+_SOLE_CHILD_BACKFILL_TABLES = ["blocked_apps", "blocked_sites"]
+
+
+def _blocked_sites_has_domain_unique_index(conn) -> bool:
+    for row in conn.execute(text("PRAGMA index_list(blocked_sites)")):
+        name, is_unique = row[1], row[2]
+        if not is_unique:
+            continue
+        columns = [info_row[2] for info_row in conn.execute(text(f"PRAGMA index_info({name})"))]
+        if columns == ["domain"]:
+            return True
+    return False
+
+
+def _drop_blocked_sites_domain_unique_constraint(conn) -> None:
+    """blocked_sites.domain etait UNIQUE au niveau table depuis la toute premiere version du
+    schema (avant le scoping par enfant) - verifie empiriquement (PRAGMA index_list sur une BD
+    creee par le modele historique). ALTER TABLE ADD COLUMN ne peut pas retirer cette
+    contrainte SQLite ; sans ce retrait, deux enfants partageant un domaine bloque (ex: un
+    prereglage d'age qui bloque tiktok.com pour les deux) leveraient IntegrityError des la
+    premiere ecriture double. Idempotent : no-op sur une table qui ne porte deja plus la
+    contrainte (toute BD creee par create_all() depuis ce changement)."""
+    if not _blocked_sites_has_domain_unique_index(conn):
+        return
+    conn.execute(text("ALTER TABLE blocked_sites RENAME TO blocked_sites_old"))
+    conn.execute(
+        text(
+            """
+            CREATE TABLE blocked_sites (
+                id INTEGER NOT NULL PRIMARY KEY,
+                domain VARCHAR(255) NOT NULL,
+                category VARCHAR(50),
+                blocked BOOLEAN NOT NULL,
+                child_id INTEGER REFERENCES children(id),
+                daily_budget_minutes INTEGER
+            )
+            """
+        )
+    )
+    conn.execute(
+        text(
+            """
+            INSERT INTO blocked_sites (id, domain, category, blocked, child_id, daily_budget_minutes)
+            SELECT id, domain, category, blocked, child_id, daily_budget_minutes FROM blocked_sites_old
+            """
+        )
+    )
+    conn.execute(text("DROP TABLE blocked_sites_old"))
 
 
 def _migrate_schema(engine: Engine) -> None:
@@ -46,17 +100,20 @@ def _migrate_schema(engine: Engine) -> None:
             if column not in existing:
                 conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {column} {sql_type}"))
 
-        # blocked_apps.child_id vient d'etre ajoutee : les lignes existantes sont NULL
+        _drop_blocked_sites_domain_unique_constraint(conn)
+
+        # child_id vient d'etre ajoutee sur ces tables : les lignes existantes sont NULL
         # ("s'applique a tous les enfants"). Avec un seul enfant en base (cas courant), on les
-        # rattache explicitement pour qu'elles restent visibles/editables dans l'onglet
-        # Applications, desormais filtre par enfant - une base multi-enfants est ambigue, on
-        # n'y touche pas (la ligne reste globale).
+        # rattache explicitement pour qu'elles restent visibles/editables dans les onglets
+        # desormais filtres par enfant - une base multi-enfants est ambigue, on n'y touche pas
+        # (la ligne reste globale).
         children = conn.execute(text("SELECT id FROM children")).fetchall()
         if len(children) == 1:
-            conn.execute(
-                text("UPDATE blocked_apps SET child_id = :child_id WHERE child_id IS NULL"),
-                {"child_id": children[0][0]},
-            )
+            for table in _SOLE_CHILD_BACKFILL_TABLES:
+                conn.execute(
+                    text(f"UPDATE {table} SET child_id = :child_id WHERE child_id IS NULL"),
+                    {"child_id": children[0][0]},
+                )
 
 
 def get_db_path() -> Path:

@@ -254,13 +254,20 @@ class TimeTab(QWidget):
 class SitesTab(QWidget):
     """Onglet 'Sites à Bloquer' — catégories + liste personnalisée, cf. wireframe 'Écran 3'.
 
-    Le blocage de sites est global (un seul résolveur DNS pour la machine), pas par enfant.
+    Scopé par enfant (`child_id`) comme AppsTab/TimeTab : `BlockedSite` a une portée par
+    enfant, une ligne `child_id=None` restant une règle globale (compat arrière, voir
+    migration dans database.py). Seuls les sites de catégorie (cases à cocher) ont un quota
+    configurable ; la liste personnalisée (texte libre) reste en blocage total — même
+    convention qu'AppsTab pour les applications personnalisées.
     """
 
-    def __init__(self, i18n: I18nLoader, parent=None):
+    def __init__(self, i18n: I18nLoader, child_id: int | None, parent=None):
         super().__init__(parent)
         self.i18n = i18n
+        self.child_id = child_id
         self._domain_checkboxes: dict[str, QCheckBox] = {}
+        self._domain_budget_checkboxes: dict[str, QCheckBox] = {}
+        self._domain_budget_spins: dict[str, QSpinBox] = {}
         self._sections: list[CollapsibleSection] = []
 
         layout = _scrollable_layout(self)
@@ -288,8 +295,32 @@ class SitesTab(QWidget):
             for domain in domains:
                 checkbox = QCheckBox(domain)
                 checkbox.toggled.connect(lambda checked, d=domain, c=category: self._toggle_domain(d, c, checked))
-                section.add(checkbox)
+
+                # Coche + quota, même schéma qu'AppsTab (une limite quotidienne au lieu d'un
+                # blocage total) : désactivé tant que le site n'est pas bloqué.
+                budget_row = QHBoxLayout()
+                budget_row.setSpacing(10)
+                budget_checkbox = QCheckBox(self.i18n("settings.daily_budget_checkbox"))
+                budget_spin = QSpinBox()
+                budget_spin.setRange(1, 1440)
+                budget_spin.setValue(30)
+                budget_spin.setSuffix(self.i18n("settings.minutes_per_day_suffix"))
+                budget_checkbox.setEnabled(False)
+                budget_spin.setEnabled(False)
+                checkbox.toggled.connect(budget_checkbox.setEnabled)
+                budget_checkbox.toggled.connect(budget_spin.setEnabled)
+                budget_checkbox.toggled.connect(lambda checked, d=domain: self._set_site_budget(d, checked))
+                budget_spin.valueChanged.connect(
+                    lambda _value, d=domain: self._set_site_budget(d, self._domain_budget_checkboxes[d].isChecked())
+                )
+                budget_row.addWidget(budget_checkbox)
+                budget_row.addStretch(1)
+                budget_row.addWidget(budget_spin)
+
+                section.add_row(checkbox, wrap_layout(budget_row))
                 self._domain_checkboxes[domain] = checkbox
+                self._domain_budget_checkboxes[domain] = budget_checkbox
+                self._domain_budget_spins[domain] = budget_spin
 
         layout.addWidget(small_label(self.i18n("settings.custom_sites")))
         self.custom_list = QListWidget()
@@ -318,16 +349,34 @@ class SitesTab(QWidget):
         self._load()
 
     def _load(self) -> None:
+        if self.child_id is None:
+            self.setEnabled(False)
+            return
         session = get_session()
         try:
-            blocked_domains = {s.domain for s in session.query(BlockedSite).filter_by(blocked=True).all()}
+            sites = session.query(BlockedSite).filter_by(child_id=self.child_id, blocked=True).all()
+            blocked_by_domain = {s.domain: s.daily_budget_minutes for s in sites}
         finally:
             session.close()
 
         for domain, checkbox in self._domain_checkboxes.items():
+            budget_checkbox = self._domain_budget_checkboxes[domain]
+            budget_spin = self._domain_budget_spins[domain]
+            is_blocked = domain in blocked_by_domain
             checkbox.blockSignals(True)
-            checkbox.setChecked(domain in blocked_domains)
+            checkbox.setChecked(is_blocked)
             checkbox.blockSignals(False)
+            budget_checkbox.setEnabled(is_blocked)
+
+            daily_budget_minutes = blocked_by_domain.get(domain)
+            budget_checkbox.blockSignals(True)
+            budget_checkbox.setChecked(daily_budget_minutes is not None)
+            budget_checkbox.blockSignals(False)
+            budget_spin.setEnabled(is_blocked and daily_budget_minutes is not None)
+            if daily_budget_minutes is not None:
+                budget_spin.blockSignals(True)
+                budget_spin.setValue(daily_budget_minutes)
+                budget_spin.blockSignals(False)
         # blockSignals() ci-dessus empêche aussi la mise à jour de la case "Tout sélectionner"
         # de chaque section (qui écoute le même signal) — rafraîchie explicitement ici.
         for section in self._sections:
@@ -335,22 +384,40 @@ class SitesTab(QWidget):
 
         predefined_domains = {d for domains in CATEGORIES.values() for d in domains}
         self.custom_list.clear()
-        for domain in sorted(blocked_domains - predefined_domains):
+        for domain in sorted(set(blocked_by_domain) - predefined_domains):
             self.custom_list.addItem(domain)
 
     def _toggle_domain(self, domain: str, category: str, checked: bool) -> None:
+        if self.child_id is None:
+            return
         session = get_session()
         try:
-            existing = session.query(BlockedSite).filter_by(domain=domain).first()
+            existing = session.query(BlockedSite).filter_by(child_id=self.child_id, domain=domain).first()
             if checked and existing is None:
-                session.add(BlockedSite(domain=domain, category=category, blocked=True))
+                session.add(BlockedSite(domain=domain, category=category, blocked=True, child_id=self.child_id))
             elif not checked and existing is not None:
                 session.delete(existing)
             session.commit()
         finally:
             session.close()
 
+    def _set_site_budget(self, domain: str, quota_enabled: bool) -> None:
+        """Bascule ou met à jour le quota (minutes/jour) d'un site déjà bloqué."""
+        if self.child_id is None:
+            return
+        minutes = self._domain_budget_spins[domain].value() if quota_enabled else None
+        session = get_session()
+        try:
+            existing = session.query(BlockedSite).filter_by(child_id=self.child_id, domain=domain).first()
+            if existing is not None:
+                existing.daily_budget_minutes = minutes
+                session.commit()
+        finally:
+            session.close()
+
     def _add_custom_site(self) -> None:
+        if self.child_id is None:
+            return
         domain = self.add_input.text().strip().lower()
         if not is_valid_domain(domain):
             self.error_label.setText(self.i18n("settings.invalid_domain_error"))
@@ -360,8 +427,8 @@ class SitesTab(QWidget):
 
         session = get_session()
         try:
-            if session.query(BlockedSite).filter_by(domain=domain).first() is None:
-                session.add(BlockedSite(domain=domain, category="custom", blocked=True))
+            if session.query(BlockedSite).filter_by(child_id=self.child_id, domain=domain).first() is None:
+                session.add(BlockedSite(domain=domain, category="custom", blocked=True, child_id=self.child_id))
                 session.commit()
         finally:
             session.close()
@@ -370,12 +437,14 @@ class SitesTab(QWidget):
         self._load()
 
     def _remove_selected_site(self) -> None:
+        if self.child_id is None:
+            return
         item = self.custom_list.currentItem()
         if item is None:
             return
         session = get_session()
         try:
-            existing = session.query(BlockedSite).filter_by(domain=item.text()).first()
+            existing = session.query(BlockedSite).filter_by(child_id=self.child_id, domain=item.text()).first()
             if existing is not None:
                 session.delete(existing)
                 session.commit()
@@ -615,7 +684,7 @@ class SettingsWindow(QDialog):
         self.time_tab = TimeTab(i18n, child_id)
         self.tabs.addTab(self.time_tab, self.i18n("settings.time_limits"))
 
-        self.sites_tab = SitesTab(i18n)
+        self.sites_tab = SitesTab(i18n, child_id)
         self.tabs.addTab(self.sites_tab, self.i18n("settings.blocked_sites"))
 
         self.apps_tab = AppsTab(i18n, child_id)

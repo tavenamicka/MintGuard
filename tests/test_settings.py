@@ -200,33 +200,37 @@ def test_quick_apply_still_allows_individual_day_adjustment_afterwards():
 
 
 def test_sites_tab_shows_one_checkbox_per_reference_domain():
-    tab = SitesTab(I18nLoader("fr"))
+    child_id = make_child()
+    tab = SitesTab(I18nLoader("fr"), child_id)
     assert set(SOCIAL_MEDIA_DOMAINS) <= set(tab._domain_checkboxes)
 
 
 def test_sites_tab_toggle_single_domain_creates_row():
-    tab = SitesTab(I18nLoader("fr"))
+    child_id = make_child()
+    tab = SitesTab(I18nLoader("fr"), child_id)
     tab._domain_checkboxes["tiktok.com"].setChecked(True)
 
     session = get_session()
     try:
-        site = session.query(BlockedSite).filter_by(domain="tiktok.com").first()
-        other_social = session.query(BlockedSite).filter_by(domain="facebook.com").first()
+        site = session.query(BlockedSite).filter_by(child_id=child_id, domain="tiktok.com").first()
+        other_social = session.query(BlockedSite).filter_by(child_id=child_id, domain="facebook.com").first()
     finally:
         session.close()
     assert site is not None
     assert site.category == "social"
+    assert site.daily_budget_minutes is None
     assert other_social is None  # les autres sites de la categorie restent non bloques
 
 
 def test_sites_tab_untoggle_single_domain_removes_row():
-    tab = SitesTab(I18nLoader("fr"))
+    child_id = make_child()
+    tab = SitesTab(I18nLoader("fr"), child_id)
     tab._domain_checkboxes["tiktok.com"].setChecked(True)
     tab._domain_checkboxes["tiktok.com"].setChecked(False)
 
     session = get_session()
     try:
-        count = session.query(BlockedSite).filter_by(domain="tiktok.com").count()
+        count = session.query(BlockedSite).filter_by(child_id=child_id, domain="tiktok.com").count()
     finally:
         session.close()
     assert count == 0
@@ -237,27 +241,54 @@ def test_sites_tab_select_all_reflects_state_loaded_from_db():
     # _load() pour eviter des ecritures BD au chargement empechait aussi la case "Tout
     # selectionner" de chaque section de se mettre a jour - elle restait decochee meme quand
     # tous les sites d'une categorie etaient deja bloques en BD avant l'ouverture de l'onglet.
+    child_id = make_child()
     session = get_session()
     try:
         for domain in ("youtube.com", "netflix.com", "twitch.tv"):  # toute la categorie "entertainment"
-            session.add(BlockedSite(domain=domain, category="entertainment", blocked=True))
+            session.add(BlockedSite(domain=domain, category="entertainment", blocked=True, child_id=child_id))
         session.commit()
     finally:
         session.close()
 
-    tab = SitesTab(I18nLoader("fr"))
+    tab = SitesTab(I18nLoader("fr"), child_id)
     entertainment_section = next(s for s in tab._sections if s._toggle_button.text() == "Divertissement")
     assert entertainment_section.select_all_checkbox.checkState() == Qt.CheckState.Checked
 
 
+def test_sites_tab_quota_checkbox_sets_daily_budget():
+    child_id = make_child()
+    tab = SitesTab(I18nLoader("fr"), child_id)
+    tab._domain_checkboxes["tiktok.com"].setChecked(True)
+    tab._domain_budget_spins["tiktok.com"].setValue(45)
+    tab._domain_budget_checkboxes["tiktok.com"].setChecked(True)
+
+    session = get_session()
+    try:
+        site = session.query(BlockedSite).filter_by(child_id=child_id, domain="tiktok.com").first()
+    finally:
+        session.close()
+    assert site.daily_budget_minutes == 45
+
+
+def test_sites_tab_budget_controls_disabled_until_site_blocked():
+    child_id = make_child()
+    tab = SitesTab(I18nLoader("fr"), child_id)
+    assert tab._domain_budget_checkboxes["tiktok.com"].isEnabled() is False
+    assert tab._domain_budget_spins["tiktok.com"].isEnabled() is False
+
+    tab._domain_checkboxes["tiktok.com"].setChecked(True)
+    assert tab._domain_budget_checkboxes["tiktok.com"].isEnabled() is True
+
+
 def test_sites_tab_add_valid_custom_site():
-    tab = SitesTab(I18nLoader("fr"))
+    child_id = make_child()
+    tab = SitesTab(I18nLoader("fr"), child_id)
     tab.add_input.setText("example.com")
     tab._add_custom_site()
 
     session = get_session()
     try:
-        site = session.query(BlockedSite).filter_by(domain="example.com").first()
+        site = session.query(BlockedSite).filter_by(child_id=child_id, domain="example.com").first()
     finally:
         session.close()
     assert site is not None
@@ -266,7 +297,8 @@ def test_sites_tab_add_valid_custom_site():
 
 
 def test_sites_tab_rejects_invalid_domain():
-    tab = SitesTab(I18nLoader("fr"))
+    child_id = make_child()
+    tab = SitesTab(I18nLoader("fr"), child_id)
     tab.add_input.setText("not a domain")
     tab._add_custom_site()
 
@@ -279,7 +311,8 @@ def test_sites_tab_rejects_invalid_domain():
 
 
 def test_sites_tab_remove_custom_site():
-    tab = SitesTab(I18nLoader("fr"))
+    child_id = make_child()
+    tab = SitesTab(I18nLoader("fr"), child_id)
     tab.add_input.setText("example.com")
     tab._add_custom_site()
     tab.custom_list.setCurrentRow(0)
@@ -287,10 +320,15 @@ def test_sites_tab_remove_custom_site():
 
     session = get_session()
     try:
-        assert session.query(BlockedSite).filter_by(domain="example.com").first() is None
+        assert session.query(BlockedSite).filter_by(child_id=child_id, domain="example.com").first() is None
     finally:
         session.close()
     assert tab.custom_list.count() == 0
+
+
+def test_sites_tab_disabled_without_child_selected():
+    tab = SitesTab(I18nLoader("fr"), None)
+    assert tab.isEnabled() is False
 
 
 # -- AppsTab --------------------------------------------------------------

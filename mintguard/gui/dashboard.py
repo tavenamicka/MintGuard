@@ -57,10 +57,12 @@ _LIVE_REFRESH_INTERVAL_MS = 5000
 class DashboardScreen(QWidget):
     """Écran 1 (Dashboard) — vue d'ensemble en un coup d'œil, cf. PROJECT_BRIEF.md 'Écrans Principaux'.
 
-    Note d'architecture : le blocage de sites (BlockedSite) est global à la machine, pas par
-    enfant (un seul résolveur DNS pour tout le poste) — seule la limite de temps (TimeRule) est
-    propre à l'enfant sélectionné. Le statut « Protection: ACTIVE » reflète la présence de règles
-    configurées en BD, pas un signal live du daemon (pas de bus D-Bus). Le temps
+    Note d'architecture : le blocage de sites (BlockedSite) est scopé par enfant (`child_id`,
+    None = règle globale/historique), comme BlockedApp — un seul résolveur DNS pour tout le
+    poste, mais la blocklist appliquée est recalculée dynamiquement selon l'enfant actuellement
+    connecté (voir DNSController._effective_blocked_domains, daemon.py::run_cycle). Le statut
+    « Protection: ACTIVE » reflète la présence de règles configurées en BD, pas un signal live du
+    daemon (pas de bus D-Bus). Le temps
     utilisé aujourd'hui, lui, vient bien du daemon (`UsageTracker`, table `DailyUsage`) : un
     QTimer relit la BD toutes les `_LIVE_REFRESH_INTERVAL_MS` pour que la barre avance pendant
     que le parent regarde l'écran, sans canal IPC dédié.
@@ -296,7 +298,16 @@ class DashboardScreen(QWidget):
         session = get_session()
         try:
             has_time_rule = session.query(TimeRule).filter_by(child_id=child_id, enabled=True).count() > 0
-            has_blocked_site = session.query(BlockedSite).filter_by(blocked=True).count() > 0
+            # Site propre a cet enfant, ou regle globale/historique (child_id NULL) - pas une
+            # union avec les sites des AUTRES enfants, qui ferait passer a tort la protection
+            # de cet enfant a "active" a cause des reglages d'un autre.
+            has_blocked_site = (
+                session.query(BlockedSite)
+                .filter(BlockedSite.blocked.is_(True))
+                .filter((BlockedSite.child_id == child_id) | (BlockedSite.child_id.is_(None)))
+                .count()
+                > 0
+            )
             return has_time_rule or has_blocked_site
         finally:
             session.close()

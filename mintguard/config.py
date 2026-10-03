@@ -42,6 +42,9 @@ DEFAULT_CONFIG: dict[str, Any] = {
         # sous-domaines - voir DNSController.
         "blocklist_path": "/var/lib/mintguard-dns/blocklist.conf",
         "refresh_interval": 30,
+        # Journal des requetes dnsmasq (log-queries) : lu PUIS TRONQUE a chaque cycle par
+        # SiteUsageTracker, jamais conserve au-dela - voir etc/dnsmasq.d/mintguard.conf.
+        "query_log_path": "/var/log/mintguard/dns.log",
     },
     "monitoring": {
         "process_check_interval": 5,

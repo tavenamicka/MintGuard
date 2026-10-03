@@ -66,3 +66,12 @@ def category_for_domain(domain: str) -> str:
         if domain in domains:
             return category
     return "custom"
+
+
+def domain_matches(queried: str, registered: str) -> bool:
+    """Vrai si `queried` EST le domaine `registered`, ou l'un de ses sous-domaines (ex:
+    www.youtube.com, i.ytimg.com...) - les logs de requetes DNS contiennent le nom litteral
+    interroge, jamais le domaine enregistre nu (voir SiteUsageTracker)."""
+    queried = queried.strip().lower().rstrip(".")
+    registered = registered.strip().lower()
+    return queried == registered or queried.endswith("." + registered)

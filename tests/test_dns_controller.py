@@ -14,13 +14,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-"""Blocklist DNS : format, robustesse d'écriture et déclenchement du redémarrage dnsmasq."""
+"""Blocklist DNS : format, robustesse d'écriture, déclenchement du redémarrage dnsmasq, et
+portée par enfant (BlockedSite.child_id) + quota quotidien (daily_budget_minutes)."""
+
+from datetime import date
 
 import pytest
 
 from mintguard.backend.dns_controller import DNSController
 from mintguard.db.database import get_session, init_db
-from mintguard.db.models import BlockedSite
+from mintguard.db.models import BlockedSite, Child, SiteDailyUsage
 
 
 @pytest.fixture(autouse=True)
@@ -33,12 +36,40 @@ def controller(tmp_path):
     return DNSController(blocklist_path=tmp_path / "blocklist.conf")
 
 
-def add_sites(*domains, blocked=True):
+def add_sites(*domains, blocked=True, child_id=None, daily_budget_minutes=None):
     session = get_session()
     for domain in domains:
-        session.add(BlockedSite(domain=domain, category="custom", blocked=blocked))
+        session.add(
+            BlockedSite(
+                domain=domain,
+                category="custom",
+                blocked=blocked,
+                child_id=child_id,
+                daily_budget_minutes=daily_budget_minutes,
+            )
+        )
     session.commit()
     session.close()
+
+
+def make_child(username: str) -> int:
+    session = get_session()
+    try:
+        child = Child(name=username, username=username)
+        session.add(child)
+        session.commit()
+        return child.id
+    finally:
+        session.close()
+
+
+def set_usage(child_id: int, domain: str, seconds_used: int) -> None:
+    session = get_session()
+    try:
+        session.add(SiteDailyUsage(child_id=child_id, domain=domain, date=date.today().isoformat(), seconds_used=seconds_used))
+        session.commit()
+    finally:
+        session.close()
 
 
 def test_blocklist_uses_wildcard_format_covering_subdomains(controller):
@@ -105,3 +136,70 @@ def test_blocklist_write_is_atomic(controller, monkeypatch):
     # L'ancienne blocklist est intacte, et aucun fichier temporaire n'est laissé derrière.
     assert controller.blocklist_path.read_text(encoding="utf-8") == original
     assert not list(controller.blocklist_path.parent.glob(".blocklist-*"))
+
+
+# -- Portée par enfant + quota (BlockedSite.child_id / daily_budget_minutes) ---------------
+
+
+def test_per_child_site_only_blocked_for_owning_child_when_active_child_known(controller):
+    alice = make_child("alice")
+    bob = make_child("bob")
+    add_sites("tiktok.com", child_id=alice)  # blocage total, propre a Alice uniquement
+
+    controller.generate_blocklist(active_child_id=alice)
+    assert "address=/tiktok.com/0.0.0.0" in controller.blocklist_path.read_text(encoding="utf-8")
+
+    controller.generate_blocklist(active_child_id=bob)
+    assert "tiktok.com" not in controller.blocklist_path.read_text(encoding="utf-8")
+
+
+def test_budgeted_site_not_blocked_until_usage_exhausted(controller):
+    alice = make_child("alice")
+    add_sites("youtube.com", child_id=alice, daily_budget_minutes=30)
+    set_usage(alice, "youtube.com", seconds_used=10 * 60)  # 10 min < 30 min
+
+    controller.generate_blocklist(active_child_id=alice)
+    assert "youtube.com" not in controller.blocklist_path.read_text(encoding="utf-8")
+
+
+def test_budgeted_site_blocked_once_usage_meets_budget(controller):
+    alice = make_child("alice")
+    add_sites("youtube.com", child_id=alice, daily_budget_minutes=30)
+    set_usage(alice, "youtube.com", seconds_used=30 * 60)  # quota atteint
+
+    controller.generate_blocklist(active_child_id=alice)
+    assert "address=/youtube.com/0.0.0.0" in controller.blocklist_path.read_text(encoding="utf-8")
+
+
+def test_ambiguous_active_child_blocks_if_any_childs_budget_exhausted(controller):
+    """Aucun enfant actif identifiable ce cycle (0 ou plusieurs a la fois) : echec du cote
+    restrictif, pas permissif - bloque si N'IMPORTE QUEL enfant a deja epuise son quota du
+    jour pour ce domaine, meme si ce n'est pas forcement celui qui navigue en ce moment."""
+    alice = make_child("alice")
+    bob = make_child("bob")
+    add_sites("youtube.com", child_id=None, daily_budget_minutes=30)  # regle globale
+    set_usage(alice, "youtube.com", seconds_used=30 * 60)  # Alice a epuise son quota
+    set_usage(bob, "youtube.com", seconds_used=0)  # Bob non
+
+    controller.generate_blocklist(active_child_id=None)
+    assert "address=/youtube.com/0.0.0.0" in controller.blocklist_path.read_text(encoding="utf-8")
+
+
+def test_global_always_blocked_site_blocks_regardless_of_active_child(controller):
+    add_sites("adult-content.example", child_id=None)  # regle globale, blocage total
+
+    controller.generate_blocklist(active_child_id=None)
+    assert "adult-content.example" in controller.blocklist_path.read_text(encoding="utf-8")
+
+    make_child("alice")
+    controller.generate_blocklist(active_child_id=1)
+    assert "adult-content.example" in controller.blocklist_path.read_text(encoding="utf-8")
+
+
+def test_per_child_always_blocked_site_does_not_block_other_active_child(controller):
+    alice = make_child("alice")
+    bob = make_child("bob")
+    add_sites("roblox.com", child_id=alice)  # blocage total, propre a Alice
+
+    controller.generate_blocklist(active_child_id=bob)
+    assert "roblox.com" not in controller.blocklist_path.read_text(encoding="utf-8")

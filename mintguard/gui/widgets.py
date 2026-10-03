@@ -269,6 +269,16 @@ class CollapsibleSection(QWidget):
         checkbox.toggled.connect(self.refresh_select_all)
         self.refresh_select_all()
 
+    def add_row(self, checkbox: QCheckBox, extra: QWidget) -> None:
+        """Comme `add()`, mais ajoute un widget supplémentaire (ex: ligne de quota, voir
+        SitesTab) juste sous la case à cocher — même principe empilé que `Tile.add()` appelé
+        deux fois. Le suivi "Tout sélectionner" continue à se baser uniquement sur `checkbox`."""
+        self._content_layout.addWidget(checkbox)
+        self._content_layout.addWidget(extra)
+        self._children_checkboxes.append(checkbox)
+        checkbox.toggled.connect(self.refresh_select_all)
+        self.refresh_select_all()
+
     def _on_toggle(self, expanded: bool) -> None:
         self._toggle_button.setArrowType(Qt.ArrowType.DownArrow if expanded else Qt.ArrowType.RightArrow)
         self._content.setVisible(expanded)

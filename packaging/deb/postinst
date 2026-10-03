@@ -83,6 +83,17 @@ case "$1" in
       systemctl reset-failed dnsmasq 2>/dev/null || true
     fi
 
+    # log-queries doit etre actif quel que soit l'etat du conffile a ce point (dpkg peut
+    # l'avoir remplace par le nouveau gabarit, ou avoir preserve/restaure une version
+    # anterieure sans cette ligne - comportement conffile ambigu constate, voir SUIVI.md).
+    # Patch idempotent plutot que de dependre de la semantique conffile de dpkg pour ce
+    # changement comportemental precis (necessaire a SiteUsageTracker, voir
+    # mintguard/backend/site_usage_tracker.py).
+    if [ -f /etc/dnsmasq.d/mintguard.conf ] && ! grep -q '^log-queries$' /etc/dnsmasq.d/mintguard.conf; then
+      sed -i '/^#*log-queries$/d; /^log-facility=/i log-queries' /etc/dnsmasq.d/mintguard.conf
+      echo "log-queries active dans /etc/dnsmasq.d/mintguard.conf (mise a jour)."
+    fi
+
     echo "== Environnement Python dedie ($VENV_DIR) =="
     if [ ! -d "$VENV_DIR" ]; then
       python3 -m venv "$VENV_DIR"

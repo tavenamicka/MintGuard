@@ -19,7 +19,7 @@ import pytest
 pytest.importorskip("PyQt6")
 
 from PyQt6.QtCore import Qt  # noqa: E402
-from PyQt6.QtWidgets import QApplication, QCheckBox  # noqa: E402
+from PyQt6.QtWidgets import QApplication, QCheckBox, QLabel  # noqa: E402
 
 from mintguard.gui.widgets import CollapsibleSection  # noqa: E402
 
@@ -98,3 +98,28 @@ def test_select_all_next_check_state_skips_partial_on_click():
     checkbox.setCheckState(Qt.CheckState.PartiallyChecked)
     checkbox.nextCheckState()
     assert checkbox.checkState() == Qt.CheckState.Checked
+
+
+def test_add_row_includes_extra_widget_and_tracks_checkbox():
+    """add_row() (voir SitesTab, ligne de quota sous chaque site) doit se comporter comme
+    add() pour le suivi "Tout sélectionner", en plus d'afficher le widget supplémentaire."""
+    section = CollapsibleSection("Catégorie", "Tout sélectionner")
+    checkbox = QCheckBox("item0")
+    extra = QLabel("quota")
+    section.add_row(checkbox, extra)
+
+    assert checkbox in section._children_checkboxes
+    checkbox.setChecked(True)
+    assert section.select_all_checkbox.checkState() == Qt.CheckState.Checked
+
+
+def test_add_row_select_all_still_reflects_partial_state_with_mixed_rows():
+    section = CollapsibleSection("Catégorie", "Tout sélectionner")
+    checkbox_a = QCheckBox("item0")
+    checkbox_b = QCheckBox("item1")
+    section.add_row(checkbox_a, QLabel("quota a"))
+    section.add_row(checkbox_b, QLabel("quota b"))
+
+    checkbox_a.setChecked(True)
+
+    assert section.select_all_checkbox.checkState() == Qt.CheckState.PartiallyChecked

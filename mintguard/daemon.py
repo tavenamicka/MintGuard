@@ -20,6 +20,7 @@ from mintguard.backend.dns_controller import DNSController
 from mintguard.backend.firewall_controller import FirewallController
 from mintguard.backend.process_monitor import ProcessMonitor
 from mintguard.backend.scheduler import Scheduler
+from mintguard.backend.site_usage_tracker import SiteUsageTracker, resolve_active_child_id
 from mintguard.backend.status_server import StatusServer
 from mintguard.backend.usage_tracker import UsageTracker
 from mintguard.config import get_config
@@ -35,6 +36,7 @@ def run_cycle(
     dns_controller: DNSController,
     firewall_controller: FirewallController,
     usage_tracker: UsageTracker,
+    site_usage_tracker: SiteUsageTracker,
     state: dict,
     now: float,
     session_interval: float,
@@ -59,6 +61,12 @@ def run_cycle(
     # réel" GUI<->daemon pour la barre de progression (cf. décision d'architecture ci-dessus).
     usage_tracker.record_tick(process_interval)
 
+    # Calculé une fois par cycle (même résolution que ci-dessus) et réutilisé à la fois par le
+    # suivi de temps par site (chaque cycle) et par la régénération DNS ci-dessous (seulement
+    # quand dns_refresh_interval le déclenche) - évite de la recalculer deux fois par cycle.
+    active_child_id = resolve_active_child_id(usage_tracker)
+    site_usage_tracker.poll(process_interval, active_child_id)
+
     if now - state["last_session_check"] >= session_interval:
         scheduler.check_all_children()
         state["last_session_check"] = now
@@ -68,7 +76,7 @@ def run_cycle(
         # `sync_child_dns_restriction()` ne reconstruit la chaîne iptables que si elle ne
         # correspond plus à la BD : un cycle sans changement (le cas courant) ne touche
         # plus au système du tout.
-        dns_controller.apply()
+        dns_controller.apply(active_child_id)
         firewall_controller.sync_child_dns_restriction()
         state["last_dns_refresh"] = now
 
@@ -87,6 +95,7 @@ def main() -> None:
     dns_controller = DNSController()
     firewall_controller = FirewallController()
     usage_tracker = UsageTracker()
+    site_usage_tracker = SiteUsageTracker()
 
     dns_controller.generate_blocklist()
     firewall_controller.sync_child_dns_restriction()
@@ -101,6 +110,7 @@ def main() -> None:
                 dns_controller,
                 firewall_controller,
                 usage_tracker,
+                site_usage_tracker,
                 state,
                 time.monotonic(),
                 session_interval,

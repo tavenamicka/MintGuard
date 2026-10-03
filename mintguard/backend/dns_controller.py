@@ -18,11 +18,12 @@ import logging
 import os
 import subprocess
 import tempfile
+from datetime import date
 from pathlib import Path
 
 from mintguard.config import get_config
 from mintguard.db.database import get_session
-from mintguard.db.models import BlockedSite
+from mintguard.db.models import BlockedSite, Child, SiteDailyUsage
 from mintguard.utils.validators import is_valid_domain
 
 logger = logging.getLogger("mintguard.backend.dns")
@@ -55,19 +56,60 @@ class DNSController:
 
     # -- Contenu ----------------------------------------------------------
 
-    def _blocked_domains(self) -> list[str]:
-        """Domaines bloqués en BD, revalidés avant écriture.
+    def _effective_blocked_domains(self, active_child_id: int | None) -> list[str]:
+        """Domaines effectivement bloqués pour ce cycle, revalidés avant écriture.
 
-        Défense en profondeur : la GUI valide déjà la saisie du parent (`is_valid_domain`),
-        mais cette blocklist est injectée telle quelle dans la configuration d'un dnsmasq
-        tournant en root. Une valeur en BD contenant un espace ou un retour à la ligne
-        (import, édition manuelle de la BD, régression d'un futur appelant) écrirait des
-        directives dnsmasq arbitraires ; au mieux dnsmasq refuse de démarrer, au pire la
-        configuration réseau est détournée. On filtre ici, au dernier moment.
+        Il n'existe qu'un seul résolveur DNS pour toute la machine (contrairement aux
+        applications, où ProcessMonitor voit quel compte Linux fait tourner un processus) :
+        la blocklist est donc recalculée à chaque appel selon `active_child_id` (voir
+        site_usage_tracker.resolve_active_child_id, calculé une fois par cycle dans
+        daemon.py::run_cycle). Trois cas par ligne `BlockedSite` :
+        - Ligne d'un AUTRE enfant que celui actif (connu et différent) : ignorée ce cycle,
+          pour ne jamais pénaliser un enfant avec la règle d'un autre.
+        - `daily_budget_minutes` None : blocage total, s'applique dès que la ligne concerne
+          l'appelant (globale, ou active/ambiguë pour une ligne propre à un enfant) — un
+          blocage explicite ne se débloque jamais faute de savoir qui est connecté.
+        - `daily_budget_minutes` défini : bloqué seulement si le quota du jour est atteint,
+          vérifié pour l'enfant propriétaire de la ligne si elle est propre à un enfant,
+          sinon pour l'enfant actif s'il est identifié, sinon (ambigu) pour TOUS les enfants
+          de la BD — échec du côté restrictif : bloque si n'importe lequel a déjà épuisé son
+          quota aujourd'hui, jamais le contraire.
+
+        Défense en profondeur, inchangée : la GUI valide déjà la saisie du parent
+        (`is_valid_domain`), mais cette blocklist est injectée telle quelle dans la
+        configuration d'un dnsmasq tournant en root — on revalide ici, au dernier moment.
         """
         session = get_session()
         try:
-            domains = [s.domain for s in session.query(BlockedSite).filter_by(blocked=True).all()]
+            sites = session.query(BlockedSite).filter_by(blocked=True).all()
+            today = date.today().isoformat()
+            all_child_ids: list[int] | None = None
+
+            domains = []
+            for site in sites:
+                owner = site.child_id  # None = regle globale/compat, sinon un enfant precis
+
+                if owner is not None and active_child_id is not None and owner != active_child_id:
+                    continue
+
+                if site.daily_budget_minutes is None:
+                    domains.append(site.domain)
+                    continue
+
+                if owner is not None:
+                    candidate_ids = [owner]
+                elif active_child_id is not None:
+                    candidate_ids = [active_child_id]
+                else:
+                    if all_child_ids is None:
+                        all_child_ids = [c.id for c in session.query(Child.id).all()]
+                    candidate_ids = all_child_ids
+
+                if any(
+                    self._budget_exhausted(session, cid, site.domain, site.daily_budget_minutes, today)
+                    for cid in candidate_ids
+                ):
+                    domains.append(site.domain)
         finally:
             session.close()
 
@@ -78,6 +120,12 @@ class DNSController:
             else:
                 logger.warning("Domaine invalide ignoré dans la blocklist: %r", domain)
         return sorted(set(valid))
+
+    @staticmethod
+    def _budget_exhausted(session, child_id: int, domain: str, budget_minutes: int, today: str) -> bool:
+        row = session.query(SiteDailyUsage).filter_by(child_id=child_id, domain=domain, date=today).first()
+        used = row.seconds_used if row is not None else 0
+        return used >= budget_minutes * 60
 
     @staticmethod
     def _render(domains: list[str]) -> str:
@@ -114,20 +162,25 @@ class DNSController:
 
     # -- API --------------------------------------------------------------
 
-    def generate_blocklist(self) -> int:
-        """Régénère le fichier de blocklist depuis la BD. Retourne le nombre d'entrées écrites."""
-        domains = self._blocked_domains()
+    def generate_blocklist(self, active_child_id: int | None = None) -> int:
+        """Régénère le fichier de blocklist depuis la BD. Retourne le nombre d'entrées écrites.
+
+        `active_child_id=None` (défaut) : aucun enfant identifié comme actif, comportement le
+        plus restrictif (voir `_effective_blocked_domains`) — utilisé notamment au démarrage
+        du daemon, avant qu'un premier cycle n'ait pu déterminer qui est connecté.
+        """
+        domains = self._effective_blocked_domains(active_child_id)
         self._write(self._render(domains))
         return len(domains)
 
-    def apply(self) -> bool:
+    def apply(self, active_child_id: int | None = None) -> bool:
         """Régénère la blocklist et redémarre dnsmasq *uniquement* si son contenu a changé.
 
         Retourne True si un redémarrage a eu lieu. Appelée à chaque cycle DNS du daemon :
         sans cette comparaison, dnsmasq était redémarré toutes les 30 s en pure perte (cache
         DNS vidé, bruit dans les logs, coupure de résolution de quelques dizaines de ms).
         """
-        content = self._render(self._blocked_domains())
+        content = self._render(self._effective_blocked_domains(active_child_id))
         if content == self._current_content():
             return False
         self._write(content)

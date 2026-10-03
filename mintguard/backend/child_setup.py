@@ -60,8 +60,10 @@ def create_child_with_age_preset(name: str, username: str, age: int, age_bracket
             )
 
         for domain in preset["blocked_domains"]:
-            if session.query(BlockedSite).filter_by(domain=domain).first() is None:
-                session.add(BlockedSite(domain=domain, category=category_for_domain(domain), blocked=True))
+            if session.query(BlockedSite).filter_by(child_id=child.id, domain=domain).first() is None:
+                session.add(
+                    BlockedSite(domain=domain, category=category_for_domain(domain), blocked=True, child_id=child.id)
+                )
 
         session.commit()
         return child.id

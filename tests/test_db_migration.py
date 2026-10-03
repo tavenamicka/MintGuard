@@ -56,6 +56,12 @@ def make_legacy_db(path) -> None:
                 binary_path VARCHAR(500),
                 enabled BOOLEAN
             );
+            CREATE TABLE blocked_sites (
+                id INTEGER PRIMARY KEY,
+                domain VARCHAR(255) UNIQUE,
+                category VARCHAR(50),
+                blocked BOOLEAN
+            );
             """
         )
         conn.commit()
@@ -83,18 +89,51 @@ def test_migration_adds_missing_columns(tmp_path):
     assert "daily_budget_minutes" in columns_of(db_path, "time_rules")
     assert "child_id" in columns_of(db_path, "blocked_apps")
     assert "daily_budget_minutes" in columns_of(db_path, "blocked_apps")
+    assert "child_id" in columns_of(db_path, "blocked_sites")
+    assert "daily_budget_minutes" in columns_of(db_path, "blocked_sites")
 
 
 def test_migration_is_idempotent(tmp_path):
     db_path = tmp_path / "legacy.db"
     make_legacy_db(db_path)
+    conn = sqlite3.connect(db_path)
+    conn.execute("INSERT INTO blocked_sites (domain, category, blocked) VALUES ('tiktok.com', 'social', 1)")
+    conn.commit()
+    conn.close()
 
     engine = create_engine(f"sqlite:///{db_path}")
     _migrate_schema(engine)
-    _migrate_schema(engine)  # ne doit pas lever (colonnes déjà présentes)
+    _migrate_schema(engine)  # ne doit pas lever (colonnes deja presentes, contrainte deja retiree)
     engine.dispose()
 
     assert "daily_budget_minutes" in columns_of(db_path, "time_rules")
+
+
+def test_migration_drops_blocked_sites_domain_unique_constraint(tmp_path):
+    """blocked_sites.domain etait UNIQUE au niveau table avant le scoping par enfant -
+    ALTER TABLE ADD COLUMN ne peut pas retirer cette contrainte SQLite ; sans le rebuild de
+    table dedie, deux enfants partageant un domaine bloque leveraient IntegrityError."""
+    db_path = tmp_path / "legacy.db"
+    make_legacy_db(db_path)
+    conn = sqlite3.connect(db_path)
+    conn.execute("INSERT INTO blocked_sites (domain, category, blocked) VALUES ('tiktok.com', 'social', 1)")
+    conn.commit()
+    conn.close()
+
+    engine = create_engine(f"sqlite:///{db_path}")
+    _migrate_schema(engine)
+    engine.dispose()
+
+    conn = sqlite3.connect(db_path)
+    try:
+        conn.execute(
+            "INSERT INTO blocked_sites (domain, category, blocked, child_id) VALUES ('tiktok.com', 'social', 1, 2)"
+        )
+        conn.commit()
+        rows = conn.execute("SELECT child_id FROM blocked_sites WHERE domain='tiktok.com'").fetchall()
+    finally:
+        conn.close()
+    assert len(rows) == 2
 
 
 def test_migration_reassigns_blocked_apps_to_sole_child(tmp_path):
@@ -138,6 +177,52 @@ def test_migration_leaves_blocked_apps_global_with_multiple_children(tmp_path):
     conn = sqlite3.connect(db_path)
     try:
         row_child_id = conn.execute("SELECT child_id FROM blocked_apps WHERE app_name='flatpak'").fetchone()[0]
+    finally:
+        conn.close()
+    assert row_child_id is None  # ambigu avec plusieurs enfants : reste une règle globale
+
+
+def test_migration_reassigns_blocked_sites_to_sole_child(tmp_path):
+    db_path = tmp_path / "legacy.db"
+    make_legacy_db(db_path)
+
+    conn = sqlite3.connect(db_path)
+    conn.execute("INSERT INTO children (name, username) VALUES ('Elisa', 'mintguard-test-child')")
+    conn.execute("INSERT INTO blocked_sites (domain, category, blocked) VALUES ('tiktok.com', 'social', 1)")
+    conn.commit()
+    conn.close()
+
+    engine = create_engine(f"sqlite:///{db_path}")
+    _migrate_schema(engine)
+    engine.dispose()
+
+    conn = sqlite3.connect(db_path)
+    try:
+        child_id = conn.execute("SELECT id FROM children WHERE username='mintguard-test-child'").fetchone()[0]
+        row_child_id = conn.execute("SELECT child_id FROM blocked_sites WHERE domain='tiktok.com'").fetchone()[0]
+    finally:
+        conn.close()
+    assert row_child_id == child_id
+
+
+def test_migration_leaves_blocked_sites_global_with_multiple_children(tmp_path):
+    db_path = tmp_path / "legacy.db"
+    make_legacy_db(db_path)
+
+    conn = sqlite3.connect(db_path)
+    conn.execute("INSERT INTO children (name, username) VALUES ('Elisa', 'child-one')")
+    conn.execute("INSERT INTO children (name, username) VALUES ('Tom', 'child-two')")
+    conn.execute("INSERT INTO blocked_sites (domain, category, blocked) VALUES ('tiktok.com', 'social', 1)")
+    conn.commit()
+    conn.close()
+
+    engine = create_engine(f"sqlite:///{db_path}")
+    _migrate_schema(engine)
+    engine.dispose()
+
+    conn = sqlite3.connect(db_path)
+    try:
+        row_child_id = conn.execute("SELECT child_id FROM blocked_sites WHERE domain='tiktok.com'").fetchone()[0]
     finally:
         conn.close()
     assert row_child_id is None  # ambigu avec plusieurs enfants : reste une règle globale

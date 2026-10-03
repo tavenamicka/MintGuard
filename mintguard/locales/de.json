@@ -75,7 +75,7 @@
   "settings": {
     "title": "Einstellungen",
     "time_limits": "Zeitlimit",
-    "blocked_sites": "Zu vermeidende Webseiten",
+    "blocked_sites": "Website-Verwaltung",
     "blocked_apps": "Zu vermeidende Anwendungen",
     "security": "Sicherheit",
     "language": "Sprache",

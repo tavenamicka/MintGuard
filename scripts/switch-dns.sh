@@ -86,8 +86,11 @@ echo "== Reecriture de $INSTALLED_CONF (port 53 + amont explicite) =="
   # etc/dnsmasq.d/mintguard.conf).
   echo "server=/use-application-dns.net/"
   echo
-  # log-queries volontairement absent : historique de navigation complet de
-  # toute la machine, sans rotation, que rien ne lit (voir etc/dnsmasq.d/mintguard.conf).
+  # log-queries + troncature par cycle (voir etc/dnsmasq.d/mintguard.conf) - la
+  # meme mitigation vie privee s'applique ici, y compris en mode resolveur
+  # systeme reel ou ce fichier capte aussi le trafic du parent, pas seulement
+  # des enfants.
+  echo "log-queries"
   echo "log-facility=/var/log/mintguard/dns.log"
 } > "$INSTALLED_CONF"
 

@@ -42,6 +42,7 @@ def test_create_tables(tmp_path):
         "blocked_apps",
         "activity_logs",
         "app_daily_usage",
+        "site_daily_usage",
         "parent_config",
         "daily_usage",
     }
@@ -77,7 +78,7 @@ def test_time_rule_relationship(tmp_path):
     assert child.time_rules[0].start_hour == dt_time(16, 0)
 
 
-def test_blocked_site_unique_domain(tmp_path):
+def test_blocked_site_scoped_per_child(tmp_path):
     session = make_session(tmp_path)
     session.add(BlockedSite(domain="tiktok.com", category="social"))
     session.commit()
@@ -85,6 +86,26 @@ def test_blocked_site_unique_domain(tmp_path):
     fetched = session.query(BlockedSite).filter_by(domain="tiktok.com").one()
     assert fetched.category == "social"
     assert fetched.blocked is True
+    assert fetched.child_id is None
+    assert fetched.daily_budget_minutes is None
+
+
+def test_blocked_site_same_domain_coexists_across_children(tmp_path):
+    """Plus de contrainte UNIQUE globale sur `domain` (voir database.py, retrait de la
+    contrainte heritee) : deux enfants peuvent chacun avoir leur propre ligne pour le meme
+    domaine, comme BlockedApp.app_name."""
+    session = make_session(tmp_path)
+    alice = Child(name="Alice", username="alice")
+    bob = Child(name="Bob", username="bob")
+    session.add_all([alice, bob])
+    session.commit()
+
+    session.add(BlockedSite(domain="tiktok.com", category="social", child_id=alice.id))
+    session.add(BlockedSite(domain="tiktok.com", category="social", child_id=bob.id, daily_budget_minutes=30))
+    session.commit()
+
+    rows = session.query(BlockedSite).filter_by(domain="tiktok.com").all()
+    assert {r.child_id for r in rows} == {alice.id, bob.id}
 
 
 def test_blocked_app(tmp_path):

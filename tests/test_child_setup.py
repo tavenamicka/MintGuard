@@ -71,16 +71,20 @@ def test_teen_preset_blocks_fewer_domains_than_young_preset():
     assert young_id is not None
 
 
-def test_does_not_duplicate_blocked_site_shared_between_two_children():
-    create_child_with_age_preset("Alice", "alice", 9, "young")  # bloque tiktok.com
-    create_child_with_age_preset("Charlie", "charlie", 14, "teen")  # bloque aussi tiktok.com
+def test_blocked_site_gets_separate_row_per_child_even_when_domain_shared():
+    """BlockedSite est scope par enfant (child_id) - deux enfants qui bloquent le meme domaine
+    (ex: tiktok.com via deux prereglages d'age differents) doivent chacun avoir leur propre
+    ligne, pas une seule ligne partagee (qui empecherait par ex. un quota propre a l'un des
+    deux) - voir database.py pour le retrait de l'ancienne contrainte UNIQUE globale."""
+    alice_id = create_child_with_age_preset("Alice", "alice", 9, "young")  # bloque tiktok.com
+    charlie_id = create_child_with_age_preset("Charlie", "charlie", 14, "teen")  # bloque aussi tiktok.com
 
     session = get_session()
     try:
-        tiktok_rows = session.query(BlockedSite).filter_by(domain="tiktok.com").count()
+        tiktok_rows = session.query(BlockedSite).filter_by(domain="tiktok.com").all()
     finally:
         session.close()
-    assert tiktok_rows == 1
+    assert {row.child_id for row in tiktok_rows} == {alice_id, charlie_id}
 
 
 def test_raises_clear_error_on_duplicate_username_instead_of_crashing():

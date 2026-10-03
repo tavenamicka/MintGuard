@@ -70,9 +70,17 @@ class BlockedSite(Base):
     __tablename__ = "blocked_sites"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    domain: Mapped[str] = mapped_column(String(255), unique=True)
+    # Plus unique=True : un domaine a desormais une ligne par enfant (voir child_id), comme
+    # BlockedApp.app_name - la contrainte UNIQUE heritee des BD deja installees est retiree
+    # par la migration (voir database.py::_drop_blocked_sites_domain_unique_constraint).
+    domain: Mapped[str] = mapped_column(String(255))
     category: Mapped[str | None] = mapped_column(String(50), nullable=True)  # social, entertainment, adult...
     blocked: Mapped[bool] = mapped_column(Boolean, default=True)
+    # None = s'applique a tous les enfants (compat arriere, voir migration dans database.py).
+    child_id: Mapped[int | None] = mapped_column(ForeignKey("children.id"), nullable=True)
+    # None = blocage total (comportement historique). Sinon, quota quotidien en minutes avant
+    # blocage - verifie contre SiteDailyUsage.seconds_used par DNSController.
+    daily_budget_minutes: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
 
 class BlockedApp(Base):
@@ -128,6 +136,22 @@ class AppDailyUsage(Base):
     child_id: Mapped[int] = mapped_column(ForeignKey("children.id"))
     app_name: Mapped[str] = mapped_column(String(255))
     date: Mapped[str] = mapped_column(String(10))  # "AAAA-MM-JJ", jour local (cohérent avec DailyUsage)
+    seconds_used: Mapped[int] = mapped_column(Integer, default=0)
+
+
+class SiteDailyUsage(Base):
+    """Cumul du temps de frequentation (en secondes) par enfant, domaine et jour local - meme
+    principe que AppDailyUsage, alimente par SiteUsageTracker.poll() a partir des requetes DNS
+    journalisees par dnsmasq (log-queries), pour les sites a quota
+    (BlockedSite.daily_budget_minutes non None)."""
+
+    __tablename__ = "site_daily_usage"
+    __table_args__ = (UniqueConstraint("child_id", "domain", "date", name="uq_site_daily_usage_child_domain_date"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    child_id: Mapped[int] = mapped_column(ForeignKey("children.id"))
+    domain: Mapped[str] = mapped_column(String(255))
+    date: Mapped[str] = mapped_column(String(10))  # "AAAA-MM-JJ", jour local (coherent avec DailyUsage)
     seconds_used: Mapped[int] = mapped_column(Integer, default=0)
 
 

@@ -147,6 +147,23 @@ def test_protection_active_from_global_blocked_site():
     assert screen.status_label.text() == "Protection active"
 
 
+def test_protection_not_active_from_another_childs_blocked_site():
+    """BlockedSite est scope par enfant (child_id) : un site bloque pour un AUTRE enfant ne
+    doit pas faire passer la protection a "active" pour l'enfant courant - sinon le Dashboard
+    d'Alice afficherait a tort "Protection active" a cause d'un reglage de Bob."""
+    make_child("Alice", "alice")
+    bob_id = make_child("Bob", "bob")
+    session = get_session()
+    try:
+        session.add(BlockedSite(domain="tiktok.com", category="social", blocked=True, child_id=bob_id))
+        session.commit()
+    finally:
+        session.close()
+
+    screen = DashboardScreen(I18nLoader("fr"))  # Alice selectionnee par defaut (1er de la liste)
+    assert screen.status_label.text() == "Protection inactive"
+
+
 # Trouvé à l'audit de sécurité : Settings/Reports s'ouvraient sans jamais
 # demander le PIN parent. Vérifie que PinDialog.prompt() est bien consulté avant d'ouvrir
 # l'un ou l'autre, et que son résultat est respecté.
