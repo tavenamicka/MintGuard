@@ -15,6 +15,18 @@ Captures de l'interface parent, réalisées sur des données fictives.
 |---|---|---|
 | ![Tableau de bord : protection active, plage horaire et temps utilisé aujourd'hui](docs/screenshots/tableau-de-bord.png) | ![Réglages : plage horaire et limite quotidienne par jour](docs/screenshots/reglages-temps.png) | ![Rapports des 7 derniers jours](docs/screenshots/rapports.png) |
 
+## Installer MintGuard (parents)
+
+Aucune connaissance en informatique n'est nécessaire. Il vous faut un ordinateur sous **Linux Mint** (ou Ubuntu) et votre mot de passe habituel.
+
+1. **Télécharger** le fichier `mintguard_0.1.0-1_all.deb` depuis la [page des versions](https://github.com/tavenamicka/MintGuard/releases/latest) (section « Assets »).
+2. **Double-cliquer** sur le fichier téléchargé : le gestionnaire de logiciels s'ouvre. Cliquer sur **Installer** et saisir votre mot de passe.
+3. **Ouvrir MintGuard** depuis le menu des applications (rubrique Système ou Administration).
+4. Suivre l'**assistant de configuration** (prénom de l'enfant, profil par âge, code PIN).
+5. Si un bandeau « La protection n'est pas encore activée » apparaît, cliquer sur **« Activer la protection maintenant »**.
+
+Chaque enfant doit avoir **son propre compte** sur l'ordinateur. En cas de souci, voir le [guide d'installation détaillé](docs/INSTALLATION.md) (dont la section « Si ça ne marche pas ») et le guide utilisateur ci-dessous.
+
 ## Guide utilisateur
 
 Pour les parents : [Français](docs/USER_MANUAL_FR.md) · [English](docs/USER_MANUAL_EN.md) · [Deutsch](docs/USER_MANUAL_DE.md) · [Español](docs/USER_MANUAL_ES.md)
