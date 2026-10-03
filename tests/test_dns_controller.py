@@ -83,6 +83,20 @@ def test_blocklist_uses_wildcard_format_covering_subdomains(controller):
     assert "0.0.0.0 youtube.com" not in content
 
 
+def test_blocklist_blocks_both_ipv4_and_ipv6_records(controller):
+    """Trouvé en usage réel (voir SUIVI.md) : youtube.com restait accessible malgré le
+    blocage - seul l'enregistrement A (IPv4) était intercepté (`address=/domaine/0.0.0.0`),
+    le navigateur préférant l'enregistrement AAAA (IPv6) toujours résolu normalement (Happy
+    Eyeballs). dnsmasq n'intercepte que la famille d'adresse correspondant à l'adresse
+    donnée (man dnsmasq, option -A) - une ligne IPv4 et une ligne IPv6 sont nécessaires."""
+    add_sites("youtube.com")
+    controller.generate_blocklist()
+
+    content = controller.blocklist_path.read_text(encoding="utf-8")
+    assert "address=/youtube.com/0.0.0.0" in content
+    assert "address=/youtube.com/::" in content
+
+
 def test_blocklist_ignores_unblocked_sites(controller):
     add_sites("youtube.com")
     add_sites("wikipedia.org", blocked=False)

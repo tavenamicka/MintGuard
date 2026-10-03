@@ -129,7 +129,20 @@ class DNSController:
 
     @staticmethod
     def _render(domains: list[str]) -> str:
-        return HEADER + "".join(f"address=/{domain}/0.0.0.0\n" for domain in domains)
+        """Une ligne `address=` par domaine ne suffit pas : dnsmasq n'intercepte que la
+        famille d'adresse (IPv4/IPv6) correspondant à l'adresse donnée (voir `man dnsmasq`,
+        « Pour donner à la fois une adresse IPv4 et une adresse IPv6 pour un domaine, utiliser
+        plusieurs options -A »). Constaté en usage réel (voir SUIVI.md) : youtube.com restait
+        accessible malgré le blocage — seul l'enregistrement A (IPv4) était intercepté, le
+        navigateur préférant l'enregistrement AAAA (IPv6) toujours résolu normalement (Happy
+        Eyeballs). Un domaine sans IPv6 (ex: tiktok.com au moment de l'écriture) ignore
+        silencieusement la ligne `::`, sans effet indésirable.
+        """
+        lines = []
+        for domain in domains:
+            lines.append(f"address=/{domain}/0.0.0.0\n")
+            lines.append(f"address=/{domain}/::\n")
+        return HEADER + "".join(lines)
 
     def _current_content(self) -> str | None:
         try:
