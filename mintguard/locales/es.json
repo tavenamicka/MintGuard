@@ -10,6 +10,9 @@
   },
   "child_tray": {
     "tooltip_minutes": "MintGuard: quedan {0} min",
+    "click_status_time": "Tiempo restante: {0} min",
+    "click_status_time_unknown": "Tiempo restante: no disponible por ahora.",
+    "click_status_last_block": "Última aplicación bloqueada: {0}",
     "warning_minutes_left": "Quedan {0} minuto(s) antes de que termine tu sesión.",
     "app_blocked": "{0} se cerró: esta aplicación no está permitida.",
     "session_ending_title": "Tu tiempo ha terminado por hoy",

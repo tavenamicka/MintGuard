@@ -22,7 +22,7 @@ import pytest
 
 pytest.importorskip("PyQt6")
 
-from PyQt6.QtWidgets import QApplication  # noqa: E402
+from PyQt6.QtWidgets import QApplication, QSystemTrayIcon  # noqa: E402
 
 import mintguard.child_tray as child_tray  # noqa: E402
 from mintguard.child_tray import ChildTray  # noqa: E402
@@ -172,6 +172,49 @@ def test_warning_threshold_also_shows_a_banner(monkeypatch, qapp):
     tray.poll()
 
     assert tray.banner.isVisible()
+
+
+def test_click_shows_remaining_time_popup(monkeypatch, qapp):
+    """Le survol (tooltip) n'est pas fiable sur tous les bureaux (constat utilisateur sur
+    Cinnamon) : un clic sur l'icone doit servir de repli et afficher le temps restant."""
+    tray = ChildTray(qapp)
+    monkeypatch.setattr(
+        child_tray, "query_status", lambda: {"is_child": True, "minutes_remaining": 17, "recent_blocks": []}
+    )
+    tray.poll()
+
+    messages = []
+    monkeypatch.setattr(tray.tray, "showMessage", lambda title, msg, icon: messages.append(msg))
+    tray._on_tray_activated(QSystemTrayIcon.ActivationReason.Trigger)
+
+    assert len(messages) == 1
+    assert "17" in messages[0]
+
+
+def test_click_before_any_poll_does_not_crash(monkeypatch, qapp):
+    tray = ChildTray(qapp)
+    messages = []
+    monkeypatch.setattr(tray.tray, "showMessage", lambda title, msg, icon: messages.append(msg))
+
+    tray._on_tray_activated(QSystemTrayIcon.ActivationReason.Trigger)
+
+    assert len(messages) == 1
+
+
+def test_click_includes_last_blocked_app(monkeypatch, qapp):
+    tray = ChildTray(qapp)
+    monkeypatch.setattr(
+        child_tray,
+        "query_status",
+        lambda: {"is_child": True, "minutes_remaining": 30, "recent_blocks": ["discord", "steam"]},
+    )
+    tray.poll()
+
+    messages = []
+    monkeypatch.setattr(tray.tray, "showMessage", lambda title, msg, icon: messages.append(msg))
+    tray._on_tray_activated(QSystemTrayIcon.ActivationReason.Trigger)
+
+    assert "steam" in messages[0]
 
 
 def test_notifies_new_blocked_app_once(monkeypatch, qapp):

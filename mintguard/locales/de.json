@@ -10,6 +10,9 @@
   },
   "child_tray": {
     "tooltip_minutes": "MintGuard: noch {0} Min.",
+    "click_status_time": "Verbleibende Zeit: {0} Min.",
+    "click_status_time_unknown": "Verbleibende Zeit: momentan nicht verfügbar.",
+    "click_status_last_block": "Zuletzt blockierte Anwendung: {0}",
     "warning_minutes_left": "Noch {0} Minute(n) bis zum Ende deiner Sitzung.",
     "app_blocked": "{0} wurde geschlossen: diese Anwendung ist nicht erlaubt.",
     "session_ending_title": "Deine Zeit ist für heute vorbei",

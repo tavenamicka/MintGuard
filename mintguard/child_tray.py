@@ -18,6 +18,7 @@ import json
 import logging
 import socket
 import sys
+from pathlib import Path
 
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QIcon
@@ -30,6 +31,12 @@ from mintguard.locales.loader import get_i18n
 logger = logging.getLogger("mintguard.child_tray")
 
 SOCKET_PATH = "/run/mintguard/status.sock"
+
+# Fichier bundle (package_data, voir setup.py), pas QIcon.fromTheme("mintguard") : sur une
+# session ou le cache d'icones du theme ne connait pas "mintguard" (gtk-update-icon-cache pas
+# encore passe), fromTheme renvoie une QIcon vide et l'icone systray reste invisible - aucun
+# survol ni clic n'est alors possible. Meme fix que parent_tray.py, deja correct sur ce point.
+_ICON_PATH = str(Path(__file__).parent / "gui" / "assets" / "icons" / "tray-active.svg")
 
 # Distincts du popup système (QSystemTrayIcon.showMessage) : celui-ci dépend du support
 # systray du bureau et peut passer inaperçu (documenté aux parents, voir USER_MANUAL_*.md) -
@@ -165,9 +172,14 @@ class ChildTray:
         self.thresholds = sorted(config.get("child_tray.warning_thresholds_minutes", [10, 5, 1]), reverse=True)
         self._warned_thresholds: set[int] = set()
         self._seen_blocks: set[str] = set()
+        # Dernier statut connu (voir poll()) : reutilise par le clic sur l'icone pour afficher
+        # une notification a la demande, sans redemander le socket (deja rafraichi au plus
+        # toutes les poll_interval_ms).
+        self._last_status: dict | None = None
 
-        self.tray = QSystemTrayIcon(QIcon.fromTheme("mintguard"))
+        self.tray = QSystemTrayIcon(QIcon(_ICON_PATH))
         self.tray.setToolTip(self._("app.name"))
+        self.tray.activated.connect(self._on_tray_activated)
 
         self.banner = _TopBanner()
         self.grace_overlay = _SessionEndingOverlay(self._)
@@ -203,6 +215,7 @@ class ChildTray:
         if not self.tray.isVisible():
             self.tray.show()
 
+        self._last_status = status
         self._update_tooltip(status.get("minutes_remaining"))
         self._warn_if_threshold_crossed(status.get("minutes_remaining"))
         self._notify_new_blocks(status.get("recent_blocks") or [])
@@ -230,6 +243,30 @@ class ChildTray:
             return
         self._grace_seconds_left = max(0, self._grace_seconds_left - 1)
         self.grace_overlay.update_seconds(self._grace_seconds_left)
+
+    def _on_tray_activated(self, reason: QSystemTrayIcon.ActivationReason) -> None:
+        # Le tooltip au survol n'est pas fiable selon le bureau (voir USER_MANUAL_*.md, meme
+        # constat que pour showMessage) : n'importe quel type de clic sert de repli explicite
+        # pour consulter le temps restant, plutot que de dependre du hover.
+        if reason == QSystemTrayIcon.ActivationReason.Unknown:
+            return
+        self._show_status_popup()
+
+    def _show_status_popup(self) -> None:
+        status = self._last_status
+        minutes_remaining = status.get("minutes_remaining") if status else None
+        if minutes_remaining is None:
+            lines = [self._("child_tray.click_status_time_unknown")]
+        else:
+            lines = [self._("child_tray.click_status_time").format(minutes_remaining)]
+
+        recent_blocks = (status.get("recent_blocks") or []) if status else []
+        if recent_blocks:
+            lines.append(self._("child_tray.click_status_last_block").format(recent_blocks[-1]))
+
+        self.tray.showMessage(
+            self._("app.name"), "\n".join(lines), QSystemTrayIcon.MessageIcon.Information
+        )
 
     def _update_tooltip(self, minutes_remaining: int | None) -> None:
         if minutes_remaining is None:
