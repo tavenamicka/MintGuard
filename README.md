@@ -17,15 +17,20 @@ Captures de l'interface parent, réalisées sur des données fictives.
 
 ## Installer MintGuard (parents)
 
-Aucune connaissance en informatique n'est nécessaire. Il vous faut un ordinateur sous **Linux Mint** (ou Ubuntu) et votre mot de passe habituel.
+Pas besoin d'être à l'aise avec l'informatique : il suffit de suivre ces 5 étapes, dans l'ordre. Comptez 10 minutes.
 
-1. **Télécharger** le fichier `mintguard_0.1.0-1_all.deb` depuis la [page des versions](https://github.com/tavenamicka/MintGuard/releases/latest) (section « Assets »).
-2. **Double-cliquer** sur le fichier téléchargé : le gestionnaire de logiciels s'ouvre. Cliquer sur **Installer** et saisir votre mot de passe.
-3. **Ouvrir MintGuard** depuis le menu des applications (rubrique Système ou Administration).
-4. Suivre l'**assistant de configuration** (prénom de l'enfant, profil par âge, code PIN).
-5. Si un bandeau « La protection n'est pas encore activée » apparaît, cliquer sur **« Activer la protection maintenant »**.
+**Avant de commencer**, vérifiez que :
+- votre ordinateur fonctionne sous **Linux Mint** (ou Ubuntu) et est connecté à Internet ;
+- vous connaissez le **mot de passe** que vous tapez pour ouvrir votre session ;
+- chaque enfant a **son propre compte** sur l'ordinateur (c'est ainsi que MintGuard sait qui l'utilise).
 
-Chaque enfant doit avoir **son propre compte** sur l'ordinateur. En cas de souci, voir le [guide d'installation détaillé](docs/INSTALLATION.md) (dont la section « Si ça ne marche pas ») et le guide utilisateur ci-dessous.
+1. **Téléchargez le fichier d'installation.** Ouvrez la [page des versions](https://github.com/tavenamicka/MintGuard/releases/latest), descendez jusqu'à « Assets » et cliquez sur le fichier `mintguard_0.1.0-1_all.deb`. Il est enregistré dans le dossier **Téléchargements**.
+2. **Lancez l'installation.** Dans le dossier Téléchargements, double-cliquez sur ce fichier. Une fenêtre s'ouvre : cliquez sur **Installer**, tapez votre mot de passe, puis attendez la fin (environ une minute).
+3. **Ouvrez MintGuard.** Cliquez sur le menu de l'ordinateur (en bas à gauche), tapez « MintGuard » et cliquez sur l'icône.
+4. **Répondez aux questions de l'assistant.** Il vous demande le prénom de votre enfant, son âge (pour choisir des réglages adaptés) et un **code PIN** à 4 chiffres. Notez ce code sur papier : il protège vos réglages.
+5. **Activez la protection.** Si le message « La protection n'est pas encore activée » apparaît, cliquez sur **« Activer la protection maintenant »** et tapez votre mot de passe. C'est fait : MintGuard se remettra en route tout seul à chaque démarrage.
+
+Un souci ? Consultez le [guide d'installation](docs/INSTALLATION.md), qui explique quoi faire pas à pas.
 
 ## Guide utilisateur
 

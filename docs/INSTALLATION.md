@@ -2,40 +2,79 @@
 
 ## Installation pour les parents (sans connaissances techniques)
 
-**Ce qu'il vous faut** : un ordinateur sous Linux Mint (ou Ubuntu), connecté à Internet, et le mot de passe de votre session. Chaque enfant doit avoir son propre compte sur l'ordinateur.
+Ce guide vous accompagne pas à pas. Si une étape ne se passe pas comme prévu, allez directement à « Si quelque chose ne marche pas » plus bas : aucune de ces situations n'est grave, et rien ne risque d'être abîmé.
 
-### Étape 1 — Télécharger
+**Avant de commencer**, vérifiez que :
+- votre ordinateur fonctionne sous **Linux Mint** (ou Ubuntu) et est connecté à Internet ;
+- vous connaissez le **mot de passe** que vous tapez pour ouvrir votre session ;
+- chaque enfant a **son propre compte** sur l'ordinateur.
 
-Rendez-vous sur la [page des versions](https://github.com/tavenamicka/MintGuard/releases/latest) et téléchargez le fichier se terminant par `.deb` (par exemple `mintguard_0.1.0-1_all.deb`). Il se retrouve dans le dossier **Téléchargements**.
+### Étape 1 — Télécharger le fichier d'installation
+
+1. Ouvrez la [page des versions de MintGuard](https://github.com/tavenamicka/MintGuard/releases/latest).
+2. Descendez jusqu'à la zone **« Assets »**.
+3. Cliquez sur `mintguard_0.1.0-1_all.deb`. Ce fichier est le « programme d'installation » : l'extension `.deb` est celle des installateurs sous Linux Mint.
+
+Le fichier est enregistré dans le dossier **Téléchargements**.
 
 ### Étape 2 — Installer
 
-Double-cliquez sur le fichier. Le gestionnaire de logiciels s'ouvre : cliquez sur **Installer**, saisissez votre mot de passe, puis patientez jusqu'à la fin (environ une minute, une connexion Internet est nécessaire).
+1. Ouvrez le dossier **Téléchargements** et double-cliquez sur le fichier `mintguard…deb`.
+2. Une fenêtre du gestionnaire de logiciels s'ouvre. Cliquez sur **Installer**.
+3. Tapez votre mot de passe, puis validez. Attendez la fin, environ une minute.
 
-Si le double-clic n'ouvre pas le gestionnaire, faites un clic droit sur le fichier, puis **Ouvrir avec → Installer des paquets (GDebi)** ou, à défaut, utilisez le terminal : ouvrez-le avec `Ctrl + Alt + T` et tapez (en adaptant le nom du fichier) :
+*Le double-clic n'ouvre rien ?* Faites un clic droit sur le fichier, puis **Ouvrir avec** et **Installer des paquets (GDebi)**. Si cela ne marche toujours pas, utilisez l'**autre méthode** décrite plus bas.
+
+### Étape 3 — Ouvrir MintGuard
+
+Cliquez sur le menu de l'ordinateur (en bas à gauche), tapez « MintGuard » puis cliquez sur l'icône.
+
+### Étape 4 — Répondre aux questions de l'assistant
+
+Au premier lancement, MintGuard vous guide. Il vous demande :
+- le **prénom** de votre enfant et le **nom de son compte** sur l'ordinateur ;
+- un **profil** selon son âge (6-12 ans ou 13-18 ans) : vous pourrez tout modifier ensuite ;
+- un **code PIN** (4 chiffres ou plus). Notez-le sur papier et rangez-le : il protège vos réglages, et vos enfants ne doivent pas le connaître.
+
+### Étape 5 — Activer la protection
+
+Si le message **« La protection n'est pas encore activée »** s'affiche, cliquez sur **« Activer la protection maintenant »**, puis tapez votre mot de passe. La protection est alors en marche et redémarre toute seule avec l'ordinateur.
+
+Pour la suite (régler les horaires, bloquer des sites ou des applications), lisez le guide : [Français](USER_MANUAL_FR.md) · [English](USER_MANUAL_EN.md) · [Deutsch](USER_MANUAL_DE.md) · [Español](USER_MANUAL_ES.md).
+
+### Autre méthode : installer avec le terminal
+
+À n'utiliser que si le double-clic ne fonctionne pas. Le **terminal** est une fenêtre où l'on donne des instructions à l'ordinateur en les tapant.
+
+1. Appuyez en même temps sur les touches `Ctrl`, `Alt` et `T` : le terminal s'ouvre.
+2. Copiez-collez cette ligne, puis appuyez sur `Entrée` :
 
 ```bash
 cd ~/Téléchargements
+```
+
+3. Copiez-collez celle-ci, puis `Entrée` :
+
+```bash
 sudo apt install ./mintguard_0.1.0-1_all.deb
 ```
 
-### Étape 3 — Première utilisation
+4. Le terminal demande votre mot de passe. **Rien ne s'affiche pendant que vous le tapez, pas même des points : c'est normal.** Tapez-le quand même, puis appuyez sur `Entrée`.
+5. Si on vous demande de confirmer, tapez `O` (ou `Y`) puis `Entrée`. Attendez le retour du message de saisie (la ligne se termine par `$`) : l'installation est terminée.
 
-1. Ouvrez **MintGuard** depuis le menu des applications.
-2. Suivez l'assistant : prénom de l'enfant, nom de son compte, profil par âge, code PIN (notez-le !).
-3. Si le Tableau de bord affiche **« La protection n'est pas encore activée »**, cliquez sur **« Activer la protection maintenant »** et confirmez avec votre mot de passe. La protection se relance ensuite seule à chaque démarrage de l'ordinateur.
+(`sudo` signifie « exécuter en tant qu'administrateur », et `apt` est l'outil qui installe les programmes sous Linux Mint.)
 
-La suite est expliquée dans le guide utilisateur : [Français](USER_MANUAL_FR.md) · [English](USER_MANUAL_EN.md) · [Deutsch](USER_MANUAL_DE.md) · [Español](USER_MANUAL_ES.md).
+### Si quelque chose ne marche pas
 
-### Si ça ne marche pas
+| Ce que vous voyez | Ce qui se passe | Quoi faire |
+|---|---|---|
+| MintGuard n'apparaît pas dans le menu | Le menu n'est pas encore mis à jour. | Fermez votre session puis rouvrez-la, ou redémarrez l'ordinateur. |
+| Un message parle de « dépendances » ou d'un paquet introuvable | L'ordinateur n'a pas pu télécharger un élément dont MintGuard a besoin. | Vérifiez que vous êtes connecté à Internet, puis recommencez l'installation. |
+| Le message « La protection n'est pas encore activée » revient | La protection ne s'est pas lancée. | Cliquez à nouveau sur « Activer la protection maintenant ». Si cela échoue, ouvrez le terminal et tapez `sudo systemctl start mintguard-daemon`. |
+| Vous avez oublié le code PIN | Cela arrive souvent, et il existe une solution. | Dans la fenêtre du code PIN, cliquez sur « Code PIN oublié ? » (voir le guide utilisateur). |
+| Vous voulez désinstaller | — | Dans le terminal, tapez `sudo apt remove mintguard` (vos réglages sont gardés) ou `sudo apt purge mintguard` (tout est supprimé). |
 
-| Problème | Que faire |
-|---|---|
-| MintGuard n'apparaît pas dans le menu | Fermez puis rouvrez votre session, ou redémarrez l'ordinateur. |
-| Une erreur de dépendances s'affiche à l'installation | Vérifiez la connexion Internet, puis relancez l'installation avec la commande `sudo apt install ./mintguard_0.1.0-1_all.deb` (cf. étape 2). |
-| Le bandeau « protection pas activée » revient | Cliquez à nouveau sur « Activer la protection maintenant ». Si cela échoue : `sudo systemctl start mintguard-daemon` dans un terminal. |
-| Le code PIN est oublié | Utilisez « Code PIN oublié ? » dans la fenêtre de saisie (voir le guide utilisateur). |
-| Vous voulez désinstaller | `sudo apt remove mintguard` (garde vos réglages) ou `sudo apt purge mintguard` (supprime tout). |
+Si rien de cela ne règle votre problème, demandez de l'aide à la personne qui vous a conseillé MintGuard, ou ouvrez une demande sur la [page des problèmes](https://github.com/tavenamicka/MintGuard/issues).
 
 ---
 
