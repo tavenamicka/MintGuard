@@ -69,6 +69,24 @@ def _confirm_forgot_pin(i18n: I18nLoader, parent=None) -> bool:
     return box.clickedButton() is continue_button
 
 
+def confirm_delete_child(i18n: I18nLoader, child_name: str, parent=None) -> bool:
+    """Confirmation avant suppression définitive d'un enfant (voir `Dashboard.open_delete_child`).
+
+    Boutons construits à la main plutôt que `QMessageBox.question(..., StandardButton.Yes/No)`
+    — même raison que `_confirm_forgot_pin` : les boutons standards suivent la locale du
+    SYSTÈME, pas celle choisie dans MintGuard.
+    """
+    box = QMessageBox(parent)
+    box.setIcon(QMessageBox.Icon.Warning)
+    box.setWindowTitle(i18n("dashboard.delete_child_title"))
+    box.setText(i18n("dashboard.delete_child_confirm").format(child_name))
+    delete_button = box.addButton(i18n("dashboard.delete_child_button"), QMessageBox.ButtonRole.YesRole)
+    box.addButton(i18n("common.cancel"), QMessageBox.ButtonRole.NoRole)
+    box.setDefaultButton(delete_button)
+    box.exec()
+    return box.clickedButton() is delete_button
+
+
 class HelpDialog(QDialog):
     """Popup d'aide contextuelle en langage simple — cf. wireframe 'Qu'est-ce que bloquer?'."""
 

@@ -102,6 +102,11 @@ class DashboardScreen(QWidget):
         self.add_child_button.setObjectName("secondary")
         self.add_child_button.clicked.connect(self.open_add_child)
         selector_row.addWidget(self.add_child_button)
+
+        self.delete_child_button = QPushButton(self.i18n("dashboard.delete_child"))
+        self.delete_child_button.setObjectName("secondary")
+        self.delete_child_button.clicked.connect(self.open_delete_child)
+        selector_row.addWidget(self.delete_child_button)
         layout.addLayout(selector_row)
 
         # Carte d'activation : distincte de status_card ci-dessous (qui reflète les règles en
@@ -236,10 +241,12 @@ class DashboardScreen(QWidget):
             self.restriction_value.setText("")
             self.settings_button.setEnabled(False)
             self.reports_button.setEnabled(False)
+            self.delete_child_button.setEnabled(False)
             return
 
         self.settings_button.setEnabled(True)
         self.reports_button.setEnabled(True)
+        self.delete_child_button.setEnabled(True)
         active = self._is_protection_active(child_id)
         self.status_label.setText(
             self.i18n("dashboard.protection_active" if active else "dashboard.protection_inactive")
@@ -399,6 +406,21 @@ class DashboardScreen(QWidget):
         index = self.child_combo.findData(new_child_id)
         if index >= 0:
             self.child_combo.setCurrentIndex(index)
+
+    def open_delete_child(self) -> None:
+        from mintguard.backend.child_setup import delete_child
+        from mintguard.gui.dialogs import PinDialog, confirm_delete_child
+
+        child_id = self.selected_child_id
+        if child_id is None:
+            return
+        if not PinDialog.prompt(self.i18n, self):
+            return
+        child_name = self.child_combo.currentText()
+        if not confirm_delete_child(self.i18n, child_name, self):
+            return
+        delete_child(child_id)
+        self.reload()
 
     def open_settings(self) -> None:
         from mintguard.gui.dialogs import PinDialog

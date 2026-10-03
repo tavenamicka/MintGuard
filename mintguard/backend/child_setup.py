@@ -24,7 +24,7 @@ from datetime import time as dt_time
 
 from mintguard.backend.site_categories import AGE_PRESETS, category_for_domain
 from mintguard.db.database import get_session
-from mintguard.db.models import BlockedSite, Child, TimeRule
+from mintguard.db.models import AppDailyUsage, BlockedApp, BlockedSite, Child, DailyUsage, SiteDailyUsage, TimeRule
 
 
 class DuplicateUsernameError(ValueError):
@@ -67,5 +67,31 @@ def create_child_with_age_preset(name: str, username: str, age: int, age_bracket
 
         session.commit()
         return child.id
+    finally:
+        session.close()
+
+
+def delete_child(child_id: int) -> None:
+    """Supprime un enfant et tout ce qui lui est rattaché.
+
+    `Child.time_rules`/`activity_logs` sont en cascade ORM (`cascade="all, delete-orphan"`,
+    voir models.py) mais `BlockedSite`, `BlockedApp`, `DailyUsage`, `AppDailyUsage` et
+    `SiteDailyUsage` n'ont pas de relation déclarée sur `Child` (leur `child_id` n'est qu'une
+    FK) — sans purge manuelle ici, `session.delete(child)` échouerait avec une
+    `IntegrityError` SQLite (PRAGMA foreign_keys=ON, voir database.py) dès qu'une de ces
+    tables contient une ligne pour cet enfant.
+    """
+    session = get_session()
+    try:
+        session.query(BlockedSite).filter_by(child_id=child_id).delete()
+        session.query(BlockedApp).filter_by(child_id=child_id).delete()
+        session.query(DailyUsage).filter_by(child_id=child_id).delete()
+        session.query(AppDailyUsage).filter_by(child_id=child_id).delete()
+        session.query(SiteDailyUsage).filter_by(child_id=child_id).delete()
+
+        child = session.query(Child).filter_by(id=child_id).first()
+        if child is not None:
+            session.delete(child)
+        session.commit()
     finally:
         session.close()

@@ -314,6 +314,73 @@ def test_open_add_child_does_nothing_when_dialog_cancelled(monkeypatch):
     assert screen.child_combo.count() == 1
 
 
+# "Supprimer" un enfant : PIN-protégé comme Settings/Reports/Ajouter un enfant, avec une
+# confirmation supplémentaire (action irréversible, cf. dialogs.confirm_delete_child).
+
+
+def test_delete_child_button_disabled_when_no_children():
+    screen = DashboardScreen(I18nLoader("fr"))
+    assert screen.delete_child_button.isEnabled() is False
+
+
+def test_delete_child_button_enabled_when_child_selected():
+    make_child()
+    screen = DashboardScreen(I18nLoader("fr"))
+    assert screen.delete_child_button.isEnabled() is True
+
+
+def test_open_delete_child_blocked_when_pin_dialog_cancelled(monkeypatch):
+    make_child("Alice", "alice")
+    from mintguard.gui import dialogs
+
+    monkeypatch.setattr(dialogs.PinDialog, "prompt", staticmethod(lambda i18n, parent=None: False))
+    confirmed = []
+    monkeypatch.setattr(dialogs, "confirm_delete_child", lambda i18n, name, parent=None: confirmed.append(name))
+
+    screen = DashboardScreen(I18nLoader("fr"))
+    screen.open_delete_child()
+
+    assert confirmed == []
+    assert screen.child_combo.count() == 1
+
+
+def test_open_delete_child_blocked_when_confirmation_declined(monkeypatch):
+    make_child("Alice", "alice")
+    from mintguard.gui import dialogs
+
+    monkeypatch.setattr(dialogs.PinDialog, "prompt", staticmethod(lambda i18n, parent=None: True))
+    monkeypatch.setattr(dialogs, "confirm_delete_child", lambda i18n, name, parent=None: False)
+
+    screen = DashboardScreen(I18nLoader("fr"))
+    screen.open_delete_child()
+
+    assert screen.child_combo.count() == 1
+
+
+def test_open_delete_child_removes_child_when_confirmed(monkeypatch):
+    make_child("Alice", "alice")
+    make_child("Bob", "bob")
+    from mintguard.gui import dialogs
+
+    monkeypatch.setattr(dialogs.PinDialog, "prompt", staticmethod(lambda i18n, parent=None: True))
+    monkeypatch.setattr(dialogs, "confirm_delete_child", lambda i18n, name, parent=None: True)
+
+    screen = DashboardScreen(I18nLoader("fr"))
+    index = screen.child_combo.findText("Alice")
+    screen.child_combo.setCurrentIndex(index)
+    deleted_id = screen.selected_child_id
+
+    screen.open_delete_child()
+
+    session = get_session()
+    try:
+        assert session.query(Child).filter_by(id=deleted_id).first() is None
+    finally:
+        session.close()
+    assert screen.child_combo.count() == 1
+    assert screen.child_combo.currentText() == "Bob"
+
+
 # -- Carte d'activation du daemon (point 2 de la revue UX) ------------------
 
 

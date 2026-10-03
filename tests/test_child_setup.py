@@ -16,9 +16,18 @@
 
 import pytest
 
-from mintguard.backend.child_setup import DuplicateUsernameError, create_child_with_age_preset
+from mintguard.backend.child_setup import DuplicateUsernameError, create_child_with_age_preset, delete_child
 from mintguard.db.database import get_session, init_db
-from mintguard.db.models import BlockedSite, Child, TimeRule
+from mintguard.db.models import (
+    ActivityLog,
+    AppDailyUsage,
+    BlockedApp,
+    BlockedSite,
+    Child,
+    DailyUsage,
+    SiteDailyUsage,
+    TimeRule,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -101,3 +110,54 @@ def test_raises_clear_error_on_duplicate_username_instead_of_crashing():
         assert session.query(Child).filter_by(username="mintguard-test-child").count() == 1
     finally:
         session.close()
+
+
+def test_delete_child_removes_child_and_all_related_rows():
+    """`delete_child` doit purger toutes les tables qui referencent `child_id` avant de
+    supprimer l'enfant - sans ca, PRAGMA foreign_keys=ON (voir database.py) leverait une
+    IntegrityError des qu'une de ces tables contient une ligne pour cet enfant."""
+    child_id = create_child_with_age_preset("Alice", "alice", 9, "young")
+
+    session = get_session()
+    try:
+        session.add(BlockedApp(app_name="steam", enabled=True, child_id=child_id))
+        session.add(ActivityLog(child_id=child_id, action="app_blocked", details="steam"))
+        session.add(DailyUsage(child_id=child_id, date="2026-09-21", seconds_used=120))
+        session.add(AppDailyUsage(child_id=child_id, app_name="steam", date="2026-09-21", seconds_used=60))
+        session.add(SiteDailyUsage(child_id=child_id, domain="tiktok.com", date="2026-09-21", seconds_used=30))
+        session.commit()
+    finally:
+        session.close()
+
+    delete_child(child_id)
+
+    session = get_session()
+    try:
+        assert session.query(Child).filter_by(id=child_id).first() is None
+        assert session.query(TimeRule).filter_by(child_id=child_id).count() == 0
+        assert session.query(BlockedSite).filter_by(child_id=child_id).count() == 0
+        assert session.query(BlockedApp).filter_by(child_id=child_id).count() == 0
+        assert session.query(ActivityLog).filter_by(child_id=child_id).count() == 0
+        assert session.query(DailyUsage).filter_by(child_id=child_id).count() == 0
+        assert session.query(AppDailyUsage).filter_by(child_id=child_id).count() == 0
+        assert session.query(SiteDailyUsage).filter_by(child_id=child_id).count() == 0
+    finally:
+        session.close()
+
+
+def test_delete_child_leaves_other_children_untouched():
+    alice_id = create_child_with_age_preset("Alice", "alice", 9, "young")
+    bob_id = create_child_with_age_preset("Bob", "bob", 15, "teen")
+
+    delete_child(alice_id)
+
+    session = get_session()
+    try:
+        assert session.query(Child).filter_by(id=bob_id).first() is not None
+        assert session.query(TimeRule).filter_by(child_id=bob_id).count() == 7
+    finally:
+        session.close()
+
+
+def test_delete_child_is_a_noop_for_unknown_id():
+    delete_child(999)
