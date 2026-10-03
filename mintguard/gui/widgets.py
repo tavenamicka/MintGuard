@@ -279,6 +279,30 @@ class CollapsibleSection(QWidget):
         checkbox.toggled.connect(self.refresh_select_all)
         self.refresh_select_all()
 
+    def add_tile(self, checkbox: QCheckBox, tile: QWidget) -> None:
+        """Comme `add_row()`, mais `checkbox` est déjà logé à l'intérieur de `tile` (ex: une
+        `Tile` contenant la case + sa ligne de quota, voir SitesTab) — seul `tile` va dans le
+        layout, `checkbox` n'y est pas ajouté une seconde fois. Même style de ligne que
+        TimeTab/AppsTab (une `Tile` par entrée), pour que "Gestion des sites" ne détonne pas
+        visuellement des deux autres onglets."""
+        self._content_layout.addWidget(tile)
+        self._children_checkboxes.append(checkbox)
+        checkbox.toggled.connect(self.refresh_select_all)
+        self.refresh_select_all()
+
+    def clear(self) -> None:
+        """Retire tout le contenu ajouté par `add()`/`add_row()`/`add_tile()` — utilisé par
+        SitesTab pour reconstruire la section "Sites personnalisés" à chaque changement
+        (contrairement aux catégories prédéfinies, l'ensemble des domaines personnalisés
+        change au fil de l'utilisation, pas seulement leur état coché/décoché)."""
+        while self._content_layout.count():
+            item = self._content_layout.takeAt(0)
+            widget = item.widget()
+            if widget is not None:
+                widget.setParent(None)
+        self._children_checkboxes.clear()
+        self.select_all_checkbox.setCheckState(Qt.CheckState.Unchecked)
+
     def _on_toggle(self, expanded: bool) -> None:
         self._toggle_button.setArrowType(Qt.ArrowType.DownArrow if expanded else Qt.ArrowType.RightArrow)
         self._content.setVisible(expanded)

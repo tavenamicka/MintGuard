@@ -293,7 +293,30 @@ def test_sites_tab_add_valid_custom_site():
         session.close()
     assert site is not None
     assert site.category == "custom"
-    assert tab.custom_list.count() == 1
+    # Affiché comme les sites prédéfinis (tuile cochée), pas dans une liste à part - trouvé en
+    # usage réel (voir SUIVI.md).
+    assert "example.com" in tab._custom_checkboxes
+    assert tab._custom_checkboxes["example.com"].isChecked() is True
+
+
+def test_sites_tab_custom_site_has_daily_budget_option_like_predefined_sites():
+    """Trouvé en usage réel (voir SUIVI.md) : un site personnalisé n'avait pas de quota
+    quotidien contrairement aux sites prédéfinis - mêmes fonctionnalités requises pour les
+    deux, y compris le quota."""
+    child_id = make_child()
+    tab = SitesTab(I18nLoader("fr"), child_id)
+    tab.add_input.setText("example.com")
+    tab._add_custom_site()
+
+    tab._custom_budget_spins["example.com"].setValue(45)
+    tab._custom_budget_checkboxes["example.com"].setChecked(True)
+
+    session = get_session()
+    try:
+        site = session.query(BlockedSite).filter_by(child_id=child_id, domain="example.com").first()
+    finally:
+        session.close()
+    assert site.daily_budget_minutes == 45
 
 
 def test_sites_tab_rejects_invalid_domain():
@@ -311,19 +334,22 @@ def test_sites_tab_rejects_invalid_domain():
 
 
 def test_sites_tab_remove_custom_site():
+    """La suppression se fait en décochant la tuile (même mécanisme que les sites prédéfinis),
+    plus de bouton "Supprimer" séparé - voir SUIVI.md."""
     child_id = make_child()
     tab = SitesTab(I18nLoader("fr"), child_id)
     tab.add_input.setText("example.com")
     tab._add_custom_site()
-    tab.custom_list.setCurrentRow(0)
-    tab._remove_selected_site()
+
+    tab._custom_checkboxes["example.com"].setChecked(False)
+    QApplication.processEvents()  # laisse le QTimer.singleShot(0, ...) reconstruire la section
 
     session = get_session()
     try:
         assert session.query(BlockedSite).filter_by(child_id=child_id, domain="example.com").first() is None
     finally:
         session.close()
-    assert tab.custom_list.count() == 0
+    assert "example.com" not in tab._custom_checkboxes
 
 
 def test_sites_tab_disabled_without_child_selected():

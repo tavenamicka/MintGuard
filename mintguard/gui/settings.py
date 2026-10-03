@@ -16,7 +16,7 @@
 
 from datetime import time as dt_time
 
-from PyQt6.QtCore import QTime
+from PyQt6.QtCore import QTime, QTimer
 from PyQt6.QtWidgets import (
     QButtonGroup,
     QCheckBox,
@@ -252,13 +252,21 @@ class TimeTab(QWidget):
 
 
 class SitesTab(QWidget):
-    """Onglet 'Sites à Bloquer' — catégories + liste personnalisée, cf. wireframe 'Écran 3'.
+    """Onglet 'Sites à Bloquer' — catégories + sites personnalisés, cf. wireframe 'Écran 3'.
 
     Scopé par enfant (`child_id`) comme AppsTab/TimeTab : `BlockedSite` a une portée par
     enfant, une ligne `child_id=None` restant une règle globale (compat arrière, voir
-    migration dans database.py). Seuls les sites de catégorie (cases à cocher) ont un quota
-    configurable ; la liste personnalisée (texte libre) reste en blocage total — même
-    convention qu'AppsTab pour les applications personnalisées.
+    migration dans database.py).
+
+    Une `Tile` par site (checkbox + ligne de quota), regroupées dans des `CollapsibleSection`
+    — même schéma visuel que TimeTab (une tuile par jour) et AppsTab (une tuile par appli),
+    trouvé en usage réel (voir SUIVI.md) : les lignes plates de l'ancienne version détonnaient
+    visuellement avec les deux autres onglets. Les sites personnalisés vivent dans leur propre
+    section repliable, avec les MÊMES fonctionnalités que les sites prédéfinis (quota
+    quotidien inclus) plutôt qu'une liste à part en blocage total uniquement — seule
+    différence : leur section est reconstruite à chaque changement (`CollapsibleSection.clear()`)
+    puisque l'ensemble des domaines personnalisés varie, contrairement aux catégories fixes de
+    `CATEGORIES`.
     """
 
     def __init__(self, i18n: I18nLoader, child_id: int | None, parent=None):
@@ -269,6 +277,12 @@ class SitesTab(QWidget):
         self._domain_budget_checkboxes: dict[str, QCheckBox] = {}
         self._domain_budget_spins: dict[str, QSpinBox] = {}
         self._sections: list[CollapsibleSection] = []
+        # Équivalents pour les sites personnalisés, repeuplés à chaque `_rebuild_custom_section`
+        # (contrairement aux dicts ci-dessus, fixés une fois à la construction) — même API que
+        # les sites prédéfinis pour que les deux offrent les mêmes fonctionnalités.
+        self._custom_checkboxes: dict[str, QCheckBox] = {}
+        self._custom_budget_checkboxes: dict[str, QCheckBox] = {}
+        self._custom_budget_spins: dict[str, QSpinBox] = {}
 
         layout = _scrollable_layout(self)
 
@@ -293,38 +307,20 @@ class SitesTab(QWidget):
             layout.addWidget(section)
             self._sections.append(section)
             for domain in domains:
-                checkbox = QCheckBox(domain)
-                checkbox.toggled.connect(lambda checked, d=domain, c=category: self._toggle_domain(d, c, checked))
-
-                # Coche + quota, même schéma qu'AppsTab (une limite quotidienne au lieu d'un
-                # blocage total) : désactivé tant que le site n'est pas bloqué.
-                budget_row = QHBoxLayout()
-                budget_row.setSpacing(10)
-                budget_checkbox = QCheckBox(self.i18n("settings.daily_budget_checkbox"))
-                budget_spin = QSpinBox()
-                budget_spin.setRange(1, 1440)
-                budget_spin.setValue(30)
-                budget_spin.setSuffix(self.i18n("settings.minutes_per_day_suffix"))
-                budget_checkbox.setEnabled(False)
-                budget_spin.setEnabled(False)
-                checkbox.toggled.connect(budget_checkbox.setEnabled)
-                budget_checkbox.toggled.connect(budget_spin.setEnabled)
-                budget_checkbox.toggled.connect(lambda checked, d=domain: self._set_site_budget(d, checked))
-                budget_spin.valueChanged.connect(
-                    lambda _value, d=domain: self._set_site_budget(d, self._domain_budget_checkboxes[d].isChecked())
-                )
-                budget_row.addWidget(budget_checkbox)
-                budget_row.addStretch(1)
-                budget_row.addWidget(budget_spin)
-
-                section.add_row(checkbox, wrap_layout(budget_row))
+                checkbox, tile, budget_checkbox, budget_spin = self._build_site_tile(domain, category)
+                section.add_tile(checkbox, tile)
                 self._domain_checkboxes[domain] = checkbox
                 self._domain_budget_checkboxes[domain] = budget_checkbox
                 self._domain_budget_spins[domain] = budget_spin
 
-        layout.addWidget(small_label(self.i18n("settings.custom_sites")))
-        self.custom_list = QListWidget()
-        layout.addWidget(self.custom_list)
+        # Sites personnalisés : même présentation (Tile + quota) que les catégories
+        # prédéfinies ci-dessus, dans leur propre section repliable — reconstruite à chaque
+        # `_load()` puisque, contrairement à `CATEGORIES`, l'ensemble des domaines n'est pas
+        # fixe à la construction (voir `_rebuild_custom_section`).
+        self._custom_section = CollapsibleSection(
+            self.i18n("settings.custom_sites"), self.i18n("settings.select_all")
+        )
+        layout.addWidget(self._custom_section)
 
         add_row = QHBoxLayout()
         self.add_input = QLineEdit()
@@ -335,11 +331,6 @@ class SitesTab(QWidget):
         add_row.addWidget(add_button)
         layout.addLayout(add_row)
 
-        remove_button = QPushButton(self.i18n("settings.remove_site_button"))
-        remove_button.setObjectName("secondary")
-        remove_button.clicked.connect(self._remove_selected_site)
-        layout.addWidget(remove_button)
-
         self.error_label = small_label("")
         self.error_label.setObjectName("danger")
         self.error_label.hide()
@@ -347,6 +338,44 @@ class SitesTab(QWidget):
 
         layout.addStretch(1)
         self._load()
+
+    def _build_site_tile(
+        self, domain: str, category: str
+    ) -> tuple[QCheckBox, QWidget, QCheckBox, QSpinBox]:
+        """Construit une `Tile` (case à cocher + ligne de quota) pour un domaine — factorisé
+        entre les catégories prédéfinies (construites une fois, à l'initialisation) et les
+        sites personnalisés (reconstruits à chaque `_load()`, voir `_rebuild_custom_section`),
+        pour que les deux offrent exactement les mêmes fonctionnalités."""
+        tile = Tile()
+        checkbox = QCheckBox(domain)
+        checkbox.toggled.connect(lambda checked, d=domain, c=category: self._toggle_domain(d, c, checked))
+        tile.add(checkbox)
+
+        # Coche + quota, même schéma qu'AppsTab (une limite quotidienne au lieu d'un blocage
+        # total) : désactivé tant que le site n'est pas bloqué.
+        budget_row = QHBoxLayout()
+        budget_row.setSpacing(10)
+        budget_checkbox = QCheckBox(self.i18n("settings.daily_budget_checkbox"))
+        budget_spin = QSpinBox()
+        budget_spin.setRange(1, 1440)
+        budget_spin.setValue(30)
+        budget_spin.setSuffix(self.i18n("settings.minutes_per_day_suffix"))
+        budget_checkbox.setEnabled(False)
+        budget_spin.setEnabled(False)
+        checkbox.toggled.connect(budget_checkbox.setEnabled)
+        budget_checkbox.toggled.connect(budget_spin.setEnabled)
+        budget_checkbox.toggled.connect(
+            lambda checked, d=domain, spin=budget_spin: self._set_site_budget(d, spin.value() if checked else None)
+        )
+        budget_spin.valueChanged.connect(
+            lambda value, d=domain, bc=budget_checkbox: self._set_site_budget(d, value if bc.isChecked() else None)
+        )
+        budget_row.addWidget(budget_checkbox)
+        budget_row.addStretch(1)
+        budget_row.addWidget(budget_spin)
+        tile.add(wrap_layout(budget_row))
+
+        return checkbox, tile, budget_checkbox, budget_spin
 
     def _load(self) -> None:
         if self.child_id is None:
@@ -383,9 +412,27 @@ class SitesTab(QWidget):
             section.refresh_select_all()
 
         predefined_domains = {d for domains in CATEGORIES.values() for d in domains}
-        self.custom_list.clear()
-        for domain in sorted(set(blocked_by_domain) - predefined_domains):
-            self.custom_list.addItem(domain)
+        custom_domains = {d: b for d, b in blocked_by_domain.items() if d not in predefined_domains}
+        self._rebuild_custom_section(custom_domains)
+
+    def _rebuild_custom_section(self, custom_domains: dict[str, int | None]) -> None:
+        self._custom_section.clear()
+        self._custom_checkboxes = {}
+        self._custom_budget_checkboxes = {}
+        self._custom_budget_spins = {}
+        for domain in sorted(custom_domains):
+            checkbox, tile, budget_checkbox, budget_spin = self._build_site_tile(domain, "custom")
+            checkbox.setChecked(True)
+            daily_budget_minutes = custom_domains[domain]
+            budget_checkbox.setEnabled(True)
+            budget_checkbox.setChecked(daily_budget_minutes is not None)
+            budget_spin.setEnabled(daily_budget_minutes is not None)
+            if daily_budget_minutes is not None:
+                budget_spin.setValue(daily_budget_minutes)
+            self._custom_section.add_tile(checkbox, tile)
+            self._custom_checkboxes[domain] = checkbox
+            self._custom_budget_checkboxes[domain] = budget_checkbox
+            self._custom_budget_spins[domain] = budget_spin
 
     def _toggle_domain(self, domain: str, category: str, checked: bool) -> None:
         if self.child_id is None:
@@ -401,11 +448,18 @@ class SitesTab(QWidget):
         finally:
             session.close()
 
-    def _set_site_budget(self, domain: str, quota_enabled: bool) -> None:
-        """Bascule ou met à jour le quota (minutes/jour) d'un site déjà bloqué."""
+        # Un site personnalisé décoché disparaît de la section (contrairement à un site
+        # prédéfini, dont la tuile reste affichée décochée) : il n'existe pas de catalogue fixe
+        # d'où le reconstruire, sa seule trace est la ligne BD qu'on vient de retirer. Différé
+        # (QTimer) plutôt qu'un appel direct à `_load()` : reconstruire la section détruirait la
+        # case à cocher qui émet encore ce signal `toggled`, pendant qu'elle l'émet.
+        if category == "custom" and not checked:
+            QTimer.singleShot(0, self._load)
+
+    def _set_site_budget(self, domain: str, minutes: int | None) -> None:
+        """Met à jour le quota (minutes/jour, `None` = blocage total) d'un site déjà bloqué."""
         if self.child_id is None:
             return
-        minutes = self._domain_budget_spins[domain].value() if quota_enabled else None
         session = get_session()
         try:
             existing = session.query(BlockedSite).filter_by(child_id=self.child_id, domain=domain).first()
@@ -434,22 +488,6 @@ class SitesTab(QWidget):
             session.close()
 
         self.add_input.clear()
-        self._load()
-
-    def _remove_selected_site(self) -> None:
-        if self.child_id is None:
-            return
-        item = self.custom_list.currentItem()
-        if item is None:
-            return
-        session = get_session()
-        try:
-            existing = session.query(BlockedSite).filter_by(child_id=self.child_id, domain=item.text()).first()
-            if existing is not None:
-                session.delete(existing)
-                session.commit()
-        finally:
-            session.close()
         self._load()
 
 
