@@ -1,5 +1,7 @@
 # Installation — MintGuard
 
+Français · [English](INSTALLATION.en.md) · [Deutsch](INSTALLATION.de.md) · [Español](INSTALLATION.es.md)
+
 ## Installation pour les parents (sans connaissances techniques)
 
 Ce guide vous accompagne pas à pas. Si une étape ne se passe pas comme prévu, allez directement à « Si quelque chose ne marche pas » plus bas : aucune de ces situations n'est grave, et rien ne risque d'être abîmé.
@@ -71,7 +73,7 @@ sudo apt install ./mintguard_0.1.0-1_all.deb
 | MintGuard n'apparaît pas dans le menu | Le menu n'est pas encore mis à jour. | Fermez votre session puis rouvrez-la, ou redémarrez l'ordinateur. |
 | Un message parle de « dépendances » ou d'un paquet introuvable | L'ordinateur n'a pas pu télécharger un élément dont MintGuard a besoin. | Vérifiez que vous êtes connecté à Internet, puis recommencez l'installation. |
 | Le message « La protection n'est pas encore activée » revient | La protection ne s'est pas lancée. | Cliquez à nouveau sur « Activer la protection maintenant ». Si cela échoue, ouvrez le terminal et tapez `sudo systemctl start mintguard-daemon`. |
-| Vous avez oublié le code PIN | Cela arrive souvent, et il existe une solution. | Dans la fenêtre du code PIN, cliquez sur « Code PIN oublié ? » (voir le guide utilisateur). |
+| Vous avez oublié le code PIN | Cela arrive souvent, et il existe une solution. | Dans la fenêtre du code PIN, cliquez sur « Code oublié ? » (voir le guide utilisateur). |
 | Vous voulez désinstaller | — | Dans le terminal, tapez `sudo apt remove mintguard` (vos réglages sont gardés) ou `sudo apt purge mintguard` (tout est supprimé). |
 
 Si rien de cela ne règle votre problème, demandez de l'aide à la personne qui vous a conseillé MintGuard, ou ouvrez une demande sur la [page des problèmes](https://github.com/tavenamicka/MintGuard/issues).

@@ -1,5 +1,7 @@
 # MintGuard
 
+Français · [English](README.en.md) · [Deutsch](README.de.md) · [Español](README.es.md)
+
 [![CI](https://github.com/tavenamicka/MintGuard/actions/workflows/ci.yml/badge.svg)](https://github.com/tavenamicka/MintGuard/actions/workflows/ci.yml)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 

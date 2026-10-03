@@ -2,7 +2,7 @@
 
 *Para que sus hijos exploren Internet con seguridad.*
 
-Esta guía está dirigida a los padres. Para la instalación técnica, consulte [INSTALLATION.md](INSTALLATION.md).
+Esta guía está dirigida a los padres. Para la instalación técnica, consulte [INSTALLATION.md](INSTALLATION.es.md).
 
 ---
 
@@ -88,7 +88,7 @@ Las aplicaciones instaladas en el ordenador se detectan automáticamente y se of
 ## 5. Seguridad y privacidad
 
 - **El código PIN** protege el acceso a Ajustes e Informes. Se almacena de forma segura (nunca en texto plano).
-- **¿Olvidó su PIN?** Haga clic en «¿Olvidó su PIN?» en la ventana de introducción. MintGuard muestra primero un mensaje explicando lo que va a pasar, antes de que se abra una ventana del sistema — para que esa ventana no sea una sorpresa. Deberá confirmar con **la contraseña de su propia cuenta** (la que usa para iniciar sesión en este ordenador) mediante esa ventana del sistema — la misma que aparece, por ejemplo, al instalar una actualización. Esta contraseña nunca es gestionada ni almacenada por MintGuard. Una vez confirmada, podrá definir un nuevo PIN de inmediato.
+- **¿Olvidaste tu código?** Haga clic en «¿Olvidaste tu código?» en la ventana de introducción. MintGuard muestra primero un mensaje explicando lo que va a pasar, antes de que se abra una ventana del sistema — para que esa ventana no sea una sorpresa. Deberá confirmar con **la contraseña de su propia cuenta** (la que usa para iniciar sesión en este ordenador) mediante esa ventana del sistema — la misma que aparece, por ejemplo, al instalar una actualización. Esta contraseña nunca es gestionada ni almacenada por MintGuard. Una vez confirmada, podrá definir un nuevo PIN de inmediato.
 - Los registros de actividad y la base de datos de MintGuard solo son legibles por una cuenta de administrador — su hijo no tiene acceso a ellos, aunque sepa dónde buscar.
 
 ---
@@ -120,4 +120,4 @@ Estos límites se documentan a propósito en lugar de ocultarse: es mejor saber 
 ## 8. ¿Necesita ayuda?
 
 - Cada pantalla tiene botones **"?"** con una explicación sencilla en lenguaje corriente.
-- Para un problema técnico (instalación, el daemon no arranca), consulte [INSTALLATION.md](INSTALLATION.md) o contacte con quien le instaló MintGuard.
+- Para un problema técnico (instalación, el daemon no arranca), consulte [INSTALLATION.md](INSTALLATION.es.md) o contacte con quien le instaló MintGuard.

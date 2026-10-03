@@ -88,7 +88,7 @@ Les applications installées sur l'ordinateur sont détectées automatiquement e
 ## 5. Sécurité et confidentialité
 
 - **Le code PIN** protège l'ouverture des Réglages et des Rapports. Il est stocké de façon sécurisée (jamais en clair).
-- **Code PIN oublié ?** Cliquez sur « Code PIN oublié ? » dans la fenêtre de saisie. MintGuard affiche d'abord un message expliquant ce qui va se passer, avant qu'une fenêtre du système ne s'ouvre — pour que cette dernière ne soit pas une surprise. Vous devrez confirmer avec **le mot de passe de votre propre compte** (celui que vous utilisez pour ouvrir une session sur cet ordinateur) via cette fenêtre système — la même que celle qui apparaît par exemple pour installer une mise à jour. Ce mot de passe n'est jamais géré ni stocké par MintGuard lui-même. Une fois confirmé, vous pourrez définir un nouveau code PIN immédiatement.
+- **Code oublié ?** Cliquez sur « Code oublié ? » dans la fenêtre de saisie. MintGuard affiche d'abord un message expliquant ce qui va se passer, avant qu'une fenêtre du système ne s'ouvre — pour que cette dernière ne soit pas une surprise. Vous devrez confirmer avec **le mot de passe de votre propre compte** (celui que vous utilisez pour ouvrir une session sur cet ordinateur) via cette fenêtre système — la même que celle qui apparaît par exemple pour installer une mise à jour. Ce mot de passe n'est jamais géré ni stocké par MintGuard lui-même. Une fois confirmé, vous pourrez définir un nouveau code PIN immédiatement.
 - Les journaux d'activité et la base de données de MintGuard ne sont lisibles que par un compte administrateur — votre enfant n'y a pas accès, même s'il sait où chercher.
 
 ---

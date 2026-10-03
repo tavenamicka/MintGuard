@@ -2,7 +2,7 @@
 
 *Damit Ihre Kinder das Internet sicher entdecken können.*
 
-Dieses Handbuch richtet sich an Eltern. Für die technische Installation siehe [INSTALLATION.md](INSTALLATION.md).
+Dieses Handbuch richtet sich an Eltern. Für die technische Installation siehe [INSTALLATION.md](INSTALLATION.de.md).
 
 ---
 
@@ -88,7 +88,7 @@ Auf dem Computer installierte Anwendungen werden automatisch erkannt und nach Ka
 ## 5. Sicherheit und Datenschutz
 
 - **Der PIN-Code** schützt den Zugriff auf Einstellungen und Berichte. Er wird sicher gespeichert (nie im Klartext).
-- **PIN vergessen?** Klicken Sie im Eingabefenster auf „PIN vergessen?". MintGuard zeigt zunächst eine Meldung, die erklärt, was als Nächstes passiert, bevor sich ein Systemfenster öffnet — damit dieses Fenster keine Überraschung ist. Sie müssen sich dann über dieses Systemfenster mit **dem Passwort Ihres eigenen Kontos** bestätigen (das, mit dem Sie sich an diesem Computer anmelden) — wie es zum Beispiel beim Installieren eines Updates erscheint. Dieses Passwort wird niemals von MintGuard selbst verwaltet oder gespeichert. Nach der Bestätigung können Sie sofort einen neuen PIN festlegen.
+- **Code vergessen?** Klicken Sie im Eingabefenster auf „Code vergessen?". MintGuard zeigt zunächst eine Meldung, die erklärt, was als Nächstes passiert, bevor sich ein Systemfenster öffnet — damit dieses Fenster keine Überraschung ist. Sie müssen sich dann über dieses Systemfenster mit **dem Passwort Ihres eigenen Kontos** bestätigen (das, mit dem Sie sich an diesem Computer anmelden) — wie es zum Beispiel beim Installieren eines Updates erscheint. Dieses Passwort wird niemals von MintGuard selbst verwaltet oder gespeichert. Nach der Bestätigung können Sie sofort einen neuen PIN festlegen.
 - Die Aktivitätsprotokolle und die Datenbank von MintGuard sind nur für ein Administratorkonto lesbar — Ihr Kind hat keinen Zugriff darauf, selbst wenn es weiß, wo es suchen muss.
 
 ---
@@ -120,4 +120,4 @@ Diese Einschränkungen werden absichtlich dokumentiert statt verschwiegen: Es is
 ## 8. Brauchen Sie Hilfe?
 
 - Jeder Bildschirm hat **„?"**-Schaltflächen mit einer einfachen Erklärung in Alltagssprache.
-- Bei einem technischen Problem (Installation, Daemon startet nicht) siehe [INSTALLATION.md](INSTALLATION.md) oder wenden Sie sich an die Person, die MintGuard für Sie installiert hat.
+- Bei einem technischen Problem (Installation, Daemon startet nicht) siehe [INSTALLATION.md](INSTALLATION.de.md) oder wenden Sie sich an die Person, die MintGuard für Sie installiert hat.

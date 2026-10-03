@@ -2,7 +2,7 @@
 
 *So your children can explore the Internet safely.*
 
-This guide is for parents. For technical installation, see [INSTALLATION.md](INSTALLATION.md).
+This guide is for parents. For technical installation, see [INSTALLATION.md](INSTALLATION.en.md).
 
 ---
 
@@ -88,7 +88,7 @@ Applications installed on the computer are detected automatically and offered as
 ## 5. Security and privacy
 
 - **The PIN code** protects access to Settings and Reports. It is stored securely (never in plain text).
-- **Forgot your PIN?** Click "Forgot your PIN?" in the entry window. MintGuard first shows a message explaining what's about to happen, before a system window opens — so that window isn't a surprise. You'll need to confirm with **your own account's password** (the one you use to log into this computer) through that system window — the same kind that appears, for example, to install an update. This password is never handled or stored by MintGuard itself. Once confirmed, you can set a new PIN right away.
+- **Forgot your code?** Click "Forgot your code?" in the entry window. MintGuard first shows a message explaining what's about to happen, before a system window opens — so that window isn't a surprise. You'll need to confirm with **your own account's password** (the one you use to log into this computer) through that system window — the same kind that appears, for example, to install an update. This password is never handled or stored by MintGuard itself. Once confirmed, you can set a new PIN right away.
 - MintGuard's activity logs and database are only readable by an administrator account — your child cannot access them, even if they know where to look.
 
 ---
@@ -120,4 +120,4 @@ These limitations are documented on purpose rather than hidden: it's better to k
 ## 8. Need help?
 
 - Every screen has **"?"** buttons with a plain-language explanation.
-- For a technical issue (installation, daemon not starting), see [INSTALLATION.md](INSTALLATION.md) or contact whoever installed MintGuard for you.
+- For a technical issue (installation, daemon not starting), see [INSTALLATION.md](INSTALLATION.en.md) or contact whoever installed MintGuard for you.
