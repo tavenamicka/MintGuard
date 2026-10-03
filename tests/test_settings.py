@@ -294,13 +294,13 @@ def test_sites_tab_add_valid_custom_site():
     assert site is not None
     assert site.category == "custom"
     # Affiché comme les sites prédéfinis (tuile cochée), pas dans une liste à part - trouvé en
-    # usage réel (voir SUIVI.md).
+    # usage réel.
     assert "example.com" in tab._custom_checkboxes
     assert tab._custom_checkboxes["example.com"].isChecked() is True
 
 
 def test_sites_tab_custom_site_has_daily_budget_option_like_predefined_sites():
-    """Trouvé en usage réel (voir SUIVI.md) : un site personnalisé n'avait pas de quota
+    """Trouvé en usage réel : un site personnalisé n'avait pas de quota
     quotidien contrairement aux sites prédéfinis - mêmes fonctionnalités requises pour les
     deux, y compris le quota."""
     child_id = make_child()
@@ -335,7 +335,7 @@ def test_sites_tab_rejects_invalid_domain():
 
 def test_sites_tab_remove_custom_site():
     """La suppression se fait en décochant la tuile (même mécanisme que les sites prédéfinis),
-    plus de bouton "Supprimer" séparé - voir SUIVI.md."""
+    plus de bouton "Supprimer" séparé."""
     child_id = make_child()
     tab = SitesTab(I18nLoader("fr"), child_id)
     tab.add_input.setText("example.com")

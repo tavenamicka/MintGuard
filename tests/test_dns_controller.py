@@ -84,7 +84,7 @@ def test_blocklist_uses_wildcard_format_covering_subdomains(controller):
 
 
 def test_blocklist_blocks_both_ipv4_and_ipv6_records(controller):
-    """Trouvé en usage réel (voir SUIVI.md) : youtube.com restait accessible malgré le
+    """Trouvé en usage réel : youtube.com restait accessible malgré le
     blocage - seul l'enregistrement A (IPv4) était intercepté (`address=/domaine/0.0.0.0`),
     le navigateur préférant l'enregistrement AAAA (IPv6) toujours résolu normalement (Happy
     Eyeballs). dnsmasq n'intercepte que la famille d'adresse correspondant à l'adresse

@@ -260,7 +260,7 @@ class SitesTab(QWidget):
 
     Une `Tile` par site (checkbox + ligne de quota), regroupées dans des `CollapsibleSection`
     — même schéma visuel que TimeTab (une tuile par jour) et AppsTab (une tuile par appli),
-    trouvé en usage réel (voir SUIVI.md) : les lignes plates de l'ancienne version détonnaient
+    trouvé en usage réel : les lignes plates de l'ancienne version détonnaient
     visuellement avec les deux autres onglets. Les sites personnalisés vivent dans leur propre
     section repliable, avec les MÊMES fonctionnalités que les sites prédéfinis (quota
     quotidien inclus) plutôt qu'une liste à part en blocage total uniquement — seule

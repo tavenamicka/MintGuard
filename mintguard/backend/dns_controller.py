@@ -132,7 +132,7 @@ class DNSController:
         """Une ligne `address=` par domaine ne suffit pas : dnsmasq n'intercepte que la
         famille d'adresse (IPv4/IPv6) correspondant à l'adresse donnée (voir `man dnsmasq`,
         « Pour donner à la fois une adresse IPv4 et une adresse IPv6 pour un domaine, utiliser
-        plusieurs options -A »). Constaté en usage réel (voir SUIVI.md) : youtube.com restait
+        plusieurs options -A »). Constaté en usage réel : youtube.com restait
         accessible malgré le blocage — seul l'enregistrement A (IPv4) était intercepté, le
         navigateur préférant l'enregistrement AAAA (IPv6) toujours résolu normalement (Happy
         Eyeballs). Un domaine sans IPv6 (ex: tiktok.com au moment de l'écriture) ignore

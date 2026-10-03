@@ -85,7 +85,7 @@ case "$1" in
 
     # log-queries doit etre actif quel que soit l'etat du conffile a ce point (dpkg peut
     # l'avoir remplace par le nouveau gabarit, ou avoir preserve/restaure une version
-    # anterieure sans cette ligne - comportement conffile ambigu constate, voir SUIVI.md).
+    # anterieure sans cette ligne - comportement conffile ambigu constate).
     # Patch idempotent plutot que de dependre de la semantique conffile de dpkg pour ce
     # changement comportemental precis (necessaire a SiteUsageTracker, voir
     # mintguard/backend/site_usage_tracker.py).

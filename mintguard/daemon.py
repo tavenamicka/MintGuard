@@ -99,7 +99,7 @@ def main() -> None:
 
     # Écrit la blocklist ET redémarre dnsmasq inconditionnellement (pas `apply()`, qui ne
     # redémarre que si le contenu diffère de celui déjà sur disque) : constaté en usage réel
-    # (voir SUIVI.md) qu'un dnsmasq déjà démarré (avant ce cycle, ex: resté actif d'un
+    # qu'un dnsmasq déjà démarré (avant ce cycle, ex: resté actif d'un
     # précédent lancement du daemon) tournait avec une configuration chargée en mémoire
     # potentiellement plus ancienne que ce qui vient d'être (ré)écrit sur disque - le premier
     # `apply()` du cycle ne voyait ensuite aucun changement (le fichier venait d'être écrit
