@@ -7,32 +7,7 @@ Français · [English](README.en.md) · [Deutsch](README.de.md) · [Español](RE
 
 Application de contrôle parental pour Linux Mint — simple et accessible pour des parents non-techniques, avec limitation du temps d'écran, blocage de sites et d'applications, multilingue (FR/EN/DE/ES).
 
-> Statut : Phase 3 (Sécurité & Intégration) terminée, Phase 4 (Testing & Release) en cours — bascule DNS, iptables, audit de sécurité et audit d'accessibilité validés. Voir [PROJECT_BRIEF.md](PROJECT_BRIEF.md) pour les spécifications complètes et [CLAUDE_CODE_BRIEFING.md](CLAUDE_CODE_BRIEFING.md) pour le plan d'implémentation par phases.
-
-## Aperçu
-
-Captures de l'interface parent, réalisées sur des données fictives.
-
-| Tableau de bord | Réglages : limite de temps | Rapports |
-|---|---|---|
-| ![Tableau de bord : protection active, plage horaire et temps utilisé aujourd'hui](docs/screenshots/tableau-de-bord.png) | ![Réglages : plage horaire et limite quotidienne par jour](docs/screenshots/reglages-temps.png) | ![Rapports des 7 derniers jours](docs/screenshots/rapports.png) |
-
-## Installer MintGuard (parents)
-
-Pas besoin d'être à l'aise avec l'informatique : il suffit de suivre ces 5 étapes, dans l'ordre. Comptez 10 minutes.
-
-**Avant de commencer**, vérifiez que :
-- votre ordinateur fonctionne sous **Linux Mint** (ou Ubuntu) et est connecté à Internet ;
-- vous connaissez le **mot de passe** que vous tapez pour ouvrir votre session ;
-- chaque enfant a **son propre compte** sur l'ordinateur (c'est ainsi que MintGuard sait qui l'utilise).
-
-1. **Téléchargez le fichier d'installation.** Ouvrez la [page des versions](https://github.com/tavenamicka/MintGuard/releases/latest), descendez jusqu'à « Assets » et cliquez sur le fichier `mintguard_0.1.0-1_all.deb`. Il est enregistré dans le dossier **Téléchargements**.
-2. **Lancez l'installation.** Dans le dossier Téléchargements, double-cliquez sur ce fichier. Une fenêtre s'ouvre : cliquez sur **Installer**, tapez votre mot de passe, puis attendez la fin (environ une minute).
-3. **Ouvrez MintGuard.** Cliquez sur le menu de l'ordinateur (en bas à gauche), tapez « MintGuard » et cliquez sur l'icône.
-4. **Répondez aux questions de l'assistant.** Il vous demande le prénom de votre enfant, son âge (pour choisir des réglages adaptés) et un **code PIN** à 4 chiffres. Notez ce code sur papier : il protège vos réglages.
-5. **Activez la protection.** Si le message « La protection n'est pas encore activée » apparaît, cliquez sur **« Activer la protection maintenant »** et tapez votre mot de passe. C'est fait : MintGuard se remettra en route tout seul à chaque démarrage.
-
-Un souci ? Consultez le [guide d'installation](docs/INSTALLATION.md), qui explique quoi faire pas à pas.
+> Version **0.1.1**. Statut : Phase 3 (Sécurité & Intégration) terminée, Phase 4 (Testing & Release) en cours — bascule DNS, iptables, audit de sécurité, audit d'accessibilité et audit du code (2026-10-11) faits. Voir [PROJECT_BRIEF.md](PROJECT_BRIEF.md) pour les spécifications complètes et [CLAUDE_CODE_BRIEFING.md](CLAUDE_CODE_BRIEFING.md) pour le plan d'implémentation par phases.
 
 ## Guide utilisateur
 
@@ -57,6 +32,19 @@ Base SQLite partagée ◄──────┐   Socket Unix /run/mintguard/stat
 ```
 
 La GUI et le daemon ne communiquent pas directement : la GUI écrit les règles dans la base SQLite, que le daemon relit à chaque cycle. Le socket `status.sock` est le seul canal exposé au compte enfant ; il ne fournit que le statut de l'appelant (temps restant, période de grâce).
+
+Le blocage des sites ne fonctionne que si le résolveur DNS du système est dnsmasq (`/etc/resolv.conf` → `127.0.0.1`). Cette bascule n'est jamais automatique à l'installation : elle se fait depuis le Tableau de bord (bouton « Activer le blocage des sites », qui lance `/usr/lib/mintguard/switch-dns.sh` via pkexec), et le Tableau de bord la signale si elle est défaite.
+
+## Installation (paquet .deb)
+
+Pour installer MintGuard sur un poste, sans cloner le dépôt :
+
+```bash
+bash scripts/build-deb.sh                          # produit dist/mintguard_<version>-1_all.deb
+sudo apt install ./dist/mintguard_0.1.1-1_all.deb   # apt installe aussi les dépendances système
+```
+
+Ouvrez ensuite MintGuard depuis le menu des applications : le Tableau de bord propose « Activer la protection » (démarre le daemon), puis « Activer le blocage des sites » (bascule DNS). Pour réinstaller le même numéro de version, ajoutez `--reinstall`. Désinstallation : `sudo apt remove mintguard` (le DNS d'origine est rétabli), ou `purge` pour supprimer aussi la base et les journaux. Détails : [docs/INSTALLATION.md](docs/INSTALLATION.md).
 
 ## Installation (développement)
 

@@ -113,6 +113,8 @@ sudo systemctl start mintguard-daemon
 
 Pour un parent utilisateur final, cette commande n'est plus nécessaire : au premier lancement, le Tableau de bord affiche un bouton **« Activer la protection maintenant »** tant que le daemon ne répond pas, qui déclenche ce même démarrage via une fenêtre de confirmation système (polkit). La commande ci-dessus reste utile pour un usage scripté/technique.
 
+Démarrer le daemon ne suffit pas à bloquer les sites : il faut aussi que le système utilise dnsmasq comme résolveur DNS. Une fois le daemon actif, le Tableau de bord affiche une carte **« Le blocage des sites ne fonctionne pas »** avec un bouton **« Activer le blocage des sites »**, qui lance `/usr/lib/mintguard/switch-dns.sh` via polkit. Équivalent en terminal : `sudo /usr/lib/mintguard/switch-dns.sh`. Pour revenir en arrière : `sudo /usr/lib/mintguard/switch-dns-rollback.sh` (fait automatiquement à la désinstallation du paquet).
+
 Désinstallation : `sudo apt remove mintguard` (garde BD/logs/config) ou `sudo apt purge mintguard` (supprime tout — équivalent de `uninstall.sh --purge`).
 
 ## Installation cible pour le développement (Linux Mint)
