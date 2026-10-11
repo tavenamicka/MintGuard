@@ -185,9 +185,19 @@ class TimeTab(QWidget):
             end_edit.setDisplayFormat("HH:mm")
             row.addStretch(1)
             row.addWidget(mode_combo)
-            row.addWidget(start_edit)
-            row.addWidget(end_edit)
             tile.add(wrap_layout(row))
+
+            # Heures sur leur propre ligne (libellé + sélecteur + 2 heures débordaient de la
+            # fenêtre), affichée seulement en mode "Horaires" - voir `_sync_day_controls`.
+            hours_row = QHBoxLayout()
+            hours_row.setSpacing(10)
+            hours_row.addWidget(small_label(self.i18n("settings.start_label")))
+            hours_row.addWidget(start_edit)
+            hours_row.addWidget(small_label(self.i18n("settings.end_label")))
+            hours_row.addWidget(end_edit)
+            hours_row.addStretch(1)
+            hours_widget = wrap_layout(hours_row)
+            tile.add(hours_widget)
 
             # Quota cumulé (minutes) à l'intérieur de la plage horaire, en plus des bornes
             # start/end ci-dessus — cf. TimeRule.daily_budget_minutes. Décoché = comportement
@@ -203,24 +213,31 @@ class TimeTab(QWidget):
             budget_row.addWidget(budget_checkbox)
             budget_row.addStretch(1)
             budget_row.addWidget(budget_spin)
-            tile.add(wrap_layout(budget_row))
+            budget_widget = wrap_layout(budget_row)
+            tile.add(budget_widget)
 
             layout.addWidget(tile)
             widgets = (mode_combo, start_edit, end_edit, budget_checkbox, budget_spin)
             self._day_widgets.append(widgets)
-            mode_combo.currentIndexChanged.connect(lambda _index, w=widgets: self._sync_day_controls(w))
-            budget_checkbox.toggled.connect(lambda _checked, w=widgets: self._sync_day_controls(w))
-            self._sync_day_controls(widgets)
+            rows = (hours_widget, budget_widget)
+            mode_combo.currentIndexChanged.connect(lambda _index, w=widgets, r=rows: self._sync_day_controls(w, r))
+            budget_checkbox.toggled.connect(lambda _checked, w=widgets, r=rows: self._sync_day_controls(w, r))
+            self._sync_day_controls(widgets, rows)
 
         layout.addStretch(1)
 
         self._load()
 
     @staticmethod
-    def _sync_day_controls(widgets: tuple[QComboBox, QTimeEdit, QTimeEdit, QCheckBox, QSpinBox]) -> None:
-        """Horaires et quota ne concernent que le mode "Horaires" : grisés sinon."""
+    def _sync_day_controls(
+        widgets: tuple[QComboBox, QTimeEdit, QTimeEdit, QCheckBox, QSpinBox], rows: tuple[QWidget, QWidget]
+    ) -> None:
+        """Horaires et quota ne concernent que le mode "Horaires" : masqués sinon (le thème ne
+        distingue pas visuellement un champ désactivé - ils paraissaient modifiables)."""
         mode_combo, start_edit, end_edit, budget_checkbox, budget_spin = widgets
         hours = mode_combo.currentIndex() == DayMode.HOURS
+        for row in rows:
+            row.setVisible(hours)
         start_edit.setEnabled(hours)
         end_edit.setEnabled(hours)
         budget_checkbox.setEnabled(hours)
