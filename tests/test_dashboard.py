@@ -35,6 +35,14 @@ def db(tmp_path):
     init_db(tmp_path / "test.db")
 
 
+@pytest.fixture(autouse=True)
+def resolver_ok(monkeypatch):
+    """Isole les tests du vrai /etc/resolv.conf de la machine qui les exécute."""
+    from mintguard.gui import dashboard
+
+    monkeypatch.setattr(dashboard, "system_resolver_uses_mintguard", lambda: True)
+
+
 @pytest.fixture(scope="module", autouse=True)
 def qapp():
     return QApplication.instance() or QApplication([])
@@ -461,3 +469,58 @@ def test_usage_limit_uses_daily_budget_when_shorter_than_window():
 
     screen = DashboardScreen(I18nLoader("fr"))
     assert screen.usage_value.text().endswith(format_duration(3600))
+
+
+# -- Carte "blocage des sites inactif" (DNS non redirigé vers dnsmasq) ---------------------
+
+
+def test_dns_card_shown_when_daemon_active_but_resolver_bypasses_dnsmasq(monkeypatch):
+    from mintguard.gui import dashboard
+
+    monkeypatch.setattr(dashboard, "is_daemon_active", lambda: True)
+    monkeypatch.setattr(dashboard, "system_resolver_uses_mintguard", lambda: False)
+    screen = DashboardScreen(I18nLoader("fr"))
+    assert screen.dns_card.isHidden() is False
+
+
+def test_dns_card_hidden_while_daemon_inactive(monkeypatch):
+    """Une seule action à la fois : d'abord démarrer le daemon."""
+    from mintguard.gui import dashboard
+
+    monkeypatch.setattr(dashboard, "is_daemon_active", lambda: False)
+    monkeypatch.setattr(dashboard, "system_resolver_uses_mintguard", lambda: False)
+    screen = DashboardScreen(I18nLoader("fr"))
+    assert screen.dns_card.isHidden() is True
+
+
+def test_dns_card_hidden_when_resolver_state_unknown(monkeypatch):
+    from mintguard.gui import dashboard
+
+    monkeypatch.setattr(dashboard, "is_daemon_active", lambda: True)
+    monkeypatch.setattr(dashboard, "system_resolver_uses_mintguard", lambda: None)
+    screen = DashboardScreen(I18nLoader("fr"))
+    assert screen.dns_card.isHidden() is True
+
+
+def test_repair_dns_success_hides_card(monkeypatch):
+    from mintguard.gui import dashboard
+
+    monkeypatch.setattr(dashboard, "is_daemon_active", lambda: True)
+    monkeypatch.setattr(dashboard, "system_resolver_uses_mintguard", lambda: False)
+    monkeypatch.setattr(dashboard, "repair_dns_via_polkit", lambda: True)
+    screen = DashboardScreen(I18nLoader("fr"))
+    screen._repair_dns()
+    assert screen.dns_card.isHidden() is True
+    assert screen.dns_repair_button.isEnabled() is True
+
+
+def test_repair_dns_failure_keeps_card_with_explanation(monkeypatch):
+    from mintguard.gui import dashboard
+
+    monkeypatch.setattr(dashboard, "is_daemon_active", lambda: True)
+    monkeypatch.setattr(dashboard, "system_resolver_uses_mintguard", lambda: False)
+    monkeypatch.setattr(dashboard, "repair_dns_via_polkit", lambda: False)
+    screen = DashboardScreen(I18nLoader("fr"))
+    screen._repair_dns()
+    assert screen.dns_card.isHidden() is False
+    assert screen.dns_body.text() == I18nLoader("fr")("dashboard.dns_repair_failed")

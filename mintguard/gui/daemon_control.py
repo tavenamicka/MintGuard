@@ -16,8 +16,13 @@
 
 import logging
 import subprocess
+from pathlib import Path
 
 logger = logging.getLogger("mintguard.gui.daemon_control")
+
+# Installé par le .deb (et scripts/install.sh), propriété de root : pkexec n'exécute jamais un
+# script modifiable par un utilisateur normal (celui du dépôt git par exemple).
+SWITCH_DNS_SCRIPT = Path("/usr/lib/mintguard/switch-dns.sh")
 
 
 def is_daemon_active() -> bool:
@@ -50,3 +55,23 @@ def start_daemon_via_polkit() -> bool | None:
         return None
     except subprocess.TimeoutExpired:
         return False
+
+
+def repair_dns_via_polkit() -> bool | None:
+    """Bascule (ou rebascule) le résolveur DNS système vers dnsmasq, via pkexec - voir
+    scripts/switch-dns.sh (idempotent, remet l'état précédent si le DNS ne répond plus).
+
+    Même contrat que `start_daemon_via_polkit` : `None` si l'action est indisponible (pkexec
+    ou script absent), sinon `True`/`False` selon le résultat.
+    """
+    if not SWITCH_DNS_SCRIPT.is_file():
+        return None
+    try:
+        result = subprocess.run(["pkexec", str(SWITCH_DNS_SCRIPT)], capture_output=True, timeout=180)
+    except FileNotFoundError:
+        return None
+    except subprocess.TimeoutExpired:
+        return False
+    if result.returncode != 0:
+        logger.warning("Bascule DNS échouée (%s): %s", result.returncode, result.stderr.decode(errors="replace"))
+    return result.returncode == 0

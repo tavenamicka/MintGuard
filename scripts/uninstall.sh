@@ -26,9 +26,11 @@ echo "== Regles firewall (defense en profondeur) =="
 # A faire meme sans --purge : contrairement a la BD/logs (donnees inertes), une regle
 # iptables oubliee continuerait a bloquer le compte enfant indefiniment apres retrait
 # de MintGuard.
-iptables -D OUTPUT -j MINTGUARD 2>/dev/null || true
-iptables -F MINTGUARD 2>/dev/null || true
-iptables -X MINTGUARD 2>/dev/null || true
+for cmd in iptables ip6tables; do
+  "$cmd" -D OUTPUT -j MINTGUARD 2>/dev/null || true
+  "$cmd" -F MINTGUARD 2>/dev/null || true
+  "$cmd" -X MINTGUARD 2>/dev/null || true
+done
 
 echo "== dnsmasq =="
 rm -f /etc/dnsmasq.d/mintguard.conf
@@ -38,6 +40,7 @@ rm -f /usr/share/applications/mintguard.desktop
 rm -f /usr/share/icons/hicolor/scalable/apps/mintguard.svg
 rm -f /etc/xdg/autostart/mintguard-child-tray.desktop
 rm -f /etc/xdg/autostart/mintguard-parent-tray.desktop
+rm -rf /usr/lib/mintguard
 
 echo "== Environnement Python =="
 rm -rf /opt/mintguard

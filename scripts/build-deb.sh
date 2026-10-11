@@ -42,6 +42,10 @@ echo "== dnsmasq et exemple de config =="
 install -D -m 644 "$REPO_ROOT/etc/dnsmasq.d/mintguard.conf" "$BUILD_DIR/etc/dnsmasq.d/mintguard.conf"
 install -D -m 644 "$REPO_ROOT/etc/config.json.example" "$BUILD_DIR/etc/mintguard/config.json.example"
 
+echo "== Bascule DNS (lancee par le Tableau de bord via pkexec) =="
+install -D -m 755 "$REPO_ROOT/scripts/switch-dns.sh" "$BUILD_DIR/usr/lib/mintguard/switch-dns.sh"
+install -D -m 755 "$REPO_ROOT/scripts/switch-dns-rollback.sh" "$BUILD_DIR/usr/lib/mintguard/switch-dns-rollback.sh"
+
 echo "== Scripts de maintenance dpkg =="
 mkdir -p "$BUILD_DIR/DEBIAN"
 sed "s/@VERSION@/$DEB_VERSION/" "$PKG_DIR/control" > "$BUILD_DIR/DEBIAN/control"

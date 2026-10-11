@@ -195,3 +195,16 @@ def test_dns_and_firewall_refresh_only_after_interval_elapsed(tmp_path, monkeypa
         now=70.0, session_interval=999, dns_refresh_interval=30, process_interval=5,
     )
     assert calls == ["dns", "firewall"]
+
+
+def test_resolver_bypass_is_logged_once_per_change(monkeypatch, caplog):
+    states = iter([False, False, True])
+    monkeypatch.setattr(daemon_module, "system_resolver_uses_mintguard", lambda: next(states))
+    state: dict = {}
+    with caplog.at_level("INFO", logger="mintguard-daemon"):
+        for _ in range(3):
+            daemon_module._log_resolver_change(state)
+    warnings = [r for r in caplog.records if "AUCUN site" in r.getMessage()]
+    infos = [r for r in caplog.records if "blocage des sites actif" in r.getMessage()]
+    assert len(warnings) == 1
+    assert len(infos) == 1

@@ -117,10 +117,13 @@ ici : il change la resolution DNS de toute la machine). Pour
 l'activer, ouvrez MintGuard (entree "MintGuard" dans le menu des applications,
 ou 'mintguard' depuis un terminal) : un bouton "Activer la protection maintenant"
 s'affiche tant qu'elle n'est pas active, et gere le demarrage a votre place (une
-seule fenetre de confirmation systeme a valider, rien a taper).
+seule fenetre de confirmation systeme a valider, rien a taper). Un second bouton,
+"Activer le blocage des sites", fait ensuite passer le DNS de la machine par
+MintGuard - sans cette etape, aucun site n'est bloque.
 
 Alternative pour un usage technique/scripte :
     sudo systemctl start mintguard-daemon
+    sudo /usr/lib/mintguard/switch-dns.sh
     sudo systemctl status mintguard-daemon
     sudo journalctl -u mintguard-daemon -f
 

@@ -13,4 +13,17 @@ case "$1" in
     ;;
 esac
 
+# Desinstallation (pas une mise a jour) : rendre le DNS de la machine a son etat
+# d'origine tant que le script de rollback est encore present. Sans cela, apres
+# une purge, dnsmasq (toujours resolveur systeme) ne trouverait plus sa blocklist
+# et refuserait de demarrer : plus aucune resolution DNS sur la machine.
+case "$1" in
+  remove|deconfigure)
+    if [ -d /var/lib/mintguard/dns-switch-backup ] && [ -x /usr/lib/mintguard/switch-dns-rollback.sh ]; then
+      /usr/lib/mintguard/switch-dns-rollback.sh || echo "Rollback DNS incomplet - voir /usr/lib/mintguard/switch-dns-rollback.sh" >&2
+      rm -rf /var/lib/mintguard/dns-switch-backup
+    fi
+    ;;
+esac
+
 exit 0

@@ -74,7 +74,13 @@
     "daemon_activating": "Activation en cours...",
     "daemon_activated": "Protection activée ✓",
     "daemon_activation_unavailable": "Impossible d'activer automatiquement (composant manquant). Contactez la personne qui a installé MintGuard.",
-    "daemon_activation_failed": "Activation annulée ou non autorisée. Réessayez, ou contactez la personne qui a installé MintGuard."
+    "daemon_activation_failed": "Activation annulée ou non autorisée. Réessayez, ou contactez la personne qui a installé MintGuard.",
+    "dns_broken_title": "Le blocage des sites ne fonctionne pas",
+    "dns_broken_body": "Cet ordinateur ne passe pas par MintGuard pour trouver les sites internet : aucun site n'est bloqué pour le moment. Un clic suffit pour corriger (votre mot de passe sera demandé).",
+    "dns_repair_button": "Activer le blocage des sites",
+    "dns_repairing": "Activation en cours...",
+    "dns_repair_failed": "L'activation a été annulée ou n'a pas fonctionné. Internet fonctionne comme avant ; réessayez, ou contactez la personne qui a installé MintGuard.",
+    "dns_repair_unavailable": "Impossible d'activer automatiquement (composant manquant). Contactez la personne qui a installé MintGuard."
   },
   "settings": {
     "title": "Paramètres",

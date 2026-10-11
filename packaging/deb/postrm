@@ -10,9 +10,13 @@ set -euo pipefail
 case "$1" in
   remove|purge)
     echo "== Regles firewall (defense en profondeur) =="
-    iptables -D OUTPUT -j MINTGUARD 2>/dev/null || true
-    iptables -F MINTGUARD 2>/dev/null || true
-    iptables -X MINTGUARD 2>/dev/null || true
+    # IPv4 et IPv6 : le daemon pose la chaine dans les deux familles (voir
+    # firewall_controller.py) - seule l'IPv4 etait retiree jusqu'ici.
+    for cmd in iptables ip6tables; do
+      "$cmd" -D OUTPUT -j MINTGUARD 2>/dev/null || true
+      "$cmd" -F MINTGUARD 2>/dev/null || true
+      "$cmd" -X MINTGUARD 2>/dev/null || true
+    done
     ;;
 esac
 

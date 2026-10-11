@@ -31,6 +31,12 @@ else
   echo "Sauvegarde de mintguard.conf introuvable, restauration manuelle necessaire." >&2
 fi
 
+echo "== NetworkManager : gestion de /etc/resolv.conf rendue =="
+if [ -f /etc/NetworkManager/conf.d/90-mintguard-dns.conf ]; then
+  rm -f /etc/NetworkManager/conf.d/90-mintguard-dns.conf
+  nmcli general reload conf 2>/dev/null || systemctl reload NetworkManager 2>/dev/null || true
+fi
+
 echo "== Restauration de systemd-resolved =="
 if [ -f "$BACKUP_DIR/resolved.conf.orig" ]; then
   cp "$BACKUP_DIR/resolved.conf.orig" /etc/systemd/resolved.conf

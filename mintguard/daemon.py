@@ -17,6 +17,7 @@
 import time
 
 from mintguard.backend.dns_controller import DNSController
+from mintguard.backend.dns_health import system_resolver_uses_mintguard
 from mintguard.backend.firewall_controller import FirewallController
 from mintguard.backend.process_monitor import ProcessMonitor
 from mintguard.backend.scheduler import Scheduler
@@ -81,7 +82,24 @@ def run_cycle(
         # plus au système du tout.
         dns_controller.apply(active_child_id)
         firewall_controller.sync_child_dns_restriction()
+        _log_resolver_change(state)
         state["last_dns_refresh"] = now
+
+
+def _log_resolver_change(state: dict) -> None:
+    """Journalise (une fois par changement, pas à chaque cycle) quand le système cesse ou
+    recommence d'interroger dnsmasq - sans ce signal, un blocage inopérant passait inaperçu."""
+    resolver_ok = system_resolver_uses_mintguard()
+    if resolver_ok is None or resolver_ok == state.get("resolver_ok"):
+        return
+    if resolver_ok:
+        logger.info("/etc/resolv.conf désigne dnsmasq : blocage des sites actif")
+    else:
+        logger.warning(
+            "/etc/resolv.conf ne désigne pas dnsmasq (127.0.0.1) : AUCUN site n'est bloqué. "
+            "Réparer depuis le Tableau de bord, ou /usr/lib/mintguard/switch-dns.sh"
+        )
+    state["resolver_ok"] = resolver_ok
 
 
 def main() -> None:

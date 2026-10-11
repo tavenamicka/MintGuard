@@ -160,6 +160,12 @@ install -D -m 644 "$REPO_ROOT/mintguard/gui/assets/icons/mintguard.svg" /usr/sha
 install -D -m 644 "$REPO_ROOT/packaging/deb/mintguard-child-tray.desktop" /etc/xdg/autostart/mintguard-child-tray.desktop
 install -D -m 644 "$REPO_ROOT/packaging/deb/mintguard-parent-tray.desktop" /etc/xdg/autostart/mintguard-parent-tray.desktop
 
+echo "== Bascule DNS (bouton du Tableau de bord, via pkexec) =="
+# Copie root:root hors du depot : pkexec ne doit jamais executer un script que l'utilisateur
+# peut modifier (voir mintguard/gui/daemon_control.py::SWITCH_DNS_SCRIPT).
+install -D -m 755 "$REPO_ROOT/scripts/switch-dns.sh" /usr/lib/mintguard/switch-dns.sh
+install -D -m 755 "$REPO_ROOT/scripts/switch-dns-rollback.sh" /usr/lib/mintguard/switch-dns-rollback.sh
+
 echo "== Service systemd =="
 install -m 644 "$REPO_ROOT/etc/systemd/mintguard-daemon.service" /etc/systemd/system/mintguard-daemon.service
 systemctl daemon-reload

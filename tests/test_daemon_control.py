@@ -64,3 +64,33 @@ def test_start_daemon_timeout_is_treated_as_failure(monkeypatch):
 
     monkeypatch.setattr(daemon_control.subprocess, "run", raise_timeout)
     assert daemon_control.start_daemon_via_polkit() is False
+
+
+def test_repair_dns_unavailable_when_script_missing(monkeypatch, tmp_path):
+    monkeypatch.setattr(daemon_control, "SWITCH_DNS_SCRIPT", tmp_path / "absent.sh")
+    assert daemon_control.repair_dns_via_polkit() is None
+
+
+def test_repair_dns_runs_installed_script_through_pkexec(monkeypatch, tmp_path):
+    script = tmp_path / "switch-dns.sh"
+    script.write_text("#!/bin/sh\n")
+    monkeypatch.setattr(daemon_control, "SWITCH_DNS_SCRIPT", script)
+    calls = []
+
+    def fake_run(cmd, **kwargs):
+        calls.append(cmd)
+        return subprocess.CompletedProcess(cmd, returncode=0, stderr=b"")
+
+    monkeypatch.setattr(daemon_control.subprocess, "run", fake_run)
+    assert daemon_control.repair_dns_via_polkit() is True
+    assert calls == [["pkexec", str(script)]]
+
+
+def test_repair_dns_failure(monkeypatch, tmp_path):
+    script = tmp_path / "switch-dns.sh"
+    script.write_text("#!/bin/sh\n")
+    monkeypatch.setattr(daemon_control, "SWITCH_DNS_SCRIPT", script)
+    monkeypatch.setattr(
+        daemon_control.subprocess, "run", lambda cmd, **k: subprocess.CompletedProcess(cmd, returncode=2, stderr=b"x")
+    )
+    assert daemon_control.repair_dns_via_polkit() is False

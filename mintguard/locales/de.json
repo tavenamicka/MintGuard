@@ -74,7 +74,13 @@
     "daemon_activating": "Wird aktiviert...",
     "daemon_activated": "Schutz aktiviert ✓",
     "daemon_activation_unavailable": "Automatische Aktivierung nicht möglich (fehlende Komponente). Wenden Sie sich an die Person, die MintGuard installiert hat.",
-    "daemon_activation_failed": "Aktivierung abgebrochen oder nicht autorisiert. Versuchen Sie es erneut, oder wenden Sie sich an die Person, die MintGuard installiert hat."
+    "daemon_activation_failed": "Aktivierung abgebrochen oder nicht autorisiert. Versuchen Sie es erneut, oder wenden Sie sich an die Person, die MintGuard installiert hat.",
+    "dns_broken_title": "Die Website-Sperre funktioniert nicht",
+    "dns_broken_body": "Dieser Computer nutzt MintGuard nicht, um Websites zu finden: Zurzeit wird keine Seite gesperrt. Ein Klick genügt zur Behebung (Ihr Passwort wird abgefragt).",
+    "dns_repair_button": "Website-Sperre aktivieren",
+    "dns_repairing": "Wird aktiviert...",
+    "dns_repair_failed": "Die Aktivierung wurde abgebrochen oder hat nicht funktioniert. Das Internet funktioniert wie zuvor; versuchen Sie es erneut oder wenden Sie sich an die Person, die MintGuard installiert hat.",
+    "dns_repair_unavailable": "Automatische Aktivierung nicht möglich (Komponente fehlt). Wenden Sie sich an die Person, die MintGuard installiert hat."
   },
   "settings": {
     "title": "Einstellungen",

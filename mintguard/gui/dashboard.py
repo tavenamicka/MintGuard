@@ -29,10 +29,11 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from mintguard.backend.dns_health import system_resolver_uses_mintguard
 from mintguard.backend.usage_tracker import UsageTracker
 from mintguard.db.database import get_session
 from mintguard.db.models import ActivityLog, BlockedSite, Child, TimeRule
-from mintguard.gui.daemon_control import is_daemon_active, start_daemon_via_polkit
+from mintguard.gui.daemon_control import is_daemon_active, repair_dns_via_polkit, start_daemon_via_polkit
 from mintguard.gui.styles import COLORS, DISPLAY_FONT_FAMILY, FONT_SIZES
 from mintguard.gui.widgets import (
     Card,
@@ -130,6 +131,26 @@ class DashboardScreen(QWidget):
         self.daemon_card.add(self.daemon_activate_button)
         self.daemon_card.hide()
         layout.addWidget(self.daemon_card)
+
+        # Carte "blocage des sites inactif" : le daemon tourne, mais le système n'interroge pas
+        # dnsmasq (voir backend/dns_health.py) - cas d'une installation neuve (la bascule DNS
+        # n'est jamais automatique) ou d'un /etc/resolv.conf réécrit après coup. Sans elle, le
+        # parent voyait "Protection active" alors qu'aucun site n'était bloqué.
+        self.dns_card = Card()
+        dns_title_row = QHBoxLayout()
+        dns_title_row.setSpacing(8)
+        dns_title_row.addWidget(icon_badge("shield-alert", size=32, icon_size=18, color=colors["warning"]))
+        dns_title_row.addWidget(heading(self.i18n("dashboard.dns_broken_title"), "h3"))
+        dns_title_row.addStretch(1)
+        self.dns_card.add(wrap_layout(dns_title_row))
+        self.dns_body = QLabel(self.i18n("dashboard.dns_broken_body"))
+        self.dns_body.setWordWrap(True)
+        self.dns_card.add(self.dns_body)
+        self.dns_repair_button = QPushButton(self.i18n("dashboard.dns_repair_button"))
+        self.dns_repair_button.clicked.connect(self._repair_dns)
+        self.dns_card.add(self.dns_repair_button)
+        self.dns_card.hide()
+        layout.addWidget(self.dns_card)
 
         # Carte "héro" pleine largeur : statut de protection, le signal de confiance principal
         # de l'appli — icône + titre + sous-titre, comme la maquette. `status_icon` change de
@@ -279,7 +300,12 @@ class DashboardScreen(QWidget):
         # pkexec attend une saisie ne doit pas remettre le bouton dans son état initial.
         if not self.daemon_activate_button.isEnabled() and self.daemon_card.isVisible():
             return
-        self.daemon_card.setVisible(not is_daemon_active())
+        daemon_active = is_daemon_active()
+        self.daemon_card.setVisible(not daemon_active)
+        if self.dns_repair_button.isEnabled():
+            # Pas d'alerte DNS tant que le daemon est arrêté : la carte ci-dessus couvre déjà ce
+            # cas, et une seule action à la fois reste plus claire pour le parent.
+            self.dns_card.setVisible(daemon_active and system_resolver_uses_mintguard() is False)
 
     def _activate_daemon(self) -> None:
         self.daemon_activate_button.setEnabled(False)
@@ -300,6 +326,23 @@ class DashboardScreen(QWidget):
 
         self.daemon_activate_button.setEnabled(True)
         self.daemon_activate_button.setText(self.i18n("dashboard.daemon_activate_button"))
+
+    def _repair_dns(self) -> None:
+        self.dns_repair_button.setEnabled(False)
+        self.dns_repair_button.setText(self.i18n("dashboard.dns_repairing"))
+        QApplication.processEvents()
+        result = repair_dns_via_polkit()
+
+        if result is None:
+            self.dns_body.setText(self.i18n("dashboard.dns_repair_unavailable"))
+        elif result:
+            self.dns_body.setText(self.i18n("dashboard.dns_broken_body"))
+            self.dns_card.hide()
+        else:
+            self.dns_body.setText(self.i18n("dashboard.dns_repair_failed"))
+
+        self.dns_repair_button.setEnabled(True)
+        self.dns_repair_button.setText(self.i18n("dashboard.dns_repair_button"))
 
     def _is_protection_active(self, child_id: int) -> bool:
         session = get_session()
