@@ -71,7 +71,9 @@ In dem Moment, in dem die Zeit abgelaufen ist, wird Ihr Kind **nicht ohne Vorwar
 
 Ankreuzbare Kategorien (Soziale Netzwerke, Unterhaltung, Online-Spiele) und eine eigene Seitenliste, die Sie frei hinzufügen/entfernen können (z. B. `tiktok.com`).
 
-**Wichtig**: Anders als bei den Zeitplänen gilt die Seitenblockierung für den **gesamten Computer**, nicht nur für das ausgewählte Kinderkonto — da ein einziges DNS-Blockiersystem die gesamte Maschine abdeckt. Wenn sich mehrere Kinder denselben Computer teilen, teilen sie sich dieselbe Liste blockierter Seiten.
+**Blockierte Seiten pro Kind**: Jedes Kind hat seine eigene Liste. Ist ein Kind angemeldet, gelten seine Einstellungen für den Computer; sind Sie allein am Computer, bleiben die für Ihre Kinder blockierten Seiten für Sie erreichbar. Sind zwei Kinder gleichzeitig angemeldet oder ist niemand angemeldet, wendet MintGuard vorsichtshalber die Sperren aller Kinder an.
+
+**Zeit auf einer Seite begrenzen**: Für eine angehakte Seite erlaubt „Tageslimit“ eine bestimmte Anzahl Minuten pro Tag, statt sie ganz zu sperren. Die Zeit wird anhand der Netzwerkaktivität der Seite geschätzt: Sie wird noch etwa eine Minute nach der letzten Aktivität weitergezählt (ein offen gelassener Tab kann also etwas Zeit verbrauchen). Ist das Kontingent erreicht, wird die Seite bis zum nächsten Tag gesperrt.
 
 **Was Ihr Kind tatsächlich sieht**: MintGuard zeigt keine Seite „Diese Seite ist gesperrt" an. Die Sperrung erfolgt auf Netzwerkebene (DNS), noch bevor die Seite überhaupt zu laden beginnt — Ihr Kind sieht daher die übliche Fehlerseite seines Browsers, etwa „Verbindung nicht möglich" oder „Diese Seite ist nicht erreichbar". Das ist normal: Es bedeutet, dass die Sperre funktioniert, nicht dass ein technisches Problem vorliegt. Es lohnt sich, dies Ihrem Kind im Voraus zu erklären, damit es versteht, dass eine solche Meldung eine von Ihnen gesetzte Grenze ist und kein Internetausfall.
 

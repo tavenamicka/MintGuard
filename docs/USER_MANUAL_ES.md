@@ -71,7 +71,9 @@ Los cambios solo se aplican tras hacer clic en **Guardar**.
 
 Categorías marcables (Redes sociales, Entretenimiento, Juegos en línea) y una lista de sitios personalizados que puede añadir/quitar libremente (p. ej. `tiktok.com`).
 
-**Importante**: a diferencia de los horarios, el bloqueo de sitios se aplica a **todo el ordenador**, no solo a la cuenta del hijo seleccionado — porque un único sistema de bloqueo DNS cubre toda la máquina. Si varios hijos comparten el mismo ordenador, comparten la misma lista de sitios bloqueados.
+**Sitios bloqueados por hijo**: cada hijo tiene su propia lista. Cuando un hijo ha iniciado sesión, se aplican sus ajustes al ordenador; cuando usted está solo en el ordenador, los sitios bloqueados para sus hijos siguen siendo accesibles para usted. Si dos hijos han iniciado sesión a la vez, o nadie ha iniciado sesión, MintGuard aplica por prudencia los bloqueos de todos los hijos.
+
+**Limitar el tiempo en un sitio**: para un sitio marcado, «Límite diario» permite usarlo unos minutos al día en lugar de bloquearlo por completo. El tiempo se estima a partir de la actividad de red del sitio: se sigue contando aproximadamente un minuto después de la última actividad (una pestaña abierta puede consumir algo de tiempo). Una vez alcanzada la cuota, el sitio queda bloqueado hasta el día siguiente.
 
 **Lo que su hijo/a ve en realidad**: MintGuard no muestra una página de «Este sitio está bloqueado». El bloqueo ocurre a nivel de red (DNS), antes incluso de que la página empiece a cargarse — así que su hijo/a verá la pantalla de error habitual de su navegador, algo como «No se puede establecer conexión» o «No se puede acceder a este sitio». Es normal: significa que el bloqueo está funcionando, no que haya un problema técnico. Conviene explicárselo a su hijo/a con antelación, para que entienda que ese mensaje es un límite que usted ha fijado, y no una avería de internet.
 

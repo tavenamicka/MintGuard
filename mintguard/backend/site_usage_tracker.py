@@ -16,10 +16,11 @@
 
 import logging
 import re
+import time
 from datetime import date
 from pathlib import Path
 
-from mintguard.backend.site_categories import domain_matches
+from mintguard.backend.site_categories import domain_matches, domains_for_site
 from mintguard.config import get_config
 from mintguard.db.database import session_scope
 from mintguard.db.models import BlockedSite, Child, SiteDailyUsage
@@ -68,25 +69,45 @@ class SiteUsageTracker:
     navigation complet ou illimite.
     """
 
-    def __init__(self, log_path: Path | None = None):
-        self.log_path = log_path or Path(get_config().get("dns.query_log_path", "/var/log/mintguard/dns.log"))
+    def __init__(self, log_path: Path | None = None, activity_window_seconds: float | None = None):
+        config = get_config()
+        self.log_path = log_path or Path(config.get("dns.query_log_path", "/var/log/mintguard/dns.log"))
+        self.activity_window_seconds = (
+            activity_window_seconds
+            if activity_window_seconds is not None
+            else config.get("dns.site_activity_window_seconds", 60)
+        )
+        # (enfant, domaine enregistre) -> instant (time.monotonic) de la derniere requete vue.
+        self._last_seen: dict[tuple[int, str], float] = {}
 
-    def poll(self, elapsed_seconds: float, active_child_id: int | None) -> None:
+    def poll(self, elapsed_seconds: float, active_child_id: int | None, now: float | None = None) -> None:
         """A appeler une fois par cycle du daemon (voir daemon.py::run_cycle), avec
         l'intervalle ecoule depuis le tour precedent et l'enfant actif resolu ce cycle (voir
         resolve_active_child_id). Le fichier de log est toujours lu et tronque, meme si
         active_child_id est None - la troncature est une protection vie privee
-        inconditionnelle, independante du decompte de quota."""
+        inconditionnelle, independante du decompte de quota.
+
+        Un site est compte pendant `activity_window_seconds` apres sa derniere requete, et
+        pas seulement pendant le cycle ou elle apparait : le navigateur garde les reponses DNS
+        en cache et une video tourne sans nouvelle requete vers le domaine du site - une heure
+        de YouTube ne comptait auparavant que quelques secondes. Contrepartie assumee : un
+        onglet laisse ouvert en arriere-plan peut etre un peu surcompte, preferable pour un
+        controle parental a un quota qui ne s'epuise jamais."""
+        now = time.monotonic() if now is None else now
         queried_domains = self._read_and_truncate()
-        if active_child_id is None or not queried_domains:
+        if active_child_id is None:
             return
 
-        budgeted_domains = self._budgeted_domains()
-        matched = {
-            domain for domain in budgeted_domains if any(domain_matches(q, domain) for q in queried_domains)
-        }
-        if matched:
-            self._accumulate(active_child_id, matched, elapsed_seconds)
+        budgeted_domains = self._budgeted_domains(active_child_id)
+        for domain in budgeted_domains:
+            if any(domain_matches(q, site) for site in domains_for_site(domain) for q in queried_domains):
+                self._last_seen[(active_child_id, domain)] = now
+
+        window = self.activity_window_seconds
+        self._last_seen = {key: seen for key, seen in self._last_seen.items() if now - seen <= window}
+        in_use = {domain for domain in budgeted_domains if (active_child_id, domain) in self._last_seen}
+        if in_use:
+            self._accumulate(active_child_id, in_use, elapsed_seconds)
 
     def _read_and_truncate(self) -> set[str]:
         try:
@@ -108,14 +129,20 @@ class SiteUsageTracker:
         return domains
 
     @staticmethod
-    def _budgeted_domains() -> list[str]:
+    def _budgeted_domains(child_id: int) -> list[str]:
+        """Sites a quota qui concernent cet enfant : les siens et les regles globales. Ceux
+        d'un autre enfant etaient auparavant decomptes aussi, en pure perte (jamais relus)."""
         with session_scope() as session:
             rows = (
                 session.query(BlockedSite)
-                .filter(BlockedSite.blocked.is_(True), BlockedSite.daily_budget_minutes.isnot(None))
+                .filter(
+                    BlockedSite.blocked.is_(True),
+                    BlockedSite.daily_budget_minutes.isnot(None),
+                    (BlockedSite.child_id == child_id) | (BlockedSite.child_id.is_(None)),
+                )
                 .all()
             )
-            return [row.domain for row in rows]
+            return sorted({row.domain for row in rows})
 
     @staticmethod
     def _accumulate(child_id: int, domains: set[str], elapsed_seconds: float) -> None:

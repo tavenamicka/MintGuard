@@ -45,6 +45,10 @@ DEFAULT_CONFIG: dict[str, Any] = {
         # Journal des requetes dnsmasq (log-queries) : lu PUIS TRONQUE a chaque cycle par
         # SiteUsageTracker, jamais conserve au-dela - voir etc/dnsmasq.d/mintguard.conf.
         "query_log_path": "/var/log/mintguard/dns.log",
+        # Un site a quota reste "en cours d'utilisation" pendant ce delai apres sa derniere
+        # requete DNS (voir SiteUsageTracker) : les navigateurs gardent les reponses DNS en
+        # cache, une seule requete couvre donc souvent plusieurs minutes de navigation.
+        "site_activity_window_seconds": 60,
     },
     "monitoring": {
         "process_check_interval": 5,

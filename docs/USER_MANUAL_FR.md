@@ -71,7 +71,9 @@ Les changements ne sont appliqués qu'après avoir cliqué sur **Sauvegarder**.
 
 Des catégories à cocher (Réseaux sociaux, Divertissement, Jeux en ligne) et une liste de sites personnalisés que vous pouvez ajouter/retirer librement (ex: `tiktok.com`).
 
-**Important** : contrairement aux horaires, le blocage de sites s'applique à **tout l'ordinateur**, pas seulement au compte de l'enfant sélectionné — parce qu'un seul système de blocage DNS gère toute la machine. Si plusieurs enfants partagent le même ordinateur, ils partagent la même liste de sites bloqués.
+**Sites bloqués par enfant** : chaque enfant a sa propre liste. Quand un enfant est connecté, ce sont ses réglages qui s'appliquent à l'ordinateur ; quand vous êtes seul sur l'ordinateur, les sites bloqués pour vos enfants restent accessibles pour vous. Si deux enfants sont connectés en même temps, ou si personne n'est connecté, MintGuard applique par prudence les blocages de tous les enfants.
+
+**Limiter le temps sur un site** : pour un site coché, « Limite quotidienne » permet de l'autoriser un certain nombre de minutes par jour au lieu de le bloquer complètement. Le temps est estimé à partir de l'activité réseau du site : il continue d'être compté environ une minute après la dernière activité (un onglet resté ouvert peut donc consommer un peu de temps). Une fois le quota atteint, le site est bloqué jusqu'au lendemain.
 
 **Ce que voit concrètement votre enfant** : MintGuard n'affiche pas de page « Ce site est bloqué ». Le blocage se fait au niveau du réseau (DNS), avant même que la page ne commence à se charger — votre enfant voit donc l'écran d'erreur habituel de son navigateur, du type « Impossible d'établir une connexion » ou « Ce site est inaccessible ». C'est normal : ça signifie que le blocage fonctionne, pas qu'il y a un problème technique. Il est utile d'expliquer cela à votre enfant à l'avance, pour qu'il comprenne qu'un tel message est une limite fixée par vous, et non une panne d'internet.
 

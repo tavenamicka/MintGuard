@@ -61,6 +61,34 @@ AGE_PRESETS = {
 }
 
 
+# Domaines techniques servant le contenu d'un site sans porter son nom : une video YouTube
+# est servie par *.googlevideo.com, une page Instagram charge ses images depuis
+# cdninstagram.com... Sans eux, le temps passe sur le site etait presque invisible dans les
+# requetes DNS (seul le chargement de la page touche youtube.com), et un site bloque restait
+# partiellement accessible (lecteurs integres sur d'autres sites). Utilises a la fois par
+# SiteUsageTracker (decompte) et DNSController (blocage). Liste volontairement limitee aux
+# domaines propres a chaque service, jamais a un CDN partage avec d'autres sites.
+COMPANION_DOMAINS = {
+    "youtube.com": ["googlevideo.com", "ytimg.com", "youtu.be", "youtube-nocookie.com", "youtubei.googleapis.com"],
+    "facebook.com": ["fbcdn.net", "fb.com", "facebook.net"],
+    "instagram.com": ["cdninstagram.com"],
+    "tiktok.com": ["tiktokcdn.com", "tiktokv.com", "tiktokcdn-us.com", "tiktokv.us"],
+    "snapchat.com": ["sc-cdn.net", "snap-dev.net"],
+    "twitter.com": ["twimg.com", "t.co"],
+    "x.com": ["twimg.com", "t.co"],
+    "netflix.com": ["nflxvideo.net", "nflximg.net", "nflxext.com", "nflxso.net"],
+    "twitch.tv": ["ttvnw.net", "jtvnw.net"],
+    "roblox.com": ["rbxcdn.com"],
+    "steampowered.com": ["steamstatic.com", "steamcommunity.com"],
+    "epicgames.com": ["epicgames.dev"],
+}
+
+
+def domains_for_site(domain: str) -> list[str]:
+    """Le domaine enregistre par le parent, suivi de ses domaines techniques connus."""
+    return [domain] + COMPANION_DOMAINS.get(domain.strip().lower(), [])
+
+
 def category_for_domain(domain: str) -> str:
     for category, domains in CATEGORIES.items():
         if domain in domains:

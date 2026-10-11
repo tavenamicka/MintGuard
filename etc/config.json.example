@@ -12,7 +12,8 @@
     "listen_port": 5354,
     "blocklist_path": "/var/lib/mintguard-dns/blocklist.conf",
     "refresh_interval": 30,
-    "query_log_path": "/var/log/mintguard/dns.log"
+    "query_log_path": "/var/log/mintguard/dns.log",
+    "site_activity_window_seconds": 60
   },
   "monitoring": {
     "process_check_interval": 5,

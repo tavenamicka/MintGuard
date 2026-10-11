@@ -22,6 +22,7 @@ from datetime import date
 import pytest
 
 from mintguard.backend.dns_controller import DNSController
+from mintguard.backend.site_categories import domains_for_site
 from mintguard.db.database import get_session, init_db
 from mintguard.db.models import BlockedSite, Child, SiteDailyUsage
 
@@ -76,7 +77,7 @@ def test_blocklist_uses_wildcard_format_covering_subdomains(controller):
     """Le cœur du produit : un fichier hosts (`0.0.0.0 youtube.com`) ne matche que le nom
     exact et laissait « www.youtube.com » — le site lui-même — parfaitement accessible."""
     add_sites("youtube.com")
-    assert controller.generate_blocklist() == 1
+    assert controller.generate_blocklist() == len(domains_for_site("youtube.com"))
 
     content = controller.blocklist_path.read_text(encoding="utf-8")
     assert "address=/youtube.com/0.0.0.0" in content
@@ -101,7 +102,7 @@ def test_blocklist_ignores_unblocked_sites(controller):
     add_sites("youtube.com")
     add_sites("wikipedia.org", blocked=False)
 
-    assert controller.generate_blocklist() == 1
+    assert controller.generate_blocklist() == len(domains_for_site("youtube.com"))
     assert "wikipedia.org" not in controller.blocklist_path.read_text(encoding="utf-8")
 
 
@@ -110,7 +111,7 @@ def test_blocklist_skips_invalid_domains(controller):
     dnsmasq qui tourne en root, une ligne arbitraire n'a rien à y faire."""
     add_sites("youtube.com", "mauvais domaine\nlog-facility=/etc/passwd")
 
-    assert controller.generate_blocklist() == 1
+    assert controller.generate_blocklist() == len(domains_for_site("youtube.com"))
     content = controller.blocklist_path.read_text(encoding="utf-8")
     assert "log-facility=/etc/passwd" not in content
     assert "address=/youtube.com/0.0.0.0" in content
@@ -243,3 +244,14 @@ def test_nobody_logged_in_stays_restrictive(controller):
 
     controller.generate_blocklist()
     assert "tiktok.com" in controller.blocklist_path.read_text(encoding="utf-8")
+
+
+def test_blocking_a_site_also_blocks_its_companion_domains(controller):
+    """Les vidéos YouTube viennent de googlevideo.com : sans lui, un lecteur YouTube intégré
+    à un autre site restait lisible malgré le blocage."""
+    add_sites("youtube.com", "example.org")
+    controller.generate_blocklist()
+    content = controller.blocklist_path.read_text(encoding="utf-8")
+    assert "address=/googlevideo.com/0.0.0.0" in content
+    assert "address=/ytimg.com/::" in content
+    assert content.count("address=/") == 2 * (len(domains_for_site("youtube.com")) + 1)

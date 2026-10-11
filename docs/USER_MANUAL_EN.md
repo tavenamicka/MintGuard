@@ -71,7 +71,9 @@ Changes only take effect after clicking **Save**.
 
 Checkable categories (Social media, Entertainment, Online games) and a custom site list you can add to/remove from freely (e.g. `tiktok.com`).
 
-**Important**: unlike time schedules, site blocking applies to the **entire computer**, not just the selected child's account — because a single DNS blocking system covers the whole machine. If several children share the same computer, they share the same blocked-site list.
+**Blocked sites per child**: each child has their own list. When a child is logged in, their settings apply to the computer; when you are alone on the computer, sites blocked for your children remain accessible to you. If two children are logged in at the same time, or nobody is logged in, MintGuard applies every child's blocks as a precaution.
+
+**Limiting time on a site**: for a checked site, "Daily limit" allows it for a number of minutes per day instead of blocking it completely. Time is estimated from the site's network activity: it keeps being counted for about a minute after the last activity (so a tab left open can use up a little time). Once the quota is reached, the site is blocked until the next day.
 
 **What your child actually sees**: MintGuard does not display a "This site is blocked" page. Blocking happens at the network level (DNS), before the page even starts loading — so your child sees their browser's usual error screen instead, something like "Unable to connect" or "This site can't be reached". That's normal: it means the block is working, not that there's a technical problem. It's worth explaining this to your child in advance, so they understand such a message is a limit you set, not an internet outage.
 

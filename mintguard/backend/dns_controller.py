@@ -21,6 +21,7 @@ import tempfile
 from datetime import date
 from pathlib import Path
 
+from mintguard.backend.site_categories import domains_for_site
 from mintguard.config import get_config
 from mintguard.db.database import get_session
 from mintguard.db.models import BlockedSite, Child, SiteDailyUsage
@@ -122,6 +123,11 @@ class DNSController:
                     domains.append(site.domain)
         finally:
             session.close()
+
+        # Domaines techniques du site (ex: googlevideo.com pour youtube.com, voir
+        # site_categories.COMPANION_DOMAINS) : sans eux, les videos d'un site bloque restaient
+        # lisibles via un lecteur integre sur un autre site.
+        domains = [d for domain in domains for d in domains_for_site(domain)]
 
         valid = []
         for domain in domains:

@@ -222,3 +222,48 @@ def test_resolve_active_child_id_ignores_logged_in_non_child_account(monkeypatch
     monkeypatch.setattr("mintguard.backend.usage_tracker.psutil.users", lambda: sessions)
 
     assert resolve_active_child_id(UsageTracker().get_active_usernames()) is None
+
+
+
+# -- Fenetre d'activite et domaines techniques ----------------------------------------------
+
+
+def test_site_keeps_counting_within_activity_window_without_new_query(tmp_path):
+    """Le navigateur garde la reponse DNS en cache : une seule requete doit couvrir les
+    cycles suivants tant que la fenetre d'activite n'est pas ecoulee."""
+    child_id = add_child("alice")
+    add_budgeted_site("youtube.com", child_id=child_id)
+    log_path = tmp_path / "dns.log"
+    tracker = SiteUsageTracker(log_path=log_path, activity_window_seconds=60)
+
+    write_log(log_path, "Sep 20 10:15:23 dnsmasq[1]: query[A] www.youtube.com from 127.0.0.1")
+    for t in (0, 5, 10, 60):
+        tracker.poll(elapsed_seconds=5, active_child_id=child_id, now=1000.0 + t)
+    assert seconds_used(child_id, "youtube.com") == 20
+
+    tracker.poll(elapsed_seconds=5, active_child_id=child_id, now=1000.0 + 65)  # fenetre ecoulee
+    assert seconds_used(child_id, "youtube.com") == 20
+
+
+def test_companion_domain_query_counts_for_its_site(tmp_path):
+    """Pendant une video, seules les requetes vers googlevideo.com continuent."""
+    child_id = add_child("alice")
+    add_budgeted_site("youtube.com", child_id=child_id)
+    log_path = tmp_path / "dns.log"
+    write_log(log_path, "Sep 20 10:15:23 dnsmasq[1]: query[A] rr3---sn-abc.googlevideo.com from 127.0.0.1")
+
+    SiteUsageTracker(log_path=log_path).poll(elapsed_seconds=5, active_child_id=child_id, now=1.0)
+
+    assert seconds_used(child_id, "youtube.com") == 5
+
+
+def test_other_childs_budgeted_site_is_not_counted(tmp_path):
+    alice = add_child("alice")
+    bob = add_child("bob")
+    add_budgeted_site("youtube.com", child_id=bob)
+    log_path = tmp_path / "dns.log"
+    write_log(log_path, "Sep 20 10:15:23 dnsmasq[1]: query[A] youtube.com from 127.0.0.1")
+
+    SiteUsageTracker(log_path=log_path).poll(elapsed_seconds=5, active_child_id=alice, now=1.0)
+
+    assert seconds_used(alice, "youtube.com") == 0
