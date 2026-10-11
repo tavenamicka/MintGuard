@@ -22,7 +22,7 @@ from pathlib import Path
 
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QIcon
-from PyQt6.QtWidgets import QApplication, QLabel, QSystemTrayIcon, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QApplication, QLabel, QPushButton, QSystemTrayIcon, QVBoxLayout, QWidget
 
 from mintguard.config import get_config
 from mintguard.gui.styles import COLORS
@@ -31,6 +31,7 @@ from mintguard.locales.loader import get_i18n
 logger = logging.getLogger("mintguard.child_tray")
 
 SOCKET_PATH = "/run/mintguard/status.sock"
+_MAX_RESPONSE_BYTES = 1024 * 1024
 
 # Fichier bundle (package_data, voir setup.py), pas QIcon.fromTheme("mintguard") : sur une
 # session ou le cache d'icones du theme ne connait pas "mintguard" (gtk-update-icon-cache pas
@@ -140,6 +141,76 @@ class _SessionEndingOverlay(QWidget):
             self._body.setText(self._("child_tray.session_ending_body_now"))
 
 
+class _StatusWindow(QWidget):
+    """Fenêtre ouverte au clic sur l'icône : temps restant, applications et sites bloqués,
+    dernière application fermée. Remplace la bulle de notification système, qui ne
+    s'affichait pas sur tous les bureaux (constaté sur un compte enfant Cinnamon : un clic
+    sur l'icône ne montrait rien)."""
+
+    def __init__(self, i18n):
+        super().__init__(None, Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.Tool)
+        self._ = i18n
+        self.setWindowTitle(self._("app.name"))
+        self.setMinimumWidth(360)
+        self.setStyleSheet(f"background-color: {COLORS['surface']}; color: {COLORS['text']};")
+        self._body = QLabel()
+        self._body.setWordWrap(True)
+        self._body.setTextFormat(Qt.TextFormat.RichText)
+        self._body.setStyleSheet("font-size: 14px;")
+        close_button = QPushButton(self._("common.close"))
+        close_button.clicked.connect(self.hide)
+        layout = QVBoxLayout(self)
+        layout.addWidget(self._body)
+        layout.addWidget(close_button)
+
+    @staticmethod
+    def _escape(text: str) -> str:
+        return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+    def _rule_lines(self, rules: list[dict]) -> list[str]:
+        if not rules:
+            return [self._("child_tray.status_none")]
+        lines = []
+        for rule in rules:
+            name = self._escape(str(rule.get("name", "?")))
+            remaining = rule.get("remaining_minutes")
+            if rule.get("budget_minutes") is None:
+                lines.append(name)
+            elif remaining:
+                lines.append(self._("child_tray.status_quota_left").format(name, remaining))
+            else:
+                lines.append(self._("child_tray.status_quota_used_up").format(name))
+        return lines
+
+    def text_for(self, status: dict | None) -> str:
+        if not status:
+            return self._escape(self._("child_tray.status_unavailable"))
+        minutes = status.get("minutes_remaining")
+        if minutes is None:
+            parts = [f"<b>{self._('child_tray.status_no_limit')}</b>"]
+        else:
+            parts = [f"<b>{self._('child_tray.status_time_left').format(minutes)}</b>"]
+        parts.append(f"<br><br><b>{self._('child_tray.status_blocked_apps')}</b><br>")
+        parts.append("<br>".join("• " + line for line in self._rule_lines(status.get("blocked_apps") or [])))
+        parts.append(f"<br><br><b>{self._('child_tray.status_blocked_sites')}</b><br>")
+        parts.append("<br>".join("• " + line for line in self._rule_lines(status.get("blocked_sites") or [])))
+        last = status.get("last_block_today")
+        if last:
+            parts.append("<br><br>" + self._escape(self._("child_tray.status_last_block").format(last)))
+        return "".join(parts)
+
+    def show_status(self, status: dict | None) -> None:
+        self._body.setText(self.text_for(status))
+        self.adjustSize()
+        screen = self.screen() or QApplication.primaryScreen()
+        if screen is not None:
+            geometry = screen.availableGeometry()
+            self.move(geometry.center().x() - self.width() // 2, geometry.center().y() - self.height() // 2)
+        self.show()
+        self.raise_()
+        self.activateWindow()
+
+
 def query_status() -> dict | None:
     """Interroge le daemon (StatusServer). None si le daemon est injoignable (pas encore
     démarré, ou machine hors cible Linux - échec silencieux, ce composant ne doit jamais
@@ -149,8 +220,18 @@ def query_status() -> dict | None:
             sock.settimeout(3)
             sock.connect(SOCKET_PATH)
             sock.sendall((json.dumps({"cmd": "status"}) + "\n").encode("utf-8"))
-            raw = sock.recv(4096)
-            return json.loads(raw.decode("utf-8"))
+            # Lecture jusqu'à la fin de ligne : un seul recv(4096) tronquait une réponse
+            # longue (listes d'applis et de sites bloqués), qui passait alors pour un daemon
+            # injoignable.
+            chunks = []
+            while True:
+                chunk = sock.recv(4096)
+                if not chunk:
+                    break
+                chunks.append(chunk)
+                if chunk.endswith(b"\n") or sum(len(c) for c in chunks) > _MAX_RESPONSE_BYTES:
+                    break
+            return json.loads(b"".join(chunks).decode("utf-8"))
     except (OSError, ValueError, json.JSONDecodeError) as e:
         logger.warning("StatusServer injoignable: %s", e)
         return None
@@ -182,6 +263,7 @@ class ChildTray:
         self.tray.activated.connect(self._on_tray_activated)
 
         self.banner = _TopBanner()
+        self.status_window = _StatusWindow(self._)
         self.grace_overlay = _SessionEndingOverlay(self._)
         # Compte à rebours local à la seconde entre deux sondages du daemon (poll_interval_ms,
         # 15s par défaut) : le nombre de secondes restantes vient du serveur (source de
@@ -253,20 +335,11 @@ class ChildTray:
         self._show_status_popup()
 
     def _show_status_popup(self) -> None:
-        status = self._last_status
-        minutes_remaining = status.get("minutes_remaining") if status else None
-        if minutes_remaining is None:
-            lines = [self._("child_tray.click_status_time_unknown")]
-        else:
-            lines = [self._("child_tray.click_status_time").format(minutes_remaining)]
-
-        recent_blocks = (status.get("recent_blocks") or []) if status else []
-        if recent_blocks:
-            lines.append(self._("child_tray.click_status_last_block").format(recent_blocks[-1]))
-
-        self.tray.showMessage(
-            self._("app.name"), "\n".join(lines), QSystemTrayIcon.MessageIcon.Information
-        )
+        # Statut frais au moment du clic plutôt que celui du dernier sondage (jusqu'à 15 s).
+        fresh = query_status()
+        if fresh is not None and fresh.get("is_child"):
+            self._last_status = fresh
+        self.status_window.show_status(fresh if fresh is not None else None)
 
     def _update_tooltip(self, minutes_remaining: int | None) -> None:
         if minutes_remaining is None:

@@ -18,20 +18,25 @@ import json
 import logging
 import os
 import pwd
+import re
 import socket
 import struct
 import threading
-from datetime import timedelta
+from datetime import date, datetime, time, timedelta
 
 from mintguard.backend.scheduler import Scheduler
 from mintguard.db.database import get_session
-from mintguard.db.models import ActivityLog, Child, utcnow
+from mintguard.db.models import ActivityLog, AppDailyUsage, BlockedApp, BlockedSite, Child, SiteDailyUsage, utcnow
+from mintguard.utils.formatters import local_to_utc
 
 logger = logging.getLogger("mintguard.backend.status_server")
 
 _SO_PEERCRED_FMT = "3i"  # pid, uid, gid (struct ucred, Linux)
 _RECENT_BLOCKS_WINDOW_SECONDS = 30
 _CLIENT_TIMEOUT_SECONDS = 2.0
+# Format des détails journalisés par ProcessMonitor ("Application bloquée : discord",
+# "Quota atteint : steam (60 min/jour)") : phrase en français, on n'en garde que le nom.
+_BLOCK_DETAILS_RE = re.compile(r"^(?:Application bloquée|Quota atteint) : (\S+)")
 
 
 class StatusServer:
@@ -125,7 +130,8 @@ class StatusServer:
                 )
                 .all()
             )
-            recent_blocks = [log.details for log in recent if log.details]
+            recent_blocks = [self._app_name_from_details(log.details) for log in recent if log.details]
+            rules = self._rules_for_child(db_session, child.id)
         finally:
             db_session.close()
 
@@ -134,4 +140,87 @@ class StatusServer:
             "minutes_remaining": self.scheduler.get_minutes_remaining(child.id),
             "grace_seconds_remaining": self.scheduler.get_grace_seconds_remaining(child.id),
             "recent_blocks": recent_blocks,
+            **rules,
+        }
+
+    @staticmethod
+    def _app_name_from_details(details: str | None) -> str | None:
+        if not details:
+            return None
+        match = _BLOCK_DETAILS_RE.match(details)
+        return match.group(1) if match else details
+
+    @staticmethod
+    def _rules_for_child(db_session, child_id: int) -> dict:
+        """Ce qui s'applique à cet enfant aujourd'hui, pour la fenêtre ouverte au clic sur son
+        icône : applications et sites bloqués (avec le temps restant s'ils ont un quota) et
+        dernière application fermée aujourd'hui. Avant, l'enfant ne voyait que les applis
+        fermées dans les 30 dernières secondes - un clic plus tard ne montrait rien.
+
+        Règle propre à l'enfant prioritaire sur une règle globale du même nom, comme côté
+        ProcessMonitor/DNSController."""
+        today = date.today().isoformat()
+
+        def remaining(budget: int | None, used_seconds: int) -> int | None:
+            return None if budget is None else max(0, budget * 60 - used_seconds) // 60
+
+        apps: dict[str, BlockedApp] = {}
+        for app in (
+            db_session.query(BlockedApp)
+            .filter(BlockedApp.enabled.is_(True))
+            .filter((BlockedApp.child_id == child_id) | (BlockedApp.child_id.is_(None)))
+            .all()
+        ):
+            if app.child_id is not None or app.app_name not in apps:
+                apps[app.app_name] = app
+        app_usage = {
+            row.app_name: row.seconds_used
+            for row in db_session.query(AppDailyUsage).filter_by(child_id=child_id, date=today).all()
+        }
+
+        sites: dict[str, BlockedSite] = {}
+        for site in (
+            db_session.query(BlockedSite)
+            .filter(BlockedSite.blocked.is_(True))
+            .filter((BlockedSite.child_id == child_id) | (BlockedSite.child_id.is_(None)))
+            .all()
+        ):
+            if site.child_id is not None or site.domain not in sites:
+                sites[site.domain] = site
+        site_usage = {
+            row.domain: row.seconds_used
+            for row in db_session.query(SiteDailyUsage).filter_by(child_id=child_id, date=today).all()
+        }
+
+        # ActivityLog.timestamp est en UTC naïf : minuit local converti en UTC.
+        midnight_utc = local_to_utc(datetime.combine(date.today(), time()))
+        last = (
+            db_session.query(ActivityLog)
+            .filter(
+                ActivityLog.child_id == child_id,
+                ActivityLog.action == "app_blocked",
+                ActivityLog.timestamp >= midnight_utc,
+            )
+            .order_by(ActivityLog.timestamp.desc())
+            .first()
+        )
+
+        return {
+            "blocked_apps": [
+                {
+                    "name": name,
+                    "budget_minutes": app.daily_budget_minutes,
+                    "remaining_minutes": remaining(app.daily_budget_minutes, app_usage.get(name, 0)),
+                }
+                for name, app in sorted(apps.items())
+            ],
+            "blocked_sites": [
+                {
+                    "name": domain,
+                    "budget_minutes": site.daily_budget_minutes,
+                    "remaining_minutes": remaining(site.daily_budget_minutes, site_usage.get(domain, 0)),
+                }
+                for domain, site in sorted(sites.items())
+            ],
+            "last_block_today": StatusServer._app_name_from_details(last.details) if last is not None else None,
         }

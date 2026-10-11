@@ -10,15 +10,21 @@
   },
   "child_tray": {
     "tooltip_minutes": "MintGuard : {0} min restantes",
-    "click_status_time": "Temps restant : {0} min",
-    "click_status_time_unknown": "Temps restant : indisponible pour le moment.",
-    "click_status_last_block": "Dernière application bloquée : {0}",
     "warning_minutes_left": "Encore {0} minute(s) avant la fin de ta session.",
     "app_blocked": "{0} a été fermé : application non autorisée.",
     "session_ending_title": "Ton temps est terminé pour aujourd'hui",
     "session_ending_body": "Pense à enregistrer ton travail. Fermeture dans {0} secondes.",
     "session_ending_body_now": "Fermeture en cours...",
-    "session_ending_footer": "À demain !"
+    "session_ending_footer": "À demain !",
+    "status_time_left": "Temps restant aujourd'hui : {0} min",
+    "status_no_limit": "Pas de limite de temps aujourd'hui",
+    "status_unavailable": "MintGuard ne répond pas pour le moment. Réessaie dans un instant.",
+    "status_blocked_apps": "Applications bloquées",
+    "status_blocked_sites": "Sites bloqués",
+    "status_none": "Aucun",
+    "status_quota_left": "{0} : encore {1} min aujourd'hui",
+    "status_quota_used_up": "{0} : plus de temps aujourd'hui",
+    "status_last_block": "Dernière application fermée aujourd'hui : {0}"
   },
   "parent_tray": {
     "tooltip_checking": "MintGuard : vérification en cours...",

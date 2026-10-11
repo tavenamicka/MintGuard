@@ -10,15 +10,21 @@
   },
   "child_tray": {
     "tooltip_minutes": "MintGuard: quedan {0} min",
-    "click_status_time": "Tiempo restante: {0} min",
-    "click_status_time_unknown": "Tiempo restante: no disponible por ahora.",
-    "click_status_last_block": "Última aplicación bloqueada: {0}",
     "warning_minutes_left": "Quedan {0} minuto(s) antes de que termine tu sesión.",
     "app_blocked": "{0} se cerró: esta aplicación no está permitida.",
     "session_ending_title": "Tu tiempo ha terminado por hoy",
     "session_ending_body": "Recuerda guardar tu trabajo. Se cerrará en {0} segundos.",
     "session_ending_body_now": "Cerrando...",
-    "session_ending_footer": "¡Hasta mañana!"
+    "session_ending_footer": "¡Hasta mañana!",
+    "status_time_left": "Tiempo restante hoy: {0} min",
+    "status_no_limit": "Sin límite de tiempo hoy",
+    "status_unavailable": "MintGuard no responde ahora mismo. Vuelve a intentarlo en un momento.",
+    "status_blocked_apps": "Aplicaciones bloqueadas",
+    "status_blocked_sites": "Sitios bloqueados",
+    "status_none": "Ninguno",
+    "status_quota_left": "{0}: quedan {1} min hoy",
+    "status_quota_used_up": "{0}: sin tiempo hoy",
+    "status_last_block": "Última aplicación cerrada hoy: {0}"
   },
   "parent_tray": {
     "tooltip_checking": "MintGuard: comprobando...",

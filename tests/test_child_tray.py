@@ -174,47 +174,83 @@ def test_warning_threshold_also_shows_a_banner(monkeypatch, qapp):
     assert tray.banner.isVisible()
 
 
-def test_click_shows_remaining_time_popup(monkeypatch, qapp):
-    """Le survol (tooltip) n'est pas fiable sur tous les bureaux (constat utilisateur sur
-    Cinnamon) : un clic sur l'icone doit servir de repli et afficher le temps restant."""
+def test_click_opens_status_window_with_time_and_blocked_items(monkeypatch, qapp):
+    """Constat réel sur Cinnamon (compte enfant) : un clic sur l'icône ne montrait rien. La
+    bulle de notification est remplacée par une fenêtre, avec ce qui est bloqué."""
+    status = {
+        "is_child": True,
+        "minutes_remaining": 17,
+        "recent_blocks": [],
+        "blocked_apps": [
+            {"name": "discord", "budget_minutes": None, "remaining_minutes": None},
+            {"name": "steam", "budget_minutes": 60, "remaining_minutes": 25},
+        ],
+        "blocked_sites": [{"name": "tiktok.com", "budget_minutes": 30, "remaining_minutes": 0}],
+        "last_block_today": "discord",
+    }
+    monkeypatch.setattr(child_tray, "query_status", lambda: status)
     tray = ChildTray(qapp)
-    monkeypatch.setattr(
-        child_tray, "query_status", lambda: {"is_child": True, "minutes_remaining": 17, "recent_blocks": []}
+    tray._on_tray_activated(QSystemTrayIcon.ActivationReason.Trigger)
+
+    text = tray.status_window._body.text()
+    assert tray.status_window.isHidden() is False
+    assert "17" in text
+    assert "discord" in text and "steam" in text and "25" in text
+    assert "tiktok.com" in text
+    assert tray._("child_tray.status_quota_used_up").format("tiktok.com") in text
+    tray.status_window.hide()
+
+
+def test_click_shows_no_limit_when_no_rule_today(monkeypatch, qapp):
+    monkeypatch.setattr(child_tray, "query_status", lambda: {"is_child": True, "minutes_remaining": None})
+    tray = ChildTray(qapp)
+    tray._on_tray_activated(QSystemTrayIcon.ActivationReason.Trigger)
+    assert tray._("child_tray.status_no_limit") in tray.status_window._body.text()
+    tray.status_window.hide()
+
+
+def test_click_when_daemon_unreachable_says_so(monkeypatch, qapp):
+    monkeypatch.setattr(child_tray, "query_status", lambda: None)
+    tray = ChildTray(qapp)
+    tray._on_tray_activated(QSystemTrayIcon.ActivationReason.Trigger)
+    assert tray.status_window._body.text() == tray._("child_tray.status_unavailable")
+    tray.status_window.hide()
+
+
+def test_status_window_escapes_names():
+    window = child_tray._StatusWindow(child_tray.get_i18n())
+    text = window.text_for(
+        {"is_child": True, "minutes_remaining": 5, "blocked_apps": [{"name": "<b>x</b>", "budget_minutes": None}]}
     )
-    tray.poll()
-
-    messages = []
-    monkeypatch.setattr(tray.tray, "showMessage", lambda title, msg, icon: messages.append(msg))
-    tray._on_tray_activated(QSystemTrayIcon.ActivationReason.Trigger)
-
-    assert len(messages) == 1
-    assert "17" in messages[0]
+    assert "<b>x</b>" not in text and "&lt;b&gt;x&lt;/b&gt;" in text
 
 
-def test_click_before_any_poll_does_not_crash(monkeypatch, qapp):
-    tray = ChildTray(qapp)
-    messages = []
-    monkeypatch.setattr(tray.tray, "showMessage", lambda title, msg, icon: messages.append(msg))
+def test_query_status_reads_long_responses(tmp_path, monkeypatch):
+    """Une réponse de plus de 4 Ko était tronquée et passait pour un daemon injoignable."""
+    import json
+    import socket
+    import threading
 
-    tray._on_tray_activated(QSystemTrayIcon.ActivationReason.Trigger)
+    path = str(tmp_path / "s.sock")
+    payload = {"is_child": True, "blocked_sites": [{"name": f"site{i}.example.com"} for i in range(500)]}
+    server = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    server.bind(path)
+    server.listen(1)
 
-    assert len(messages) == 1
+    def serve():
+        conn, _ = server.accept()
+        conn.recv(4096)
+        conn.sendall((json.dumps(payload) + "\n").encode())
+        conn.close()
 
-
-def test_click_includes_last_blocked_app(monkeypatch, qapp):
-    tray = ChildTray(qapp)
-    monkeypatch.setattr(
-        child_tray,
-        "query_status",
-        lambda: {"is_child": True, "minutes_remaining": 30, "recent_blocks": ["discord", "steam"]},
-    )
-    tray.poll()
-
-    messages = []
-    monkeypatch.setattr(tray.tray, "showMessage", lambda title, msg, icon: messages.append(msg))
-    tray._on_tray_activated(QSystemTrayIcon.ActivationReason.Trigger)
-
-    assert "steam" in messages[0]
+    thread = threading.Thread(target=serve)
+    thread.start()
+    monkeypatch.setattr(child_tray, "SOCKET_PATH", path)
+    try:
+        assert child_tray.query_status() == payload
+    finally:
+        thread.join(timeout=5)
+        server.close()
 
 
 def test_notifies_new_blocked_app_once(monkeypatch, qapp):

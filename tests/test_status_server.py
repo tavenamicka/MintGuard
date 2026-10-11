@@ -26,7 +26,7 @@ import pytest
 from mintguard.backend.scheduler import Scheduler
 from mintguard.backend.status_server import StatusServer
 from mintguard.db.database import get_session, init_db
-from mintguard.db.models import ActivityLog, Child
+from mintguard.db.models import ActivityLog, AppDailyUsage, BlockedApp, BlockedSite, Child
 
 FAKE_PARENT_UID = 1000
 FAKE_CHILD_UID = 1001
@@ -151,6 +151,9 @@ def test_real_socket_roundtrip_returns_own_status_only(tmp_path, monkeypatch):
         "minutes_remaining": 5,
         "grace_seconds_remaining": None,
         "recent_blocks": ["minecraft"],
+        "blocked_apps": [],
+        "blocked_sites": [],
+        "last_block_today": "minecraft",
     }
 
 
@@ -174,3 +177,38 @@ def test_silent_client_does_not_block_handler_forever(monkeypatch):
         assert server_side.fileno() == -1  # connexion refermée
     finally:
         client_side.close()
+
+
+def test_build_status_lists_this_childs_blocked_apps_and_sites(monkeypatch):
+    """L'enfant voit au clic ce qui le concerne : ses règles et les règles globales, pas
+    celles d'un autre enfant ; temps restant calculé pour les quotas."""
+    from datetime import date
+
+    emma = add_child("emma")
+    other = add_child("lucas")
+    session = get_session()
+    session.add_all([
+        BlockedApp(app_name="steam", enabled=True, child_id=emma, daily_budget_minutes=60),
+        BlockedApp(app_name="discord", enabled=True, child_id=None),
+        BlockedApp(app_name="minecraft", enabled=True, child_id=other),
+        BlockedSite(domain="tiktok.com", blocked=True, child_id=emma),
+        BlockedSite(domain="youtube.com", blocked=True, child_id=other),
+        AppDailyUsage(child_id=emma, app_name="steam", date=date.today().isoformat(), seconds_used=35 * 60),
+        ActivityLog(child_id=emma, action="app_blocked", details="Application bloquée : discord"),
+    ])
+    session.commit()
+    session.close()
+    monkeypatch.setattr("mintguard.backend.status_server.pwd.getpwuid", _fake_getpwuid({FAKE_CHILD_UID: "emma"}))
+
+    status = StatusServer(Scheduler())._build_status(FAKE_CHILD_UID)
+
+    assert [a["name"] for a in status["blocked_apps"]] == ["discord", "steam"]
+    steam = next(a for a in status["blocked_apps"] if a["name"] == "steam")
+    assert steam["budget_minutes"] == 60 and steam["remaining_minutes"] == 25
+    assert [s["name"] for s in status["blocked_sites"]] == ["tiktok.com"]
+    assert status["last_block_today"] == "discord"
+
+
+def test_last_block_name_extracted_from_quota_details():
+    assert StatusServer._app_name_from_details("Quota atteint : steam (60 min/jour)") == "steam"
+    assert StatusServer._app_name_from_details("autre chose") == "autre chose"
