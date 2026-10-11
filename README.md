@@ -9,6 +9,40 @@ Application de contrôle parental pour Linux Mint — simple et accessible pour 
 
 > Version **0.1.1**. Statut : Phase 3 (Sécurité & Intégration) terminée, Phase 4 (Testing & Release) en cours — bascule DNS, iptables, audit de sécurité, audit d'accessibilité et audit du code (2026-10-11) faits. Voir [PROJECT_BRIEF.md](PROJECT_BRIEF.md) pour les spécifications complètes et [CLAUDE_CODE_BRIEFING.md](CLAUDE_CODE_BRIEFING.md) pour le plan d'implémentation par phases.
 
+## Aperçu
+
+Captures de l'interface parent, réalisées sur des données fictives.
+
+| Tableau de bord | Réglages : limite de temps | Rapports |
+|---|---|---|
+| ![Tableau de bord : protection active, plage horaire et temps utilisé aujourd'hui](docs/screenshots/tableau-de-bord.png) | ![Réglages : plage horaire et limite quotidienne par jour](docs/screenshots/reglages-temps.png) | ![Rapports des 7 derniers jours](docs/screenshots/rapports.png) |
+
+## Installer MintGuard (parents)
+
+Pas besoin d'être à l'aise avec l'informatique : il suffit de suivre ces 6 étapes, dans l'ordre. Comptez 10 minutes.
+
+**Avant de commencer**, vérifiez que :
+- votre ordinateur fonctionne sous **Linux Mint** (ou Ubuntu) et est connecté à Internet ;
+- vous connaissez le **mot de passe** que vous tapez pour ouvrir votre session ;
+- chaque enfant a **son propre compte** sur l'ordinateur (c'est ainsi que MintGuard sait qui l'utilise).
+
+1. **Téléchargez le fichier d'installation.** Ouvrez la [page des versions](https://github.com/tavenamicka/MintGuard/releases/latest), descendez jusqu'à « Assets » et cliquez sur le fichier `mintguard_0.1.1-1_all.deb` (ou un numéro plus récent). Il est enregistré dans le dossier **Téléchargements**.
+2. **Lancez l'installation.** Dans le dossier Téléchargements, double-cliquez sur ce fichier. Une fenêtre s'ouvre : cliquez sur **Installer**, tapez votre mot de passe, puis attendez la fin (environ une minute).
+3. **Ouvrez MintGuard.** Cliquez sur le menu de l'ordinateur (en bas à gauche), tapez « MintGuard » et cliquez sur l'icône.
+4. **Répondez aux questions de l'assistant.** Il vous demande le prénom de votre enfant, son âge (pour choisir des réglages adaptés) et un **code PIN** à 4 chiffres. Notez ce code sur papier : il protège vos réglages.
+5. **Activez la protection.** Si le message « La protection n'est pas encore activée » apparaît, cliquez sur **« Activer la protection maintenant »** et tapez votre mot de passe. C'est fait : MintGuard se remettra en route tout seul à chaque démarrage.
+6. **Activez le blocage des sites.** Si le message « Le blocage des sites ne fonctionne pas » apparaît, cliquez sur **« Activer le blocage des sites »** et tapez votre mot de passe. Sans cette étape, les horaires fonctionnent mais aucun site n'est bloqué.
+
+Un souci ? Consultez le [guide d'installation](docs/INSTALLATION.md), qui explique quoi faire pas à pas.
+
+## Mettre à jour MintGuard
+
+**Quelle version avez-vous ?** Elle est écrite dans le titre de la fenêtre MintGuard, par exemple « MintGuard 0.1.1 ». Si le titre affiche seulement « MintGuard », vous avez la version 0.1.0. Les nouveautés de chaque version sont décrites sur la [page des versions](https://github.com/tavenamicka/MintGuard/releases) et dans le [journal des modifications](CHANGELOG.md).
+
+**Pour mettre à jour**, refaites les étapes 1 et 2 avec le nouveau fichier : téléchargez-le, double-cliquez dessus, cliquez sur **Installer** (ou **Mettre à niveau**) et tapez votre mot de passe. Inutile de désinstaller l'ancienne version : vos enfants, leurs horaires, les sites et applications bloqués et votre code PIN sont conservés.
+
+**Après la mise à jour**, ouvrez MintGuard. Si une carte propose « Activer la protection maintenant » ou « Activer le blocage des sites », cliquez dessus et tapez votre mot de passe. C'est le cas en passant de la 0.1.0 à la 0.1.1 ; à partir de la 0.1.1, la protection se relance d'elle-même après chaque mise à jour.
+
 ## Guide utilisateur
 
 Pour les parents : [Français](docs/USER_MANUAL_FR.md) · [English](docs/USER_MANUAL_EN.md) · [Deutsch](docs/USER_MANUAL_DE.md) · [Español](docs/USER_MANUAL_ES.md)
@@ -45,6 +79,8 @@ sudo apt install ./dist/mintguard_0.1.1-1_all.deb   # apt installe aussi les dé
 ```
 
 Ouvrez ensuite MintGuard depuis le menu des applications : le Tableau de bord propose « Activer la protection » (démarre le daemon), puis « Activer le blocage des sites » (bascule DNS). Pour réinstaller le même numéro de version, ajoutez `--reinstall`. Désinstallation : `sudo apt remove mintguard` (le DNS d'origine est rétabli), ou `purge` pour supprimer aussi la base et les journaux. Détails : [docs/INSTALLATION.md](docs/INSTALLATION.md).
+
+**Publier une nouvelle version** : augmentez le numéro dans `mintguard/__init__.py` (lu par `scripts/build-deb.sh` pour nommer le paquet), `setup.py` et `app.version` des 4 fichiers de `mintguard/locales/`, puis ajoutez une entrée en tête de [CHANGELOG.md](CHANGELOG.md) et [CHANGELOG.en.md](CHANGELOG.en.md), avec ce que le parent doit faire après la mise à jour s'il y a lieu. Un numéro plus élevé que la version installée permet aux parents de mettre à jour par simple double-clic, sans `--reinstall`. Le paquet relance lui-même le service de protection après une mise à jour s'il tournait.
 
 ## Installation (développement)
 

@@ -15,7 +15,7 @@ Esta guía le acompaña paso a paso. Si algo no sale como esperaba, vaya a «Si 
 
 1. Abra la [página de versiones de MintGuard](https://github.com/tavenamicka/MintGuard/releases/latest).
 2. Baje hasta la zona **«Assets»**.
-3. Haga clic en `mintguard_0.1.0-1_all.deb`. Este archivo es el «instalador»: la extensión `.deb` es la que usan los instaladores en Linux Mint.
+3. Haga clic en `mintguard_0.1.1-1_all.deb` (o un número más reciente). Este archivo es el «instalador»: la extensión `.deb` es la que usan los instaladores en Linux Mint.
 
 El archivo se guarda en la carpeta **Descargas**.
 
@@ -42,6 +42,10 @@ En el primer inicio, MintGuard le guía. Le pide:
 
 Si aparece el mensaje **«La protección aún no está activada»**, haga clic en **«Activar la protección ahora»** y escriba su contraseña. La protección ya está en marcha y se reinicia sola con el ordenador.
 
+### Paso 6 — Activar el bloqueo de sitios
+
+Si aparece el mensaje **«El bloqueo de sitios no funciona»**, haga clic en **«Activar el bloqueo de sitios»** y escriba su contraseña. Su ordenador pasa entonces por MintGuard para encontrar los sitios web: es lo que permite bloquear los que usted eligió. Sin este paso, los horarios funcionan, pero no se bloquea ningún sitio.
+
 Para lo que sigue (definir franjas horarias, bloquear sitios web o aplicaciones), lea la guía: [Français](USER_MANUAL_FR.md) · [English](USER_MANUAL_EN.md) · [Deutsch](USER_MANUAL_DE.md) · [Español](USER_MANUAL_ES.md).
 
 ### Otro método: instalar con el terminal
@@ -66,6 +70,16 @@ sudo apt install ./mintguard_0.1.0-1_all.deb
 
 (`sudo` significa «ejecutar como administrador» y `apt` es la herramienta que instala programas en Linux Mint.)
 
+### Actualizar MintGuard
+
+**¿Qué versión tiene?** Aparece en el título de la ventana de MintGuard, por ejemplo «MintGuard 0.1.1». Si el título solo dice «MintGuard», tiene la versión 0.1.0. Las novedades de cada versión se describen en la [página de versiones](https://github.com/tavenamicka/MintGuard/releases) y en el [registro de cambios](../CHANGELOG.en.md) (en inglés).
+
+**Para actualizar**, repita los pasos 1 y 2 con el nuevo archivo: descárguelo, haga doble clic, pulse **Instalar** (o **Actualizar**) y escriba su contraseña. No hace falta desinstalar la versión anterior: sus hijos, sus horarios, los sitios y aplicaciones bloqueados y su código PIN se conservan.
+
+**Después de actualizar**, abra MintGuard. Si una tarjeta le propone «Activar la protección ahora» o «Activar el bloqueo de sitios», haga clic y escriba su contraseña. Ocurre al pasar de la 0.1.0 a la 0.1.1; a partir de la 0.1.1, la protección se reinicia sola después de cada actualización.
+
+En el terminal, desde la carpeta Descargas: `sudo apt install ./mintguard_0.1.1-1_all.deb` (cambie el número por el del archivo descargado).
+
 ### Si algo no funciona
 
 | Lo que ve | Lo que ocurre | Qué hacer |
@@ -73,6 +87,7 @@ sudo apt install ./mintguard_0.1.0-1_all.deb
 | MintGuard no aparece en el menú | El menú aún no se ha actualizado. | Cierre la sesión y vuelva a abrirla, o reinicie el ordenador. |
 | Un mensaje habla de «dependencias» o de un paquete no encontrado | El ordenador no pudo descargar algo que MintGuard necesita. | Compruebe que está conectado a Internet y vuelva a intentar la instalación. |
 | Vuelve el mensaje «La protección aún no está activada» | La protección no se inició. | Haga clic de nuevo en «Activar la protección ahora». Si falla, abra el terminal y escriba `sudo systemctl start mintguard-daemon`. |
+| Aparece el mensaje «El bloqueo de sitios no funciona» | Su ordenador todavía no pasa por MintGuard para encontrar los sitios web. | Haga clic en «Activar el bloqueo de sitios» y escriba su contraseña. Si falla, abra el terminal y escriba `sudo /usr/lib/mintguard/switch-dns.sh`. |
 | Ha olvidado el código PIN | Pasa a menudo y hay una solución. | En la ventana del código, haga clic en «¿Olvidaste tu código?» (véase la guía del usuario). |
 | Quiere desinstalar | — | En el terminal, escriba `sudo apt remove mintguard` (se conservan sus ajustes) o `sudo apt purge mintguard` (se borra todo). |
 

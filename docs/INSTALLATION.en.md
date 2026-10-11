@@ -15,7 +15,7 @@ This guide walks you through, step by step. If something does not go as expected
 
 1. Open the [MintGuard releases page](https://github.com/tavenamicka/MintGuard/releases/latest).
 2. Scroll down to the **"Assets"** area.
-3. Click `mintguard_0.1.0-1_all.deb`. This file is the "installer": the `.deb` extension is the one used for installers on Linux Mint.
+3. Click `mintguard_0.1.1-1_all.deb` (or a higher number). This file is the "installer": the `.deb` extension is the one used for installers on Linux Mint.
 
 The file is saved in the **Downloads** folder.
 
@@ -42,6 +42,10 @@ On first launch, MintGuard guides you. It asks for:
 
 If the message **"Protection isn't active yet"** appears, click **"Activate protection now"**, then type your password. Protection is now running and restarts by itself with the computer.
 
+### Step 6 — Turn on website blocking
+
+If the message **"Website blocking is not working"** appears, click **"Turn on website blocking"**, then type your password. Your computer now goes through MintGuard to find websites: this is what lets it block the ones you chose. Without this step, time limits work, but no website is blocked.
+
 For what comes next (setting time slots, blocking websites or apps), read the guide: [Français](USER_MANUAL_FR.md) · [English](USER_MANUAL_EN.md) · [Deutsch](USER_MANUAL_DE.md) · [Español](USER_MANUAL_ES.md).
 
 ### Other method: install with the terminal
@@ -66,6 +70,16 @@ sudo apt install ./mintguard_0.1.0-1_all.deb
 
 (`sudo` means "run as administrator", and `apt` is the tool that installs programs on Linux Mint.)
 
+### Updating MintGuard
+
+**Which version do you have?** It is shown in the title of the MintGuard window, for example "MintGuard 0.1.1". If the title only says "MintGuard", you have version 0.1.0. What's new in each version is described on the [releases page](https://github.com/tavenamicka/MintGuard/releases) and in the [changelog](../CHANGELOG.en.md).
+
+**To update**, repeat steps 1 and 2 with the new file: download it, double-click it, click **Install** (or **Upgrade**) and type your password. There is no need to uninstall the old version: your children, their schedules, blocked websites and apps, and your PIN code are kept.
+
+**After updating**, open MintGuard. If a card offers "Activate protection now" or "Turn on website blocking", click it and type your password. This happens when going from 0.1.0 to 0.1.1; from 0.1.1 on, protection restarts by itself after each update.
+
+From a terminal, in the Downloads folder: `sudo apt install ./mintguard_0.1.1-1_all.deb` (use the number of the file you downloaded).
+
 ### If something goes wrong
 
 | What you see | What is happening | What to do |
@@ -73,6 +87,7 @@ sudo apt install ./mintguard_0.1.0-1_all.deb
 | MintGuard does not appear in the menu | The menu has not refreshed yet. | Log out and log back in, or restart the computer. |
 | A message mentions "dependencies" or a missing package | The computer could not download something MintGuard needs. | Check that you are connected to the Internet, then try the installation again. |
 | The message "Protection isn't active yet" comes back | Protection did not start. | Click "Activate protection now" again. If that fails, open the terminal and type `sudo systemctl start mintguard-daemon`. |
+| The message "Website blocking is not working" appears | Your computer does not go through MintGuard to find websites yet. | Click "Turn on website blocking" and type your password. If that fails, open the terminal and type `sudo /usr/lib/mintguard/switch-dns.sh`. |
 | You forgot the PIN code | This happens often, and there is a solution. | In the code window, click "Forgot your code?" (see the user guide). |
 | You want to uninstall | — | In the terminal, type `sudo apt remove mintguard` (your settings are kept) or `sudo apt purge mintguard` (everything is deleted). |
 

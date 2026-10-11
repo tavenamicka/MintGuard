@@ -15,7 +15,7 @@ Diese Anleitung führt Sie Schritt für Schritt. Wenn etwas nicht wie erwartet f
 
 1. Öffnen Sie die [Seite mit den MintGuard-Versionen](https://github.com/tavenamicka/MintGuard/releases/latest).
 2. Scrollen Sie zum Bereich **„Assets“**.
-3. Klicken Sie auf `mintguard_0.1.0-1_all.deb`. Diese Datei ist das „Installationsprogramm“: Die Endung `.deb` wird unter Linux Mint für Installationsprogramme verwendet.
+3. Klicken Sie auf `mintguard_0.1.1-1_all.deb` (oder eine höhere Nummer). Diese Datei ist das „Installationsprogramm“: Die Endung `.deb` wird unter Linux Mint für Installationsprogramme verwendet.
 
 Die Datei wird im Ordner **Downloads** gespeichert.
 
@@ -42,6 +42,10 @@ Beim ersten Start führt MintGuard Sie durch die Einrichtung. Es fragt nach:
 
 Erscheint die Meldung **„Der Schutz ist noch nicht aktiv“**, klicken Sie auf **„Schutz jetzt aktivieren“** und geben Sie Ihr Passwort ein. Der Schutz läuft nun und startet mit dem Computer automatisch neu.
 
+### Schritt 6 — Website-Sperre aktivieren
+
+Erscheint die Meldung **„Die Website-Sperre funktioniert nicht“**, klicken Sie auf **„Website-Sperre aktivieren“** und geben Sie Ihr Passwort ein. Ihr Computer nutzt nun MintGuard, um Websites zu finden: Nur so können die von Ihnen gewählten Seiten gesperrt werden. Ohne diesen Schritt funktionieren die Zeitlimits, aber keine Website wird gesperrt.
+
 Wie es weitergeht (Zeitfenster festlegen, Websites oder Apps sperren), lesen Sie im Handbuch: [Français](USER_MANUAL_FR.md) · [English](USER_MANUAL_EN.md) · [Deutsch](USER_MANUAL_DE.md) · [Español](USER_MANUAL_ES.md).
 
 ### Andere Methode: Installation über das Terminal
@@ -66,6 +70,16 @@ sudo apt install ./mintguard_0.1.0-1_all.deb
 
 (`sudo` bedeutet „als Administrator ausführen“, und `apt` ist das Werkzeug, das unter Linux Mint Programme installiert.)
 
+### MintGuard aktualisieren
+
+**Welche Version haben Sie?** Sie steht im Titel des MintGuard-Fensters, zum Beispiel „MintGuard 0.1.1“. Steht im Titel nur „MintGuard“, haben Sie Version 0.1.0. Die Neuerungen jeder Version stehen auf der [Seite mit den Versionen](https://github.com/tavenamicka/MintGuard/releases) und im [Änderungsprotokoll](../CHANGELOG.en.md) (auf Englisch).
+
+**Zum Aktualisieren** wiederholen Sie die Schritte 1 und 2 mit der neuen Datei: herunterladen, doppelklicken, auf **Installieren** (oder **Aktualisieren**) klicken und Ihr Passwort eingeben. Die alte Version muss nicht deinstalliert werden: Ihre Kinder, ihre Zeitpläne, gesperrte Websites und Apps sowie Ihr PIN-Code bleiben erhalten.
+
+**Nach der Aktualisierung** öffnen Sie MintGuard. Bietet eine Karte „Schutz jetzt aktivieren“ oder „Website-Sperre aktivieren“ an, klicken Sie darauf und geben Sie Ihr Passwort ein. Das ist beim Wechsel von 0.1.0 auf 0.1.1 der Fall; ab 0.1.1 startet der Schutz nach jeder Aktualisierung von selbst neu.
+
+Im Terminal, im Ordner Downloads: `sudo apt install ./mintguard_0.1.1-1_all.deb` (ersetzen Sie die Nummer durch die der heruntergeladenen Datei).
+
 ### Wenn etwas nicht klappt
 
 | Was Sie sehen | Was passiert | Was zu tun ist |
@@ -73,6 +87,7 @@ sudo apt install ./mintguard_0.1.0-1_all.deb
 | MintGuard erscheint nicht im Menü | Das Menü wurde noch nicht aktualisiert. | Melden Sie sich ab und wieder an oder starten Sie den Computer neu. |
 | Eine Meldung erwähnt „Abhängigkeiten“ oder ein fehlendes Paket | Der Computer konnte etwas, das MintGuard braucht, nicht herunterladen. | Prüfen Sie die Internetverbindung und versuchen Sie die Installation erneut. |
 | Die Meldung „Der Schutz ist noch nicht aktiv“ kehrt zurück | Der Schutz wurde nicht gestartet. | Klicken Sie erneut auf „Schutz jetzt aktivieren“. Schlägt das fehl, öffnen Sie das Terminal und tippen Sie `sudo systemctl start mintguard-daemon`. |
+| Die Meldung „Die Website-Sperre funktioniert nicht“ erscheint | Ihr Computer nutzt MintGuard noch nicht, um Websites zu finden. | Klicken Sie auf „Website-Sperre aktivieren“ und geben Sie Ihr Passwort ein. Schlägt das fehl, öffnen Sie das Terminal und tippen Sie `sudo /usr/lib/mintguard/switch-dns.sh`. |
 | Sie haben den PIN-Code vergessen | Das passiert oft, und es gibt eine Lösung. | Klicken Sie im Code-Fenster auf „Code vergessen?“ (siehe Benutzerhandbuch). |
 | Sie möchten deinstallieren | — | Tippen Sie im Terminal `sudo apt remove mintguard` (Ihre Einstellungen bleiben erhalten) oder `sudo apt purge mintguard` (alles wird gelöscht). |
 

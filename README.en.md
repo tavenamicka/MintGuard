@@ -19,20 +19,29 @@ Screenshots of the parent interface, taken with fictional data. The interface it
 
 ## Install MintGuard (parents)
 
-No computer skills needed: just follow these 5 steps, in order. Allow 10 minutes.
+No computer skills needed: just follow these 6 steps, in order. Allow 10 minutes.
 
 **Before you start**, check that:
 - your computer runs **Linux Mint** (or Ubuntu) and is connected to the Internet;
 - you know the **password** you type to log in;
 - each child has **their own account** on the computer (this is how MintGuard knows who is using it).
 
-1. **Download the installation file.** Open the [releases page](https://github.com/tavenamicka/MintGuard/releases/latest), scroll down to "Assets" and click the file `mintguard_0.1.0-1_all.deb`. It is saved in the **Downloads** folder.
+1. **Download the installation file.** Open the [releases page](https://github.com/tavenamicka/MintGuard/releases/latest), scroll down to "Assets" and click the file `mintguard_0.1.1-1_all.deb` (or a higher number). It is saved in the **Downloads** folder.
 2. **Start the installation.** In the Downloads folder, double-click that file. A window opens: click **Install**, type your password, then wait until it finishes (about one minute).
 3. **Open MintGuard.** Click the computer's menu (bottom left), type "MintGuard" and click the icon.
 4. **Answer the assistant's questions.** It asks for your child's first name, their age (to pick suitable settings) and a **PIN code** of 4 digits. Write this code down on paper: it protects your settings.
 5. **Turn on protection.** If the message "Protection isn't active yet" appears, click **"Activate protection now"** and type your password. Done: MintGuard will restart by itself every time the computer starts.
+6. **Turn on website blocking.** If the message "Website blocking is not working" appears, click **"Turn on website blocking"** and type your password. Without this step, time limits work but no website is blocked.
 
 Having trouble? See the [installation guide](docs/INSTALLATION.en.md), which explains what to do step by step.
+
+## Updating MintGuard
+
+**Which version do you have?** It is shown in the title of the MintGuard window, for example "MintGuard 0.1.1". If the title only says "MintGuard", you have version 0.1.0. What's new in each version is described on the [releases page](https://github.com/tavenamicka/MintGuard/releases) and in the [changelog](CHANGELOG.en.md).
+
+**To update**, repeat steps 1 and 2 with the new file: download it, double-click it, click **Install** (or **Upgrade**) and type your password. There is no need to uninstall the old version: your children, their schedules, blocked websites and apps, and your PIN code are kept.
+
+**After updating**, open MintGuard. If a card offers "Activate protection now" or "Turn on website blocking", click it and type your password. This happens when going from 0.1.0 to 0.1.1; from 0.1.1 on, protection restarts by itself after each update.
 
 ## User guide
 

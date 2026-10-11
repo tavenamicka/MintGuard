@@ -19,20 +19,29 @@ Capturas de la interfaz para padres, con datos ficticios. La interfaz se muestra
 
 ## Instalar MintGuard (padres)
 
-No hacen falta conocimientos de informática: siga estos 5 pasos, en orden. Calcule unos 10 minutos.
+No hacen falta conocimientos de informática: siga estos 6 pasos, en orden. Calcule unos 10 minutos.
 
 **Antes de empezar**, compruebe que:
 - su ordenador funciona con **Linux Mint** (o Ubuntu) y está conectado a Internet;
 - conoce la **contraseña** que escribe para iniciar sesión;
 - cada hijo tiene **su propia cuenta** en el ordenador (así MintGuard sabe quién lo está usando).
 
-1. **Descargue el archivo de instalación.** Abra la [página de versiones](https://github.com/tavenamicka/MintGuard/releases/latest), baje hasta «Assets» y haga clic en el archivo `mintguard_0.1.0-1_all.deb`. Se guarda en la carpeta **Descargas**.
+1. **Descargue el archivo de instalación.** Abra la [página de versiones](https://github.com/tavenamicka/MintGuard/releases/latest), baje hasta «Assets» y haga clic en el archivo `mintguard_0.1.1-1_all.deb` (o un número más reciente). Se guarda en la carpeta **Descargas**.
 2. **Inicie la instalación.** En la carpeta Descargas, haga doble clic en ese archivo. Se abre una ventana: haga clic en **Instalar**, escriba su contraseña y espere a que termine (alrededor de un minuto).
 3. **Abra MintGuard.** Haga clic en el menú del ordenador (abajo a la izquierda), escriba «MintGuard» y haga clic en el icono.
 4. **Responda a las preguntas del asistente.** Le pide el nombre de su hijo, su edad (para elegir ajustes adecuados) y un **código PIN** de 4 dígitos. Anótelo en papel: protege sus ajustes.
 5. **Active la protección.** Si aparece el mensaje «La protección aún no está activada», haga clic en **«Activar la protección ahora»** y escriba su contraseña. Listo: MintGuard se iniciará solo cada vez que arranque el ordenador.
+6. **Active el bloqueo de sitios.** Si aparece el mensaje «El bloqueo de sitios no funciona», haga clic en **«Activar el bloqueo de sitios»** y escriba su contraseña. Sin este paso, los horarios funcionan pero no se bloquea ningún sitio web.
 
 ¿Algún problema? Consulte la [guía de instalación](docs/INSTALLATION.es.md), que explica qué hacer paso a paso.
+
+## Actualizar MintGuard
+
+**¿Qué versión tiene?** Aparece en el título de la ventana de MintGuard, por ejemplo «MintGuard 0.1.1». Si el título solo dice «MintGuard», tiene la versión 0.1.0. Las novedades de cada versión se describen en la [página de versiones](https://github.com/tavenamicka/MintGuard/releases) y en el [registro de cambios](CHANGELOG.en.md) (en inglés).
+
+**Para actualizar**, repita los pasos 1 y 2 con el nuevo archivo: descárguelo, haga doble clic, pulse **Instalar** (o **Actualizar**) y escriba su contraseña. No hace falta desinstalar la versión anterior: sus hijos, sus horarios, los sitios y aplicaciones bloqueados y su código PIN se conservan.
+
+**Después de actualizar**, abra MintGuard. Si una tarjeta le propone «Activar la protección ahora» o «Activar el bloqueo de sitios», haga clic y escriba su contraseña. Ocurre al pasar de la 0.1.0 a la 0.1.1; a partir de la 0.1.1, la protección se reinicia sola después de cada actualización.
 
 ## Guía del usuario
 
