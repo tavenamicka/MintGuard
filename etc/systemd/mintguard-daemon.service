@@ -1,7 +1,13 @@
 [Unit]
 Description=MintGuard Parental Control Daemon
-After=network.target
-Requires=dnsmasq.service
+After=network.target dnsmasq.service
+# Wants= et non Requires= : le daemon redemarre lui-meme dnsmasq de facon inconditionnelle
+# a chaque demarrage (voir daemon.py::main, commit "dnsmasq ne rechargeait jamais sa config
+# au demarrage"). Avec Requires=, systemd redemarre AUSSI l'unite qui le requiert des qu'une
+# unite requise est explicitement redemarree (man systemd.unit) : chaque restart de dnsmasq
+# provoquait donc un restart du daemon lui-meme, qui relancait aussitot dnsmasq, etc. -
+# boucle infinie jusqu'a start-limit-hit sur les deux services (constate en usage reel).
+Wants=dnsmasq.service
 
 [Service]
 Type=simple
