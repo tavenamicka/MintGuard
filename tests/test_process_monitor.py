@@ -28,6 +28,12 @@ def db(tmp_path):
     init_db(tmp_path / "test.db")
 
 
+@pytest.fixture(autouse=True)
+def no_path_lookup(monkeypatch):
+    """N'apprend pas les empreintes des vrais programmes installés sur la machine de test."""
+    monkeypatch.setattr("mintguard.backend.process_monitor.shutil.which", lambda name: None)
+
+
 def add_blocked_app(name: str, child_id: int | None = None, daily_budget_minutes: int | None = None) -> None:
     session = get_session()
     try:
@@ -51,8 +57,8 @@ def add_child(name: str, username: str) -> int:
 
 
 class FakeProcess:
-    def __init__(self, pid: int, name: str, username: str | None):
-        self.info = {"pid": pid, "name": name, "username": username}
+    def __init__(self, pid: int, name: str, username: str | None, exe: str | None = None):
+        self.info = {"pid": pid, "name": name, "username": username, "exe": exe}
         self.killed = False
 
     def kill(self):
@@ -195,3 +201,76 @@ def test_child_specific_rule_takes_priority_over_global(monkeypatch):
     # l'appli n'est pas tuée immédiatement.
     assert killed == []
     assert procs[0].killed is False
+
+
+
+# -- Copies renommées (empreinte de l'exécutable) ---------------------------------------------
+
+
+def _binary(tmp_path, name: str, content: bytes = b"\x7fELF fake game binary") -> str:
+    path = tmp_path / name
+    path.write_bytes(content)
+    return str(path)
+
+
+def test_kills_renamed_copy_of_blocked_app(monkeypatch, tmp_path):
+    """`cp /usr/bin/supertux ~/devoirs` : même contenu, autre nom - doit être tué aussi."""
+    original = _binary(tmp_path, "supertux")
+    copy = _binary(tmp_path, "devoirs")
+    monkeypatch.setattr("mintguard.backend.process_monitor.shutil.which", lambda name: original)
+    add_blocked_app("supertux")
+    add_child("Test", "mintguard-test-child")
+
+    procs = [FakeProcess(1, "devoirs", "mintguard-test-child", exe=copy)]
+    monkeypatch.setattr("mintguard.backend.process_monitor.psutil.process_iter", lambda *_: procs)
+
+    assert ProcessMonitor().check_and_kill() == ["supertux"]
+    assert procs[0].killed is True
+
+
+def test_learns_fingerprint_from_running_original(monkeypatch, tmp_path):
+    """Sans binaire trouvable dans le PATH : l'empreinte est apprise du processus d'origine
+    (ici lancé par le parent, qui n'est pas tué) puis reconnue sur la copie de l'enfant."""
+    original = _binary(tmp_path, "supertux")
+    copy = _binary(tmp_path, "calculatrice")
+    add_blocked_app("supertux")
+    add_child("Test", "mintguard-test-child")
+
+    procs = [
+        FakeProcess(1, "supertux", "parentuser", exe=original),
+        FakeProcess(2, "calculatrice", "mintguard-test-child", exe=copy),
+    ]
+    monkeypatch.setattr("mintguard.backend.process_monitor.psutil.process_iter", lambda *_: procs)
+
+    assert ProcessMonitor().check_and_kill() == ["supertux"]
+    assert procs[0].killed is False
+    assert procs[1].killed is True
+
+
+def test_different_program_with_same_size_is_not_killed(monkeypatch, tmp_path):
+    original = _binary(tmp_path, "supertux", b"A" * 32)
+    other = _binary(tmp_path, "inkscape", b"B" * 32)
+    monkeypatch.setattr("mintguard.backend.process_monitor.shutil.which", lambda name: original)
+    add_blocked_app("supertux")
+    add_child("Test", "mintguard-test-child")
+
+    procs = [FakeProcess(1, "inkscape", "mintguard-test-child", exe=other)]
+    monkeypatch.setattr("mintguard.backend.process_monitor.psutil.process_iter", lambda *_: procs)
+
+    assert ProcessMonitor().check_and_kill() == []
+    assert procs[0].killed is False
+
+
+def test_interpreter_fingerprint_is_never_learned(monkeypatch, tmp_path):
+    """Un script bloqué qui tourne sous python3 ne doit pas faire tuer tous les autres
+    programmes Python de l'enfant."""
+    python = _binary(tmp_path, "python3")
+    add_blocked_app("python3")
+    add_child("Test", "mintguard-test-child")
+    other_python = _binary(tmp_path, "monscript", (tmp_path / "python3").read_bytes())
+
+    procs = [FakeProcess(1, "monscript", "mintguard-test-child", exe=other_python),
+             FakeProcess(2, "python3", "parentuser", exe=python)]
+    monkeypatch.setattr("mintguard.backend.process_monitor.psutil.process_iter", lambda *_: procs)
+
+    assert ProcessMonitor().check_and_kill() == []

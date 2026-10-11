@@ -14,7 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import hashlib
 import logging
+import os
+import shutil
 from collections import defaultdict
 from datetime import date
 
@@ -26,6 +29,87 @@ from mintguard.db.models import ActivityLog, AppDailyUsage, BlockedApp, Child
 logger = logging.getLogger("mintguard.backend.process_monitor")
 
 
+# Interpréteurs et lanceurs génériques : leur empreinte ne doit jamais être associée à une
+# application bloquée, sinon bloquer un script lancé par python3 ferait tuer TOUS les
+# programmes Python de l'enfant.
+_GENERIC_EXECUTABLES = {"python", "python3", "perl", "ruby", "node", "java", "bash", "sh", "dash", "env", "electron"}
+_HASH_CHUNK = 1024 * 1024
+
+
+class _BinaryFingerprints:
+    """Reconnaît une application bloquée à l'empreinte (SHA-256) de son exécutable, et pas
+    seulement à son nom : copier ou renommer le programme (`cp /usr/bin/x ~/jeu`) suffisait
+    à contourner le blocage par nom.
+
+    Les empreintes sont apprises à partir des exécutables des applications bloquées
+    (`BlockedApp.binary_path`, sinon le programme du même nom dans le PATH) et de tout
+    processus portant un nom bloqué, quel que soit son compte. Coût maîtrisé : un fichier
+    n'est haché que si sa taille est celle d'un exécutable bloqué connu, et chaque fichier
+    (inode + date de modification) n'est haché qu'une fois.
+    """
+
+    def __init__(self):
+        self._app_by_hash: dict[str, str] = {}
+        self._known_sizes: set[int] = set()
+        self._hash_cache: dict[tuple[int, int, int, int], str] = {}
+        self._seeded: set[str] = set()
+
+    def _digest(self, path: str) -> tuple[int, str] | None:
+        try:
+            st = os.stat(path)
+        except OSError:
+            return None
+        key = (st.st_dev, st.st_ino, st.st_size, st.st_mtime_ns)
+        digest = self._hash_cache.get(key)
+        if digest is None:
+            h = hashlib.sha256()
+            try:
+                with open(path, "rb") as f:
+                    while chunk := f.read(_HASH_CHUNK):
+                        h.update(chunk)
+            except OSError:
+                return None
+            digest = h.hexdigest()
+            self._hash_cache[key] = digest
+        return st.st_size, digest
+
+    def learn(self, app_name: str, exe_path: str | None) -> None:
+        """Associe l'exécutable à l'application, s'il est bien le programme lui-même (même
+        nom que l'application) et pas un interpréteur ou un script lanceur."""
+        if not exe_path:
+            return
+        base = os.path.basename(exe_path).lower()
+        if base != app_name or base in _GENERIC_EXECUTABLES:
+            return
+        result = self._digest(exe_path)
+        if result is None:
+            return
+        size, digest = result
+        self._known_sizes.add(size)
+        self._app_by_hash.setdefault(digest, app_name)
+
+    def seed(self, app: "BlockedApp") -> None:
+        name = app.app_name.lower()
+        if name in self._seeded:
+            return
+        self._seeded.add(name)
+        candidate = app.binary_path or shutil.which(name)
+        if candidate:
+            self.learn(name, os.path.realpath(candidate))
+
+    def identify(self, exe_path: str | None) -> str | None:
+        """Nom de l'application bloquée dont `exe_path` est une copie, sinon None."""
+        if not exe_path or not self._known_sizes:
+            return None
+        try:
+            if os.stat(exe_path).st_size not in self._known_sizes:
+                return None
+        except OSError:
+            return None
+        result = self._digest(exe_path)
+        return self._app_by_hash.get(result[1]) if result else None
+
+
 class ProcessMonitor:
     """Surveille les processus en cours et termine les applications bloquées.
 
@@ -33,6 +117,9 @@ class ProcessMonitor:
     blocage total et immédiat (comportement historique) ; avec quota, l'application peut
     tourner jusqu'à épuisement de son temps cumulé du jour (`AppDailyUsage`), puis est tuée.
     """
+
+    def __init__(self):
+        self._fingerprints = _BinaryFingerprints()
 
     def get_blocked_apps(self) -> list[BlockedApp]:
         session = get_session()
@@ -80,11 +167,25 @@ class ProcessMonitor:
         events: list[tuple[int, str]] = []
         budgeted_running: dict[tuple[int, str], list[psutil.Process]] = defaultdict(list)
 
-        for proc in psutil.process_iter(["pid", "name", "username"]):
+        for app in blocked_apps:
+            self._fingerprints.seed(app)
+
+        for proc in psutil.process_iter(["pid", "name", "username", "exe"]):
             proc_name = (proc.info.get("name") or "").lower()
+            exe = proc.info.get("exe")
+            if proc_name in rules_by_name:
+                # Tout compte confondu (le parent qui lance l'application l'enseigne aussi).
+                self._fingerprints.learn(proc_name, exe)
             child_id = child_ids.get(self._plain_username(proc.info.get("username")))
-            if child_id is None or proc_name not in rules_by_name:
+            if child_id is None:
                 continue
+            if proc_name not in rules_by_name:
+                # Copie renommée d'une application bloquée ?
+                original = self._fingerprints.identify(exe)
+                if original is None or original not in rules_by_name:
+                    continue
+                logger.info("Copie renommée de %s détectée : %s (%s)", original, proc_name, exe)
+                proc_name = original
             candidates = rules_by_name[proc_name]
             rule = candidates.get(child_id) or candidates.get(None)
             if rule is None:

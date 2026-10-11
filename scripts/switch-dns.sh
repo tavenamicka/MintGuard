@@ -58,21 +58,23 @@ fi
 echo "Sauvegarde dans $BACKUP_DIR"
 
 echo "== Serveurs DNS amont =="
+# Chaque detection se termine par `|| true` : avec pipefail, un maillon en echec
+# (resolvectl inactif, grep sans resultat) arreterait sinon tout le script (set -e).
 # Adresses IPv4 non-locales uniquement : 127.x (stub systemd-resolved, dnsmasq
 # lui-meme) ne sont jamais un amont valable.
 extract_ips() { grep -oE '([0-9]{1,3}\.){3}[0-9]{1,3}' | grep -v '^127\.' | sort -u || true; }
 
 FALLBACK_SERVERS="$*"
 if [ -z "$FALLBACK_SERVERS" ]; then
-  FALLBACK_SERVERS="$(resolvectl status 2>/dev/null | grep -A2 'Current DNS Server\|DNS Servers' | extract_ips)"
+  FALLBACK_SERVERS="$(resolvectl status 2>/dev/null | grep -A2 'Current DNS Server\|DNS Servers' | extract_ips || true)"
 fi
 if [ -z "$FALLBACK_SERVERS" ]; then
-  FALLBACK_SERVERS="$(nmcli -t -f IP4.DNS dev show 2>/dev/null | extract_ips)"
+  FALLBACK_SERVERS="$(nmcli -t -f IP4.DNS dev show 2>/dev/null | extract_ips || true)"
 fi
 if [ -z "$FALLBACK_SERVERS" ]; then
   # Relance apres une premiere bascule : resolved est desactive, mais la conf
   # precedente contient deja les bons serveurs.
-  FALLBACK_SERVERS="$(grep -E '^server=[0-9]' "$INSTALLED_CONF" 2>/dev/null | extract_ips)"
+  FALLBACK_SERVERS="$(grep -E '^server=[0-9]' "$INSTALLED_CONF" 2>/dev/null | extract_ips || true)"
 fi
 
 USE_NM_RESOLV_FILE=0
