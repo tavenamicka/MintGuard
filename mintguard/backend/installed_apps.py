@@ -30,6 +30,7 @@ exécute un binaire différent) — best effort, pas une garantie.
 
 import configparser
 import logging
+import shlex
 from pathlib import Path
 
 logger = logging.getLogger("mintguard.backend.installed_apps")
@@ -54,11 +55,51 @@ CATEGORY_KEYWORDS: dict[str, set[str]] = {
 EXCLUDED_CATEGORIES = {"Settings", "System", "HardwareSettings", "Core", "ConsoleOnly"}
 
 
+# Interpréteurs et shells : le processus réellement lancé n'est pas identifiable depuis la
+# ligne Exec=, et proposer de bloquer "sh" ou "python3" tuerait tous les programmes de ce
+# type chez l'enfant. Ces entrées ne sont pas proposées (la saisie manuelle reste possible).
+_GENERIC_LAUNCHERS = {"sh", "bash", "dash", "python", "python3", "perl", "ruby", "node", "java"}
+
+
 def _process_name_from_exec(exec_line: str) -> str:
-    tokens = exec_line.split()
+    """Nom du processus que lancera cette ligne Exec=, ou "" s'il est indéterminable.
+
+    Déballe les lanceurs courants plutôt que de prendre le premier mot : sur ce poste,
+    Roblox (Sober) et WhatsApp (ZapZap) sont des Flatpak dont la ligne commence par
+    /usr/bin/flatpak - ils ressortaient tous deux sous le nom "flatpak", fusionnés en une
+    seule entrée, et la bloquer visait le lanceur de toutes les applis Flatpak de l'enfant
+    sans jamais atteindre le jeu lui-même.
+    """
+    try:
+        tokens = shlex.split(exec_line)
+    except ValueError:
+        tokens = exec_line.split()
     if not tokens:
         return ""
-    return Path(tokens[0]).name.lower()
+
+    program = Path(tokens[0]).name.lower()
+    if program == "env":
+        # env [-options] [VAR=valeur ...] programme args (-u/-C prennent un argument)
+        rest = tokens[1:]
+        while rest and (rest[0].startswith("-") or "=" in rest[0]):
+            option = rest.pop(0)
+            if option in ("-u", "--unset", "-C", "--chdir") and rest:
+                rest.pop(0)
+        return _process_name_from_exec(shlex.join(rest)) if rest else ""
+    if program == "flatpak":
+        # flatpak run [--command=X] [options] app.id args : le processus visible dans le bac
+        # à sable est la commande X, ou à défaut le dernier segment de l'identifiant.
+        for token in tokens:
+            if token.startswith("--command="):
+                return Path(token.split("=", 1)[1]).name.lower()
+        if "run" in tokens:
+            after_run = [t for t in tokens[tokens.index("run") + 1 :] if not t.startswith("-")]
+            if after_run:
+                return after_run[0].rsplit(".", 1)[-1].lower()
+        return ""
+    if program in _GENERIC_LAUNCHERS:
+        return ""
+    return program
 
 
 def _category_for(categories: set[str]) -> str | None:

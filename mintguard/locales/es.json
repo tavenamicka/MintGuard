@@ -26,7 +26,8 @@
     "tooltip_inactive": "MintGuard instalado, pero inactivo",
     "notif_active": "El servicio MintGuard está activo de nuevo.",
     "notif_inactive": "No se puede contactar con el servicio MintGuard. El control parental ya no se aplica.",
-    "open_action": "Abrir MintGuard"
+    "open_action": "Abrir MintGuard",
+    "tooltip_dns_broken": "MintGuard activo, pero el bloqueo de sitios no funciona (abra MintGuard para corregirlo)"
   },
   "common": {
     "ok": "Confirmar",
@@ -232,6 +233,7 @@
   "add_child": {
     "title": "Añadir un hijo",
     "add_button": "Añadir",
-    "error_duplicate": "Esta cuenta ya está gestionada por MintGuard."
+    "error_duplicate": "Esta cuenta ya está gestionada por MintGuard.",
+    "error_unknown_account": "No existe ninguna cuenta «{0}» en este ordenador. Elija la cuenta de su hijo en la lista, o créela primero (Menú > Usuarios y grupos)."
   }
 }

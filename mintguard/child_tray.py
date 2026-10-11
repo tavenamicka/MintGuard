@@ -277,6 +277,9 @@ class ChildTray:
     def _warn_if_threshold_crossed(self, minutes_remaining: int | None) -> None:
         if minutes_remaining is None:
             return
+        # Le parent a rallongé le temps : les paliers repassés au-dessus se réarment, sinon
+        # l'enfant ne serait plus jamais prévenu avant la nouvelle échéance.
+        self._warned_thresholds = {t for t in self._warned_thresholds if t >= minutes_remaining}
         for threshold in self.thresholds:
             if minutes_remaining <= threshold and threshold not in self._warned_thresholds:
                 self._warned_thresholds.add(threshold)

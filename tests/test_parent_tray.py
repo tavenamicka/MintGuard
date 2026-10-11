@@ -35,6 +35,12 @@ def qapp():
     return QApplication.instance() or QApplication([])
 
 
+@pytest.fixture(autouse=True)
+def resolver_ok(monkeypatch):
+    """Isole les tests du vrai /etc/resolv.conf de la machine qui les exécute."""
+    monkeypatch.setattr(parent_tray, "system_resolver_uses_mintguard", lambda: True)
+
+
 def test_quits_when_account_is_a_child(monkeypatch, qapp):
     monkeypatch.setattr(parent_tray, "query_status", lambda: {"is_child": True, "minutes_remaining": 5})
     quit_calls = []
@@ -152,3 +158,12 @@ def test_right_click_does_not_open_main_gui(monkeypatch, qapp):
     tray._on_activated(QSystemTrayIcon.ActivationReason.Context)
 
     assert calls == []
+
+
+def test_shows_warning_icon_when_dns_bypasses_dnsmasq(monkeypatch, qapp):
+    monkeypatch.setattr(parent_tray, "query_status", lambda: {"is_child": False})
+    monkeypatch.setattr(parent_tray, "system_resolver_uses_mintguard", lambda: False)
+    tray = parent_tray.ParentTray(qapp)
+    tray.poll()
+    assert tray.tray.toolTip() == tray._("parent_tray.tooltip_dns_broken")
+    assert tray.tray.icon().cacheKey() == tray._icon_inactive.cacheKey()

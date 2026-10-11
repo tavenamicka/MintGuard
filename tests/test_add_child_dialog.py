@@ -31,6 +31,12 @@ def db(tmp_path):
     init_db(tmp_path / "test.db")
 
 
+@pytest.fixture(autouse=True)
+def accounts_exist(monkeypatch):
+    """Les comptes des tests (bob, emma...) n'existent pas sur la machine de test."""
+    monkeypatch.setattr("mintguard.gui.add_child_dialog.account_exists", lambda username: True)
+
+
 @pytest.fixture(scope="module", autouse=True)
 def qapp():
     return QApplication.instance() or QApplication([])
@@ -100,3 +106,22 @@ def test_age_bracket_defaults_and_can_be_changed():
 def test_prompt_returns_none_when_cancelled(monkeypatch):
     monkeypatch.setattr(AddChildDialog, "exec", lambda self: QDialog.DialogCode.Rejected)
     assert AddChildDialog.prompt(I18nLoader("fr")) is None
+
+
+
+def test_refuses_account_that_does_not_exist_on_the_system(monkeypatch):
+    """Une faute de frappe dans le nom du compte rendait l'enfant introuvable : aucune
+    limite ne s'appliquait, sans message."""
+    monkeypatch.setattr("mintguard.gui.add_child_dialog.account_exists", lambda username: False)
+    dialog = AddChildDialog(I18nLoader("fr"))
+    dialog.name_input.setText("Bob")
+    dialog.username_input.setCurrentText("bbo")
+    dialog._create()
+
+    assert dialog.result() != QDialog.DialogCode.Accepted
+    assert "bbo" in dialog._error_label.text()
+    session = get_session()
+    try:
+        assert session.query(Child).count() == 0
+    finally:
+        session.close()

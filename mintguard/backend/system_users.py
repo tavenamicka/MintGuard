@@ -64,3 +64,22 @@ def list_candidate_usernames(exclude: set[str] | None = None) -> list[str]:
         and entry.pw_name not in exclude
     }
     return sorted(candidates)
+
+
+def account_exists(username: str) -> bool | None:
+    """Le compte Linux existe-t-il sur ce poste ? None hors Linux (module `pwd` absent) :
+    l'appelant ne doit alors pas bloquer la saisie.
+
+    Le nom de compte est saisissable à la main (onboarding, ajout d'enfant) : avec une faute
+    de frappe, l'enfant n'était jamais reconnu comme connecté et aucune limite ne
+    s'appliquait, sans le moindre message au parent.
+    """
+    try:
+        import pwd
+    except ImportError:
+        return None
+    try:
+        pwd.getpwnam(username)
+    except KeyError:
+        return False
+    return True

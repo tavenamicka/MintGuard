@@ -81,3 +81,10 @@ def test_returns_empty_list_without_pwd_module(monkeypatch):
     # sans avoir a remplacer __import__ globalement (simule l'absence de `pwd` sous Windows).
     monkeypatch.setitem(sys.modules, "pwd", None)
     assert system_users.list_candidate_usernames() == []
+
+
+def test_account_exists_for_root_and_not_for_random_name():
+    from mintguard.backend.system_users import account_exists
+
+    assert account_exists("root") is True
+    assert account_exists("compte-qui-n-existe-pas-42") is False

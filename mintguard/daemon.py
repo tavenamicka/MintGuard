@@ -54,30 +54,41 @@ def run_cycle(
     au même rythme que la blocklist DNS : même but (empêcher un contournement du blocage DNS),
     et la liste des enfants change rarement.
     """
+    # Chaque étape est isolée (`_step`) : une étape qui échoue à chaque cycle (BD verrouillée,
+    # commande système en erreur...) ne doit jamais empêcher les suivantes de tourner - en
+    # particulier le Scheduler, sans quoi plus aucune session ne serait coupée.
+
     # `elapsed_seconds` sert aussi à ProcessMonitor pour accumuler le temps des applications à
     # quota (AppDailyUsage), même principe que DailyUsage ci-dessous.
-    process_monitor.check_and_kill(process_interval)
-    # Même cadence que check_and_kill() (un tick = process_interval secondes) : c'est cette
-    # écriture périodique dans DailyUsage, relue par le Dashboard, qui tient lieu d'"IPC temps
-    # réel" GUI<->daemon pour la barre de progression (cf. décision d'architecture ci-dessus).
+    _step("contrôle des processus", process_monitor.check_and_kill, process_interval)
+
     # Comptes connectés calculés une seule fois par cycle (psutil + un appel `loginctl`), puis
     # partagés entre le cumul du temps d'écran et la résolution de l'enfant actif - chacun
     # relançait auparavant sa propre requête loginctl, soit deux sous-processus toutes les 5 s.
-    active_usernames = usage_tracker.get_active_usernames()
-    usage_tracker.record_tick(process_interval, active_usernames)
+    active_usernames = _step("comptes connectés", usage_tracker.get_active_usernames)
+    child_ids: list[int] | None = None
+    if active_usernames is not None:
+        # Même cadence que check_and_kill() (un tick = process_interval secondes) : c'est cette
+        # écriture périodique dans DailyUsage, relue par le Dashboard, qui tient lieu d'"IPC
+        # temps réel" GUI<->daemon pour la barre de progression.
+        _step("temps d'écran", usage_tracker.record_tick, process_interval, active_usernames)
+        child_ids = _step("enfants connectés", logged_in_child_ids, active_usernames)
 
-    # Réutilisé à la fois par le suivi de temps par site (chaque cycle) et par la régénération
-    # DNS ci-dessous (seulement quand dns_refresh_interval le déclenche).
-    child_ids = logged_in_child_ids(active_usernames)
-    active_child_id = resolve_active_child_id(active_usernames, child_ids)
-    # Des comptes sont connectés mais aucun n'est un enfant (le parent seul) : seules les
-    # règles globales s'appliquent. Personne de connecté (écran de connexion) reste traité
-    # comme ambigu, donc restrictif - le prochain à se connecter peut être un enfant.
-    parent_only = bool(active_usernames) and not child_ids
-    site_usage_tracker.poll(process_interval, active_child_id)
+    # Comptes connectés inconnus (étape en échec) : traité comme ambigu, donc restrictif.
+    if child_ids is None:
+        active_child_id, parent_only = None, False
+    else:
+        # Réutilisé à la fois par le suivi de temps par site (chaque cycle) et par la
+        # régénération DNS ci-dessous (seulement quand dns_refresh_interval le déclenche).
+        active_child_id = resolve_active_child_id(active_usernames, child_ids)
+        # Des comptes sont connectés mais aucun n'est un enfant (le parent seul) : seules les
+        # règles globales s'appliquent. Personne de connecté (écran de connexion) reste traité
+        # comme ambigu, donc restrictif - le prochain à se connecter peut être un enfant.
+        parent_only = bool(active_usernames) and not child_ids
+    _step("temps par site", site_usage_tracker.poll, process_interval, active_child_id)
 
     if now - state["last_session_check"] >= session_interval:
-        scheduler.check_all_children()
+        _step("plages horaires", scheduler.check_all_children)
         state["last_session_check"] = now
 
     # Changement de compte connecté (parent -> enfant, enfant A -> enfant B) : la blocklist
@@ -91,10 +102,19 @@ def run_cycle(
         # `sync_child_dns_restriction()` ne reconstruit la chaîne iptables que si elle ne
         # correspond plus à la BD : un cycle sans changement (le cas courant) ne touche
         # plus au système du tout.
-        dns_controller.apply(active_child_id, parent_only=parent_only)
-        firewall_controller.sync_child_dns_restriction()
-        _log_resolver_change(state)
+        _step("blocklist DNS", dns_controller.apply, active_child_id, parent_only)
+        _step("pare-feu", firewall_controller.sync_child_dns_restriction)
+        _step("vérification du résolveur", _log_resolver_change, state)
         state["last_dns_refresh"] = now
+
+
+def _step(name: str, func, *args):
+    """Exécute une étape du cycle ; en cas d'erreur, la journalise et renvoie None."""
+    try:
+        return func(*args)
+    except Exception:
+        logger.exception("Étape « %s » en échec, les autres étapes du cycle continuent", name)
+        return None
 
 
 def _log_resolver_change(state: dict) -> None:

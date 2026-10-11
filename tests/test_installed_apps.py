@@ -119,3 +119,27 @@ def test_process_name_extraction_strips_path_and_arguments():
     assert installed_apps._process_name_from_exec("/opt/discord/Discord --no-sandbox %U") == "discord"
     assert installed_apps._process_name_from_exec("steam %U") == "steam"
     assert installed_apps._process_name_from_exec("") == ""
+
+
+
+def test_flatpak_apps_use_their_command_not_the_flatpak_launcher():
+    """Cas réel : Roblox (Sober) et WhatsApp (ZapZap) ressortaient tous deux sous "flatpak"."""
+    sober = "/usr/bin/flatpak run --branch=stable --arch=x86_64 --command=sober --file-forwarding org.vinegarhq.Sober -- @@u %u @@"
+    zapzap = "/usr/bin/flatpak run --branch=stable --arch=x86_64 --command=zapzap --file-forwarding com.rtosta.zapzap @@u %u @@"
+    assert installed_apps._process_name_from_exec(sober) == "sober"
+    assert installed_apps._process_name_from_exec(zapzap) == "zapzap"
+    assert installed_apps._process_name_from_exec("flatpak run org.example.SuperGame") == "supergame"
+
+
+def test_env_wrapper_is_unwrapped():
+    assert installed_apps._process_name_from_exec("env GDK_BACKEND=x11 /usr/bin/minetest %U") == "minetest"
+    assert installed_apps._process_name_from_exec("/usr/bin/env -u FOO tuxkart") == "tuxkart"
+
+
+def test_shell_and_interpreter_launchers_are_not_offered():
+    assert installed_apps._process_name_from_exec("sh -c 'jeu --plein-ecran'") == ""
+    assert installed_apps._process_name_from_exec("python3 /opt/jeu/main.py") == ""
+
+
+def test_quoted_program_path_is_parsed():
+    assert installed_apps._process_name_from_exec('"/opt/Mon Jeu/jeu" %U') == "jeu"

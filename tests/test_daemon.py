@@ -248,3 +248,32 @@ def test_dns_refreshed_immediately_when_logged_in_users_change(tmp_path, monkeyp
 def test_parent_only_requires_someone_logged_in(tmp_path, monkeypatch):
     applies = _run_dns_cycles(tmp_path, monkeypatch, [{"parent"}, set()], lambda users: [])
     assert applies == [(None, True), (None, False)]
+
+
+def test_failing_step_does_not_prevent_scheduler_and_dns(tmp_path, monkeypatch):
+    """Une étape qui échoue à chaque cycle ne doit jamais bloquer les suivantes - sinon une
+    erreur persistante du contrôle des processus empêchait toute coupure de session."""
+    process_monitor, scheduler, dns_controller, firewall_controller, usage_tracker, site_usage_tracker = (
+        make_controllers(tmp_path)
+    )
+
+    def boom(*args):
+        raise RuntimeError("database is locked")
+
+    monkeypatch.setattr(process_monitor, "check_and_kill", boom)
+    monkeypatch.setattr(usage_tracker, "get_active_usernames", boom)
+    monkeypatch.setattr(site_usage_tracker, "poll", lambda seconds, active_child_id: None)
+    calls = []
+    monkeypatch.setattr(scheduler, "check_all_children", lambda: calls.append("scheduler"))
+    monkeypatch.setattr(
+        dns_controller, "apply", lambda active_child_id=None, parent_only=False: calls.append((active_child_id, parent_only))
+    )
+    monkeypatch.setattr(firewall_controller, "sync_child_dns_restriction", lambda: calls.append("firewall"))
+
+    state = {"last_session_check": 0.0, "last_dns_refresh": 0.0}
+    run_cycle(
+        process_monitor, scheduler, dns_controller, firewall_controller, usage_tracker, site_usage_tracker, state,
+        now=100.0, session_interval=60, dns_refresh_interval=30, process_interval=5,
+    )
+    # Comptes connectés inconnus : blocklist restrictive (ni enfant actif, ni parent seul).
+    assert calls == ["scheduler", (None, False), "firewall"]

@@ -30,7 +30,7 @@ from PyQt6.QtWidgets import (
 )
 
 from mintguard.backend.child_setup import create_child_with_age_preset
-from mintguard.backend.system_users import list_candidate_usernames
+from mintguard.backend.system_users import account_exists, list_candidate_usernames
 from mintguard.db.database import get_session
 from mintguard.db.models import Child, ParentConfig
 from mintguard.gui.widgets import Card, HelpButton, NumericKeypad, heading, small_label
@@ -166,6 +166,10 @@ class OnboardingWizard(QWidget):
         # au moment de _persist() (page Succes), plantant toute l'application.
         if self._username_already_used(username):
             self._child_error.setText(self.i18n("add_child.error_duplicate"))
+            self._child_error.show()
+            return False
+        if account_exists(username) is False:
+            self._child_error.setText(self.i18n("add_child.error_unknown_account").format(username))
             self._child_error.show()
             return False
         self._child_error.hide()

@@ -32,6 +32,12 @@ def db(tmp_path):
     init_db(tmp_path / "test.db")
 
 
+@pytest.fixture(autouse=True)
+def accounts_exist(monkeypatch):
+    """Les comptes des tests (bob, emma...) n'existent pas sur la machine de test."""
+    monkeypatch.setattr("mintguard.gui.onboarding.account_exists", lambda username: True)
+
+
 @pytest.fixture(scope="module", autouse=True)
 def qapp():
     return QApplication.instance() or QApplication([])

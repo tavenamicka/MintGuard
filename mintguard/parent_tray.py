@@ -22,6 +22,7 @@ from PyQt6.QtCore import QProcess, QTimer
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QApplication, QMenu, QSystemTrayIcon
 
+from mintguard.backend.dns_health import system_resolver_uses_mintguard
 from mintguard.child_tray import query_status
 from mintguard.config import get_config
 from mintguard.locales.loader import get_i18n
@@ -91,13 +92,19 @@ class ParentTray:
             self.tray.show()
 
         daemon_active = status is not None
-        self._update_tooltip(daemon_active)
+        # Daemon actif mais DNS non redirigé vers dnsmasq : aucun site n'est bloqué. L'icône ne
+        # doit pas afficher "actif" dans ce cas (même alerte que la carte du Tableau de bord).
+        dns_broken = daemon_active and system_resolver_uses_mintguard() is False
+        self._update_tooltip(daemon_active, dns_broken)
         self._notify_if_state_changed(daemon_active)
 
-    def _update_tooltip(self, daemon_active: bool) -> None:
-        key = "parent_tray.tooltip_active" if daemon_active else "parent_tray.tooltip_inactive"
+    def _update_tooltip(self, daemon_active: bool, dns_broken: bool = False) -> None:
+        if dns_broken:
+            key = "parent_tray.tooltip_dns_broken"
+        else:
+            key = "parent_tray.tooltip_active" if daemon_active else "parent_tray.tooltip_inactive"
         self.tray.setToolTip(self._(key))
-        self.tray.setIcon(self._icon_active if daemon_active else self._icon_inactive)
+        self.tray.setIcon(self._icon_active if daemon_active and not dns_broken else self._icon_inactive)
 
     def _notify_if_state_changed(self, daemon_active: bool) -> None:
         # Pas de notification au tout premier poll (etat inconnu avant) - seulement sur un

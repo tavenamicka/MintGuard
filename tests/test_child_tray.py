@@ -230,3 +230,15 @@ def test_notifies_new_blocked_app_once(monkeypatch, qapp):
 
     assert len(messages) == 1
     assert "discord" in messages[0]
+
+
+def test_warnings_rearm_when_parent_extends_time(monkeypatch, qapp):
+    tray = child_tray.ChildTray(qapp)
+    shown = []
+    monkeypatch.setattr(tray.tray, "showMessage", lambda title, msg, icon: shown.append(msg))
+    monkeypatch.setattr(tray.banner, "show_message", lambda msg: None)
+
+    tray._warn_if_threshold_crossed(4)   # paliers 10 et 5 franchis
+    tray._warn_if_threshold_crossed(30)  # le parent rallonge
+    tray._warn_if_threshold_crossed(9)   # le palier 10 doit de nouveau prévenir
+    assert len(shown) == 3

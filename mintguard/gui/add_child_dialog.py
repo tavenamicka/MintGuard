@@ -28,7 +28,7 @@ from PyQt6.QtWidgets import (
 )
 
 from mintguard.backend.child_setup import create_child_with_age_preset
-from mintguard.backend.system_users import list_candidate_usernames
+from mintguard.backend.system_users import account_exists, list_candidate_usernames
 from mintguard.db.database import get_session
 from mintguard.db.models import Child
 from mintguard.gui.widgets import Card, heading, small_label
@@ -129,6 +129,11 @@ class AddChildDialog(QDialog):
 
         if username in self._existing_child_usernames():
             self._error_label.setText(self.i18n("add_child.error_duplicate"))
+            self._error_label.show()
+            return
+
+        if account_exists(username) is False:
+            self._error_label.setText(self.i18n("add_child.error_unknown_account").format(username))
             self._error_label.show()
             return
 
