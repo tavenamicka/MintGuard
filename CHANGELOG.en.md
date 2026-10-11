@@ -4,6 +4,12 @@
 
 Each MintGuard version is described here, newest first. To see which version you have, look at the title of the MintGuard window. To update, see "Updating MintGuard" in the [README](README.en.md).
 
+## Unreleased
+
+Changes already in the code but not yet in a downloadable version; they will be included in the next one.
+
+- **Child account not found**: the Dashboard flags a child registered with an account that doesn't exist on the computer (no rule applies to them then), and offers "Fix the account" without losing their settings.
+
 ## 0.1.2 — 2026-10-11
 
 ### Fixes

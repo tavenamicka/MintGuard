@@ -4,6 +4,12 @@ Français · [English](CHANGELOG.en.md)
 
 Chaque version de MintGuard est décrite ici, la plus récente en premier. Pour savoir quelle version vous avez, regardez le titre de la fenêtre MintGuard. Pour mettre à jour, voir « Mettre à jour MintGuard » dans le [README](README.md).
 
+## Non publié
+
+Changements présents dans le code mais pas encore dans une version téléchargeable ; ils seront inclus dans la prochaine.
+
+- **Compte d'enfant introuvable** : le Tableau de bord signale un enfant enregistré avec un compte qui n'existe pas sur l'ordinateur (aucune règle ne s'applique alors à lui), et propose « Corriger le compte » sans perdre ses réglages.
+
 ## 0.1.2 — 2026-10-11
 
 ### Corrections
