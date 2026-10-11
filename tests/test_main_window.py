@@ -103,3 +103,10 @@ def test_menu_reports_action_opens_dashboard_reports(monkeypatch):
     window.reports_action.trigger()
     assert calls == ["reports"]
     window.close()
+
+
+def test_window_title_shows_installed_version():
+    from mintguard import __version__
+
+    window = MainWindow()
+    assert window.windowTitle().endswith(__version__)

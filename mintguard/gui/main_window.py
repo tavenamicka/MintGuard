@@ -17,6 +17,7 @@
 from PyQt6.QtGui import QAction
 from PyQt6.QtWidgets import QApplication, QMainWindow, QStackedWidget
 
+from mintguard import __version__
 from mintguard.config import get_config
 from mintguard.db.database import get_session
 from mintguard.db.models import ParentConfig
@@ -35,7 +36,9 @@ class MainWindow(QMainWindow):
         self.i18n = get_i18n(None if lang == "auto" else lang)
         self.dashboard: DashboardScreen | None = None
 
-        self.setWindowTitle(self.i18n("app.name"))
+        # Version dans le titre : seul endroit où un parent peut voir quelle version il a
+        # installée (utile pour savoir s'il doit mettre à jour, voir README).
+        self.setWindowTitle(f'{self.i18n("app.name")} {__version__}')
         # Resserré pour coller à la densité compacte de la maquette "Jardin Numérique".
         self.setMinimumSize(420, 580)
 

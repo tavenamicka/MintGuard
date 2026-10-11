@@ -7,6 +7,11 @@ set -euo pipefail
 case "$1" in
   remove|upgrade|deconfigure)
     if systemctl is-active --quiet mintguard-daemon 2>/dev/null; then
+      # Mise a jour : postinst relance le daemon s'il tournait (sinon la protection
+      # restait coupee jusqu'au prochain redemarrage apres chaque mise a jour).
+      if [ "$1" = "upgrade" ]; then
+        touch /run/mintguard-restart-after-upgrade
+      fi
       systemctl stop mintguard-daemon
     fi
     systemctl disable mintguard-daemon 2>/dev/null || true

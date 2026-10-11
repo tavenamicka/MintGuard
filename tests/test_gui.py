@@ -32,7 +32,9 @@ def test_main_window_creates_and_shows_title():
 
     from mintguard.main_gui import MainWindow
 
-    app = QApplication.instance() or QApplication([])
+    from mintguard import __version__
+
+    app = QApplication.instance() or QApplication([])  # noqa: F841 - garder une référence
     window = MainWindow()
-    assert window.windowTitle() == "MintGuard"
+    assert window.windowTitle() == f"MintGuard {__version__}"
     window.close()
