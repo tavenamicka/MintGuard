@@ -130,6 +130,15 @@ class TimeTab(QWidget):
         quick_row.addWidget(self.quick_end)
         layout.addLayout(quick_row)
 
+        self.saved_label = small_label(self.i18n("settings.saved_confirmation"))
+        self.saved_label.setObjectName("success")
+        self.saved_label.hide()
+        layout.addWidget(self.saved_label)
+
+        save_button = QPushButton(self.i18n("common.save"))
+        save_button.clicked.connect(self._save)
+        layout.addWidget(save_button)
+
         budget_intro_row = QHBoxLayout()
         budget_intro_row.addWidget(small_label(self.i18n("settings.limit_daily_time")))
         budget_intro_row.addWidget(
@@ -174,15 +183,6 @@ class TimeTab(QWidget):
             self._day_widgets.append((checkbox, start_edit, end_edit, budget_checkbox, budget_spin))
 
         layout.addStretch(1)
-
-        self.saved_label = small_label(self.i18n("settings.saved_confirmation"))
-        self.saved_label.setObjectName("success")
-        self.saved_label.hide()
-        layout.addWidget(self.saved_label)
-
-        save_button = QPushButton(self.i18n("common.save"))
-        save_button.clicked.connect(self._save)
-        layout.addWidget(save_button)
 
         self._load()
 
