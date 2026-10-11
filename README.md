@@ -7,7 +7,7 @@ Français · [English](README.en.md) · [Deutsch](README.de.md) · [Español](RE
 
 Application de contrôle parental pour Linux Mint — simple et accessible pour des parents non-techniques, avec limitation du temps d'écran, blocage de sites et d'applications, multilingue (FR/EN/DE/ES).
 
-> Version **0.1.1**, publiée le 2026-10-11 sur la [page des versions](https://github.com/tavenamicka/MintGuard/releases) (nouveautés : [CHANGELOG.md](CHANGELOG.md)). Statut : Phase 3 (Sécurité & Intégration) terminée, Phase 4 (Testing & Release) en cours — bascule DNS, iptables, audit de sécurité, audit d'accessibilité et audit du code (2026-10-11) faits. Voir [PROJECT_BRIEF.md](PROJECT_BRIEF.md) pour les spécifications complètes et [CLAUDE_CODE_BRIEFING.md](CLAUDE_CODE_BRIEFING.md) pour le plan d'implémentation par phases.
+> Version **0.1.2**, publiée le 2026-10-11 sur la [page des versions](https://github.com/tavenamicka/MintGuard/releases) (nouveautés : [CHANGELOG.md](CHANGELOG.md)). Statut : Phase 3 (Sécurité & Intégration) terminée, Phase 4 (Testing & Release) en cours — bascule DNS, iptables, audit de sécurité, audit d'accessibilité et audit du code (2026-10-11) faits. Voir [PROJECT_BRIEF.md](PROJECT_BRIEF.md) pour les spécifications complètes et [CLAUDE_CODE_BRIEFING.md](CLAUDE_CODE_BRIEFING.md) pour le plan d'implémentation par phases.
 
 ## Aperçu
 
@@ -75,7 +75,7 @@ Pour installer MintGuard sur un poste, sans cloner le dépôt :
 
 ```bash
 bash scripts/build-deb.sh                          # produit dist/mintguard_<version>-1_all.deb
-sudo apt install ./dist/mintguard_0.1.1-1_all.deb   # apt installe aussi les dépendances système
+sudo apt install ./dist/mintguard_0.1.2-1_all.deb   # apt installe aussi les dépendances système
 ```
 
 Ouvrez ensuite MintGuard depuis le menu des applications : le Tableau de bord propose « Activer la protection » (démarre le daemon), puis « Activer le blocage des sites » (bascule DNS). Pour réinstaller le même numéro de version, ajoutez `--reinstall`. Désinstallation : `sudo apt remove mintguard` (le DNS d'origine est rétabli), ou `purge` pour supprimer aussi la base et les journaux. Détails : [docs/INSTALLATION.md](docs/INSTALLATION.md).

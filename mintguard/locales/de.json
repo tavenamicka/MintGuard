@@ -2,7 +2,7 @@
   "app": {
     "name": "MintGuard",
     "tagline": "Damit Ihre Kinder das Internet sicher entdecken können",
-    "version": "0.1.1"
+    "version": "0.1.2"
   },
   "startup_error": {
     "permission_title": "Noch ein Schritt vor der Nutzung",

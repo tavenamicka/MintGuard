@@ -4,6 +4,12 @@
 
 Each MintGuard version is described here, newest first. To see which version you have, look at the title of the MintGuard window. To update, see "Updating MintGuard" in the [README](README.en.md).
 
+## 0.1.2 — 2026-10-11
+
+### Fixes
+- **Child's icon**: a click now opens a small window with the time left today (or "no time limit today"), the apps and websites blocked for the child (with the time left on their daily limit) and the last app that was closed. Before, the click sometimes showed nothing at all, and the child only saw blocked apps for 30 seconds.
+- The child's notifications no longer read "Application bloquée : … has been closed" and use the child's language.
+
 ## 0.1.1 — 2026-10-11
 
 ### To do after updating from 0.1.0
