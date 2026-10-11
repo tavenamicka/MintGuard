@@ -15,14 +15,17 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from datetime import time as dt_time
+from enum import IntEnum
 
 from PyQt6.QtCore import QTime, QTimer
 from PyQt6.QtWidgets import (
     QButtonGroup,
     QCheckBox,
+    QComboBox,
     QDialog,
     QFrame,
     QHBoxLayout,
+    QLabel,
     QLineEdit,
     QListWidget,
     QPushButton,
@@ -68,6 +71,16 @@ def _scrollable_layout(container: QWidget) -> QVBoxLayout:
     return QVBoxLayout(content)
 
 
+class DayMode(IntEnum):
+    """Index des choix du sélecteur par jour de TimeTab (même ordre que les entrées du
+    QComboBox). Remplace l'ancienne case à cocher, dont l'état décoché voulait dire "aucune
+    limite" alors que des parents y lisaient "pas d'accès"."""
+
+    FREE = 0
+    HOURS = 1
+    FORBIDDEN = 2
+
+
 class TimeTab(QWidget):
     """Onglet 'Limite de Temps' — un créneau par jour, cf. wireframe PROJECT_BRIEF.md 'Écran 2'."""
 
@@ -75,7 +88,7 @@ class TimeTab(QWidget):
         super().__init__(parent)
         self.i18n = i18n
         self.child_id = child_id
-        self._day_widgets: list[tuple[QCheckBox, QTimeEdit, QTimeEdit, QCheckBox, QSpinBox]] = []
+        self._day_widgets: list[tuple[QComboBox, QTimeEdit, QTimeEdit, QCheckBox, QSpinBox]] = []
 
         # Les tuiles par jour (voir Étape 3 de la refonte) rendent ce contenu bien plus haut
         # que la fenêtre — même raison que SitesTab/AppsTab (voir `_scrollable_layout`) : sans
@@ -157,13 +170,21 @@ class TimeTab(QWidget):
             tile = Tile()
             row = QHBoxLayout()
             row.setSpacing(10)
-            checkbox = QCheckBox(self.i18n(f"time.{weekday_key(day_index)}"))
+            row.addWidget(QLabel(self.i18n(f"time.{weekday_key(day_index)}")))
+            mode_combo = QComboBox()
+            mode_combo.addItems(
+                [
+                    self.i18n("settings.day_mode_free"),
+                    self.i18n("settings.day_mode_hours"),
+                    self.i18n("settings.day_mode_forbidden"),
+                ]
+            )
             start_edit = QTimeEdit(QTime(16, 0))
             start_edit.setDisplayFormat("HH:mm")
             end_edit = QTimeEdit(QTime(20, 0))
             end_edit.setDisplayFormat("HH:mm")
-            row.addWidget(checkbox)
             row.addStretch(1)
+            row.addWidget(mode_combo)
             row.addWidget(start_edit)
             row.addWidget(end_edit)
             tile.add(wrap_layout(row))
@@ -179,25 +200,38 @@ class TimeTab(QWidget):
             budget_spin.setValue(120)
             budget_spin.setSuffix(self.i18n("settings.minutes_per_day_suffix"))
             budget_spin.setEnabled(False)
-            budget_checkbox.toggled.connect(budget_spin.setEnabled)
             budget_row.addWidget(budget_checkbox)
             budget_row.addStretch(1)
             budget_row.addWidget(budget_spin)
             tile.add(wrap_layout(budget_row))
 
             layout.addWidget(tile)
-            self._day_widgets.append((checkbox, start_edit, end_edit, budget_checkbox, budget_spin))
+            widgets = (mode_combo, start_edit, end_edit, budget_checkbox, budget_spin)
+            self._day_widgets.append(widgets)
+            mode_combo.currentIndexChanged.connect(lambda _index, w=widgets: self._sync_day_controls(w))
+            budget_checkbox.toggled.connect(lambda _checked, w=widgets: self._sync_day_controls(w))
+            self._sync_day_controls(widgets)
 
         layout.addStretch(1)
 
         self._load()
 
+    @staticmethod
+    def _sync_day_controls(widgets: tuple[QComboBox, QTimeEdit, QTimeEdit, QCheckBox, QSpinBox]) -> None:
+        """Horaires et quota ne concernent que le mode "Horaires" : grisés sinon."""
+        mode_combo, start_edit, end_edit, budget_checkbox, budget_spin = widgets
+        hours = mode_combo.currentIndex() == DayMode.HOURS
+        start_edit.setEnabled(hours)
+        end_edit.setEnabled(hours)
+        budget_checkbox.setEnabled(hours)
+        budget_spin.setEnabled(hours and budget_checkbox.isChecked())
+
     def _apply_quick(self, day_indices: range) -> None:
         start_time = self.quick_start.time()
         end_time = self.quick_end.time()
         for day_index in day_indices:
-            checkbox, start_edit, end_edit, _budget_checkbox, _budget_spin = self._day_widgets[day_index]
-            checkbox.setChecked(True)
+            mode_combo, start_edit, end_edit, _budget_checkbox, _budget_spin = self._day_widgets[day_index]
+            mode_combo.setCurrentIndex(DayMode.HOURS)
             start_edit.setTime(start_time)
             end_edit.setTime(end_time)
 
@@ -208,26 +242,31 @@ class TimeTab(QWidget):
         session = get_session()
         try:
             rules_by_day = {
-                r.day_of_week: (r.enabled, r.start_hour, r.end_hour, r.daily_budget_minutes)
+                r.day_of_week: (r.enabled, r.start_hour, r.end_hour, r.daily_budget_minutes, r.forbidden)
                 for r in session.query(TimeRule).filter_by(child_id=self.child_id).all()
             }
         finally:
             session.close()
 
-        for day_index, (checkbox, start_edit, end_edit, budget_checkbox, budget_spin) in enumerate(
+        for day_index, (mode_combo, start_edit, end_edit, budget_checkbox, budget_spin) in enumerate(
             self._day_widgets
         ):
             rule = rules_by_day.get(day_index)
-            checkbox.setChecked(rule is not None and rule[0])
-            if rule is not None:
-                _, start_hour, end_hour, daily_budget_minutes = rule
-                start_edit.setTime(QTime(start_hour.hour, start_hour.minute))
-                end_edit.setTime(QTime(end_hour.hour, end_hour.minute))
-                budget_checkbox.setChecked(daily_budget_minutes is not None)
-                if daily_budget_minutes is not None:
-                    budget_spin.setValue(daily_budget_minutes)
-            else:
+            if rule is None or not rule[0]:
+                mode_combo.setCurrentIndex(DayMode.FREE)
                 budget_checkbox.setChecked(False)
+                continue
+            _, start_hour, end_hour, daily_budget_minutes, forbidden = rule
+            if forbidden:
+                mode_combo.setCurrentIndex(DayMode.FORBIDDEN)
+                budget_checkbox.setChecked(False)
+                continue
+            mode_combo.setCurrentIndex(DayMode.HOURS)
+            start_edit.setTime(QTime(start_hour.hour, start_hour.minute))
+            end_edit.setTime(QTime(end_hour.hour, end_hour.minute))
+            budget_checkbox.setChecked(daily_budget_minutes is not None)
+            if daily_budget_minutes is not None:
+                budget_spin.setValue(daily_budget_minutes)
 
     def _invalid_days(self) -> list[int]:
         """Jours cochés dont la fin n'est pas après le début. Le Scheduler ne gère pas les
@@ -236,8 +275,8 @@ class TimeTab(QWidget):
         connexion, toute la journée, sans que le parent comprenne pourquoi."""
         return [
             day_index
-            for day_index, (checkbox, start_edit, end_edit, _bc, _bs) in enumerate(self._day_widgets)
-            if checkbox.isChecked() and end_edit.time() <= start_edit.time()
+            for day_index, (mode_combo, start_edit, end_edit, _bc, _bs) in enumerate(self._day_widgets)
+            if mode_combo.currentIndex() == DayMode.HOURS and end_edit.time() <= start_edit.time()
         ]
 
     def _save(self) -> None:
@@ -255,10 +294,22 @@ class TimeTab(QWidget):
         session = get_session()
         try:
             session.query(TimeRule).filter_by(child_id=self.child_id).delete()
-            for day_index, (checkbox, start_edit, end_edit, budget_checkbox, budget_spin) in enumerate(
+            for day_index, (mode_combo, start_edit, end_edit, budget_checkbox, budget_spin) in enumerate(
                 self._day_widgets
             ):
-                if checkbox.isChecked():
+                mode = mode_combo.currentIndex()
+                if mode == DayMode.FORBIDDEN:
+                    session.add(
+                        TimeRule(
+                            child_id=self.child_id,
+                            day_of_week=day_index,
+                            start_hour=dt_time(0, 0),
+                            end_hour=dt_time(0, 0),
+                            enabled=True,
+                            forbidden=True,
+                        )
+                    )
+                elif mode == DayMode.HOURS:
                     start_time = start_edit.time()
                     end_time = end_edit.time()
                     session.add(

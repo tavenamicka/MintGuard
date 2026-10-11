@@ -524,3 +524,21 @@ def test_repair_dns_failure_keeps_card_with_explanation(monkeypatch):
     screen._repair_dns()
     assert screen.dns_card.isHidden() is False
     assert screen.dns_body.text() == I18nLoader("fr")("dashboard.dns_repair_failed")
+
+
+def test_forbidden_day_shows_no_access_and_hides_usage():
+    child_id = make_child()
+    today = datetime.now().weekday()
+    session = get_session()
+    try:
+        session.add(
+            TimeRule(child_id=child_id, day_of_week=today, start_hour=dt_time(0, 0), end_hour=dt_time(0, 0),
+                     forbidden=True)
+        )
+        session.commit()
+    finally:
+        session.close()
+
+    screen = DashboardScreen(I18nLoader("fr"))
+    assert screen.window_label.text() == I18nLoader("fr")("dashboard.day_forbidden")
+    assert screen.usage_card.isHidden() is True

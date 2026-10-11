@@ -62,6 +62,10 @@ class TimeRule(Base):
     # None = pas de quota, seule la plage compte (comportement historique). Verifie contre
     # DailyUsage.seconds_used par Scheduler, pas par ce modele.
     daily_budget_minutes: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    # Jour entierement interdit (start_hour/end_hour ignores). Distinct de "aucune regle ce
+    # jour-la", qui signifie acces libre : un parent qui decochait un jour pensait souvent
+    # interdire l'acces, alors qu'il levait toute limite.
+    forbidden: Mapped[bool] = mapped_column(Boolean, default=False, server_default="0")
 
     child: Mapped["Child"] = relationship(back_populates="time_rules")
 

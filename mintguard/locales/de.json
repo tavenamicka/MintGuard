@@ -80,7 +80,8 @@
     "dns_repair_button": "Website-Sperre aktivieren",
     "dns_repairing": "Wird aktiviert...",
     "dns_repair_failed": "Die Aktivierung wurde abgebrochen oder hat nicht funktioniert. Das Internet funktioniert wie zuvor; versuchen Sie es erneut oder wenden Sie sich an die Person, die MintGuard installiert hat.",
-    "dns_repair_unavailable": "Automatische Aktivierung nicht möglich (Komponente fehlt). Wenden Sie sich an die Person, die MintGuard installiert hat."
+    "dns_repair_unavailable": "Automatische Aktivierung nicht möglich (Komponente fehlt). Wenden Sie sich an die Person, die MintGuard installiert hat.",
+    "day_forbidden": "Heute kein Zugang"
   },
   "settings": {
     "title": "Einstellungen",
@@ -115,7 +116,10 @@
     "daily_budget_checkbox": "Tageslimit",
     "minutes_per_day_suffix": " Min/Tag",
     "app_quota_checkbox": "Nutzungszeit pro Tag begrenzen (statt vollständiger Sperre)",
-    "invalid_time_range_error": "Die Endzeit muss nach der Startzeit liegen ({}). Zeiträume über Mitternacht werden nicht unterstützt."
+    "invalid_time_range_error": "Die Endzeit muss nach der Startzeit liegen ({}). Zeiträume über Mitternacht werden nicht unterstützt.",
+    "day_mode_free": "Frei (keine Begrenzung)",
+    "day_mode_hours": "Erlaubte Zeiten",
+    "day_mode_forbidden": "Kein Zugang"
   },
   "time": {
     "monday": "Montag",
@@ -139,7 +143,7 @@
     "why_pin_title": "Warum ein Sicherheitscode?",
     "why_pin_explanation": "Dieser Code verhindert, dass Ihr Kind die Einstellungen ohne Ihre Zustimmung ändert. Sie können ihn später in den Einstellungen ändern.",
     "what_is_time_limit": "Was ist das Zeitlimit?",
-    "time_limit_explanation": "Außerhalb der erlaubten Zeiten wird die Sitzung Ihres Kindes automatisch beendet. Sie können diese Zeiten jederzeit ändern.",
+    "time_limit_explanation": "Außerhalb der erlaubten Zeiten wird die Sitzung Ihres Kindes automatisch beendet. Sie können diese Zeiten jederzeit ändern. Wählen Sie für jeden Tag „Frei“ (keine Begrenzung), „Erlaubte Zeiten“ oder „Kein Zugang“ (die Sitzung wird direkt nach der Anmeldung beendet).",
     "what_is_app_blocking": "Was bedeutet eine Anwendung zu sperren?",
     "app_blocking_explanation": "Wenn Sie eine Anwendung sperren, kann Ihr Kind sie nicht mehr öffnen. Falls sie bereits läuft, wird sie automatisch geschlossen.",
     "what_is_daily_budget": "Was ist ein tägliches Zeitbudget?",

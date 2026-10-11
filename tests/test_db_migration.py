@@ -226,3 +226,27 @@ def test_migration_leaves_blocked_sites_global_with_multiple_children(tmp_path):
     finally:
         conn.close()
     assert row_child_id is None  # ambigu avec plusieurs enfants : reste une règle globale
+
+
+def test_migration_adds_forbidden_column_defaulting_to_false(tmp_path):
+    """Les règles existantes d'une BD déjà installée restent des plages horaires normales."""
+    import sqlite3
+
+    db_path = tmp_path / "legacy.db"
+    make_legacy_db(db_path)
+    conn = sqlite3.connect(db_path)
+    conn.execute("INSERT INTO children (id, name, username) VALUES (1, 'Emma', 'emma')")
+    conn.execute(
+        "INSERT INTO time_rules (child_id, day_of_week, start_hour, end_hour, enabled) "
+        "VALUES (1, 0, '16:00:00.000000', '20:00:00.000000', 1)"
+    )
+    conn.commit()
+    conn.close()
+
+    engine = create_engine(f"sqlite:///{db_path}")
+    _migrate_schema(engine)
+    engine.dispose()
+
+    conn = sqlite3.connect(db_path)
+    assert conn.execute("SELECT forbidden FROM time_rules").fetchall() == [(0,)]
+    conn.close()

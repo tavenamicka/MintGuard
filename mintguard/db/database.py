@@ -34,6 +34,7 @@ _SessionLocal: sessionmaker | None = None
 # colonnes sans cette migration explicite.
 _COLUMN_MIGRATIONS = [
     ("time_rules", "daily_budget_minutes", "INTEGER"),
+    ("time_rules", "forbidden", "BOOLEAN NOT NULL DEFAULT 0"),
     ("blocked_apps", "child_id", "INTEGER REFERENCES children(id)"),
     ("blocked_apps", "daily_budget_minutes", "INTEGER"),
     ("blocked_sites", "child_id", "INTEGER REFERENCES children(id)"),

@@ -59,6 +59,8 @@ class Scheduler:
                 .filter_by(child_id=child_id, day_of_week=day_of_week, enabled=True)
                 .all()
             )
+            if any(rule.forbidden for rule in rules):
+                return None
             for rule in rules:
                 if rule.start_hour <= now.time() <= rule.end_hour:
                     return rule
@@ -98,6 +100,8 @@ class Scheduler:
 
         if not rules:
             return None
+        if any(rule.forbidden for rule in rules):
+            return 0
         current_time = now.time()
         for rule in rules:
             if rule.start_hour <= current_time <= rule.end_hour:
@@ -178,6 +182,13 @@ class Scheduler:
             if not rules:
                 # Aucune règle aujourd'hui = pas de restriction (accès libre), pas un blocage.
                 self._grace_deadlines.pop(child_id, None)
+                continue
+            if any(r.forbidden for r in rules):
+                terminated_username = self._apply_grace(
+                    child_id, username, "time_limit_hit", "Auto-logout: day not allowed", now
+                )
+                if terminated_username:
+                    terminated.append(terminated_username)
                 continue
             matched = next((r for r in rules if r.start_hour <= current_time <= r.end_hour), None)
             if matched is None:

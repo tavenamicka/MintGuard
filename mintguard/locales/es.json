@@ -80,7 +80,8 @@
     "dns_repair_button": "Activar el bloqueo de sitios",
     "dns_repairing": "Activando...",
     "dns_repair_failed": "La activación se canceló o no funcionó. Internet funciona como antes; inténtelo de nuevo o contacte con la persona que instaló MintGuard.",
-    "dns_repair_unavailable": "No se puede activar automáticamente (falta un componente). Contacte con la persona que instaló MintGuard."
+    "dns_repair_unavailable": "No se puede activar automáticamente (falta un componente). Contacte con la persona que instaló MintGuard.",
+    "day_forbidden": "Sin acceso hoy"
   },
   "settings": {
     "title": "Ajustes",
@@ -115,7 +116,10 @@
     "daily_budget_checkbox": "Límite diario",
     "minutes_per_day_suffix": " min/día",
     "app_quota_checkbox": "Limitar el tiempo de uso por día (en lugar de un bloqueo total)",
-    "invalid_time_range_error": "La hora de fin debe ser posterior a la hora de inicio ({}). No se admiten franjas que pasen la medianoche."
+    "invalid_time_range_error": "La hora de fin debe ser posterior a la hora de inicio ({}). No se admiten franjas que pasen la medianoche.",
+    "day_mode_free": "Libre (sin límite)",
+    "day_mode_hours": "Horario permitido",
+    "day_mode_forbidden": "Sin acceso"
   },
   "time": {
     "monday": "Lunes",
@@ -139,7 +143,7 @@
     "why_pin_title": "¿Por qué un código de seguridad?",
     "why_pin_explanation": "Este código evita que su hijo/a cambie los ajustes sin su permiso. Podrá cambiarlo más tarde en Ajustes.",
     "what_is_time_limit": "¿Qué es el límite de tiempo?",
-    "time_limit_explanation": "Fuera de las horas permitidas, la sesión de su hijo/a se cierra automáticamente. Puede cambiar estas horas en cualquier momento.",
+    "time_limit_explanation": "Fuera de las horas permitidas, la sesión de su hijo/a se cierra automáticamente. Puede cambiar estas horas en cualquier momento. Para cada día, elija «Libre» (sin límite), «Horario permitido» o «Sin acceso» (la sesión se cierra en cuanto su hijo inicia sesión).",
     "what_is_app_blocking": "¿Qué significa bloquear una aplicación?",
     "app_blocking_explanation": "Si bloquea una aplicación, su hijo/a no podrá abrirla. Si ya está abierta, se cerrará automáticamente.",
     "what_is_daily_budget": "¿Qué es un presupuesto de tiempo diario?",

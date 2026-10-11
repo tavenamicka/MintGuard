@@ -80,7 +80,8 @@
     "dns_repair_button": "Activer le blocage des sites",
     "dns_repairing": "Activation en cours...",
     "dns_repair_failed": "L'activation a été annulée ou n'a pas fonctionné. Internet fonctionne comme avant ; réessayez, ou contactez la personne qui a installé MintGuard.",
-    "dns_repair_unavailable": "Impossible d'activer automatiquement (composant manquant). Contactez la personne qui a installé MintGuard."
+    "dns_repair_unavailable": "Impossible d'activer automatiquement (composant manquant). Contactez la personne qui a installé MintGuard.",
+    "day_forbidden": "Pas d'accès aujourd'hui"
   },
   "settings": {
     "title": "Paramètres",
@@ -115,7 +116,10 @@
     "daily_budget_checkbox": "Limite quotidienne",
     "minutes_per_day_suffix": " min/jour",
     "app_quota_checkbox": "Limiter le temps d'utilisation par jour (au lieu d'un blocage total)",
-    "invalid_time_range_error": "L'heure de fin doit être après l'heure de début ({}). Les plages qui passent minuit ne sont pas prises en charge."
+    "invalid_time_range_error": "L'heure de fin doit être après l'heure de début ({}). Les plages qui passent minuit ne sont pas prises en charge.",
+    "day_mode_free": "Libre (sans limite)",
+    "day_mode_hours": "Horaires autorisés",
+    "day_mode_forbidden": "Pas d'accès"
   },
   "time": {
     "monday": "Lundi",
@@ -139,7 +143,7 @@
     "why_pin_title": "Pourquoi un code de sécurité ?",
     "why_pin_explanation": "Ce code empêche votre enfant de modifier les réglages sans votre accord. Vous pourrez le changer plus tard dans les Paramètres.",
     "what_is_time_limit": "Qu'est-ce que la limite de temps ?",
-    "time_limit_explanation": "En dehors des heures autorisées, la session de votre enfant se ferme automatiquement. Vous pouvez changer ces heures à tout moment.",
+    "time_limit_explanation": "En dehors des heures autorisées, la session de votre enfant se ferme automatiquement. Vous pouvez changer ces heures à tout moment. Pour chaque jour, choisissez « Libre » (aucune limite), « Horaires autorisés » ou « Pas d'accès » (la session se ferme dès la connexion).",
     "what_is_app_blocking": "Qu'est-ce que bloquer une application ?",
     "app_blocking_explanation": "Si vous bloquez une application, votre enfant ne pourra plus l'ouvrir. Si elle est déjà lancée, elle se ferme automatiquement.",
     "what_is_daily_budget": "Qu'est-ce qu'une limite de temps quotidienne ?",

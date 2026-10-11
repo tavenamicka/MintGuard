@@ -58,7 +58,13 @@ def manager():
 
 
 def add_child(
-    username="emma", day=WEDNESDAY.weekday(), start=(16, 0), end=(20, 0), enabled=True, daily_budget_minutes=None
+    username="emma",
+    day=WEDNESDAY.weekday(),
+    start=(16, 0),
+    end=(20, 0),
+    enabled=True,
+    daily_budget_minutes=None,
+    forbidden=False,
 ):
     session = get_session()
     child = Child(name=username.capitalize(), username=username)
@@ -73,6 +79,7 @@ def add_child(
                 end_hour=dt_time(*end),
                 enabled=enabled,
                 daily_budget_minutes=daily_budget_minutes,
+                forbidden=forbidden,
             )
         )
     session.commit()
@@ -309,3 +316,17 @@ def test_grace_starts_only_once_child_logs_in(manager):
     scheduler.check_all_children(t0 + timedelta(seconds=80))
 
     assert scheduler.get_grace_seconds_remaining(child_id, t0 + timedelta(seconds=80)) == 90
+
+
+def test_forbidden_day_terminates_session_after_grace(manager):
+    child_id = add_child(start=(0, 0), end=(0, 0), forbidden=True)
+    scheduler = Scheduler(manager, grace_period_seconds=0)
+
+    assert scheduler.check_all_children(WEDNESDAY.replace(hour=10)) == ["emma"]
+    assert scheduler.get_minutes_remaining(child_id, WEDNESDAY.replace(hour=10)) == 0
+    assert scheduler.get_active_rule(child_id, WEDNESDAY.replace(hour=0)) is None
+
+
+def test_forbidden_day_does_not_affect_other_days(manager):
+    add_child(day=WEDNESDAY.weekday() + 1, forbidden=True)
+    assert Scheduler(manager, grace_period_seconds=0).check_all_children(WEDNESDAY.replace(hour=10)) == []

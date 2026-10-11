@@ -24,7 +24,7 @@ from PyQt6.QtWidgets import QApplication  # noqa: E402
 from mintguard.backend.site_categories import SOCIAL_MEDIA_DOMAINS  # noqa: E402
 from mintguard.db.database import get_session, init_db  # noqa: E402
 from mintguard.db.models import BlockedApp, BlockedSite, Child, TimeRule  # noqa: E402
-from mintguard.gui.settings import AppsTab, SettingsWindow, SitesTab, TimeTab  # noqa: E402
+from mintguard.gui.settings import AppsTab, DayMode, SettingsWindow, SitesTab, TimeTab  # noqa: E402
 from mintguard.locales.loader import I18nLoader  # noqa: E402
 
 
@@ -52,18 +52,18 @@ def make_child() -> int:
 # -- TimeTab --------------------------------------------------------------
 
 
-def test_time_tab_starts_with_no_days_checked():
+def test_time_tab_starts_with_all_days_free():
     child_id = make_child()
     tab = TimeTab(I18nLoader("fr"), child_id)
-    assert all(not checkbox.isChecked() for checkbox, _, _, _, _ in tab._day_widgets)
+    assert all(mode.currentIndex() == DayMode.FREE for mode, _, _, _, _ in tab._day_widgets)
 
 
 def test_time_tab_save_persists_checked_days():
     child_id = make_child()
     tab = TimeTab(I18nLoader("fr"), child_id)
 
-    checkbox, start_edit, end_edit, _budget_checkbox, _budget_spin = tab._day_widgets[0]
-    checkbox.setChecked(True)
+    mode, start_edit, end_edit, _budget_checkbox, _budget_spin = tab._day_widgets[0]
+    mode.setCurrentIndex(DayMode.HOURS)
     start_edit.setTime(QTime(10, 0))
     end_edit.setTime(QTime(12, 0))
     tab._save()
@@ -85,8 +85,8 @@ def test_time_tab_save_persists_daily_budget_when_checked():
     child_id = make_child()
     tab = TimeTab(I18nLoader("fr"), child_id)
 
-    checkbox, _start_edit, _end_edit, budget_checkbox, budget_spin = tab._day_widgets[0]
-    checkbox.setChecked(True)
+    mode, _start_edit, _end_edit, budget_checkbox, budget_spin = tab._day_widgets[0]
+    mode.setCurrentIndex(DayMode.HOURS)
     budget_checkbox.setChecked(True)
     budget_spin.setValue(120)
     tab._save()
@@ -99,7 +99,7 @@ def test_time_tab_save_persists_daily_budget_when_checked():
         session.close()
 
 
-def test_time_tab_save_removes_unchecked_days():
+def test_time_tab_save_removes_days_set_to_free():
     child_id = make_child()
     session = get_session()
     try:
@@ -111,9 +111,9 @@ def test_time_tab_save_removes_unchecked_days():
         session.close()
 
     tab = TimeTab(I18nLoader("fr"), child_id)  # loads existing rule
-    checkbox, _, _, _, _ = tab._day_widgets[2]
-    assert checkbox.isChecked() is True
-    checkbox.setChecked(False)
+    mode, _, _, _, _ = tab._day_widgets[2]
+    assert mode.currentIndex() == DayMode.HOURS
+    mode.setCurrentIndex(DayMode.FREE)
     tab._save()
 
     session = get_session()
@@ -140,8 +140,8 @@ def test_apply_whole_week_checks_and_sets_all_seven_days():
 
     tab._apply_quick(range(7))
 
-    for checkbox, start_edit, end_edit, _budget_checkbox, _budget_spin in tab._day_widgets:
-        assert checkbox.isChecked() is True
+    for mode, start_edit, end_edit, _budget_checkbox, _budget_spin in tab._day_widgets:
+        assert mode.currentIndex() == DayMode.HOURS
         assert start_edit.time() == QTime(9, 0)
         assert end_edit.time() == QTime(18, 0)
 
@@ -154,8 +154,8 @@ def test_apply_weekdays_only_affects_monday_to_friday():
 
     tab._apply_quick(range(0, 5))
 
-    for day_index, (checkbox, _, _, _, _) in enumerate(tab._day_widgets):
-        assert checkbox.isChecked() == (day_index < 5)
+    for day_index, (mode, _, _, _, _) in enumerate(tab._day_widgets):
+        assert (mode.currentIndex() == DayMode.HOURS) == (day_index < 5)
 
 
 def test_apply_weekend_only_affects_saturday_and_sunday():
@@ -166,8 +166,8 @@ def test_apply_weekend_only_affects_saturday_and_sunday():
 
     tab._apply_quick(range(5, 7))
 
-    for day_index, (checkbox, _, _, _, _) in enumerate(tab._day_widgets):
-        assert checkbox.isChecked() == (day_index >= 5)
+    for day_index, (mode, _, _, _, _) in enumerate(tab._day_widgets):
+        assert (mode.currentIndex() == DayMode.HOURS) == (day_index >= 5)
 
 
 def test_quick_apply_still_allows_individual_day_adjustment_afterwards():
@@ -176,7 +176,7 @@ def test_quick_apply_still_allows_individual_day_adjustment_afterwards():
     tab = TimeTab(I18nLoader("fr"), child_id)
     tab._apply_quick(range(7))
 
-    friday_checkbox, friday_start, friday_end, _friday_budget_checkbox, _friday_budget_spin = tab._day_widgets[4]
+    _friday_mode, friday_start, friday_end, _friday_budget_checkbox, _friday_budget_spin = tab._day_widgets[4]
     friday_start.setTime(QTime(20, 0))
     friday_end.setTime(QTime(23, 0))
     tab._save()
@@ -502,8 +502,8 @@ def test_time_tab_refuses_end_before_start():
     Scheduler : l'enfant serait déconnecté à chaque connexion. Refusée à la sauvegarde."""
     child_id = make_child()
     tab = TimeTab(I18nLoader("fr"), child_id)
-    checkbox, start_edit, end_edit, _bc, _bs = tab._day_widgets[0]
-    checkbox.setChecked(True)
+    mode, start_edit, end_edit, _bc, _bs = tab._day_widgets[0]
+    mode.setCurrentIndex(DayMode.HOURS)
     start_edit.setTime(QTime(22, 0))
     end_edit.setTime(QTime(1, 0))
     tab._save()
@@ -517,10 +517,10 @@ def test_time_tab_refuses_end_before_start():
     assert tab.saved_label.isHidden()
 
 
-def test_time_tab_ignores_invalid_range_on_unchecked_day():
+def test_time_tab_ignores_invalid_range_on_free_day():
     child_id = make_child()
     tab = TimeTab(I18nLoader("fr"), child_id)
-    _cb, start_edit, end_edit, _bc, _bs = tab._day_widgets[3]
+    _mode, start_edit, end_edit, _bc, _bs = tab._day_widgets[3]
     start_edit.setTime(QTime(22, 0))
     end_edit.setTime(QTime(1, 0))
     tab._save()
@@ -545,3 +545,37 @@ def test_sites_tab_rebuilding_custom_section_does_not_write_db(monkeypatch):
     assert writes == []
     assert tab._custom_budget_spins["example.com"].value() == 45
     assert tab._custom_budget_checkboxes["example.com"].isChecked() is True
+
+
+
+def test_time_tab_forbidden_day_saved_and_reloaded():
+    child_id = make_child()
+    tab = TimeTab(I18nLoader("fr"), child_id)
+    mode, start_edit, end_edit, budget_checkbox, _bs = tab._day_widgets[6]
+    mode.setCurrentIndex(DayMode.FORBIDDEN)
+    assert start_edit.isEnabled() is False
+    assert budget_checkbox.isEnabled() is False
+    tab._save()
+
+    session = get_session()
+    try:
+        rules = session.query(TimeRule).filter_by(child_id=child_id).all()
+        assert [(r.day_of_week, r.forbidden) for r in rules] == [(6, True)]
+    finally:
+        session.close()
+
+    reloaded = TimeTab(I18nLoader("fr"), child_id)
+    assert reloaded._day_widgets[6][0].currentIndex() == DayMode.FORBIDDEN
+    assert reloaded._day_widgets[0][0].currentIndex() == DayMode.FREE
+
+
+def test_time_tab_hours_controls_only_enabled_in_hours_mode():
+    child_id = make_child()
+    tab = TimeTab(I18nLoader("fr"), child_id)
+    mode, start_edit, end_edit, budget_checkbox, budget_spin = tab._day_widgets[1]
+    assert start_edit.isEnabled() is False
+    mode.setCurrentIndex(DayMode.HOURS)
+    assert start_edit.isEnabled() and end_edit.isEnabled() and budget_checkbox.isEnabled()
+    assert budget_spin.isEnabled() is False
+    budget_checkbox.setChecked(True)
+    assert budget_spin.isEnabled() is True
