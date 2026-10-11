@@ -88,7 +88,10 @@
     "dns_repairing": "Wird aktiviert...",
     "dns_repair_failed": "Die Aktivierung wurde abgebrochen oder hat nicht funktioniert. Das Internet funktioniert wie zuvor; versuchen Sie es erneut oder wenden Sie sich an die Person, die MintGuard installiert hat.",
     "dns_repair_unavailable": "Automatische Aktivierung nicht möglich (Komponente fehlt). Wenden Sie sich an die Person, die MintGuard installiert hat.",
-    "day_forbidden": "Heute kein Zugang"
+    "day_forbidden": "Heute kein Zugang",
+    "account_missing_title": "Das Konto von {0} wurde nicht gefunden",
+    "account_missing_body": "MintGuard überwacht das Konto „{1}“, das auf diesem Computer nicht existiert: Derzeit gilt keine Regel für {0}. Wählen Sie das richtige Konto; die Einstellungen bleiben erhalten.",
+    "account_missing_button": "Konto korrigieren"
   },
   "settings": {
     "title": "Einstellungen",
@@ -241,5 +244,9 @@
     "add_button": "Hinzufügen",
     "error_duplicate": "Dieses Konto wird bereits von MintGuard verwaltet.",
     "error_unknown_account": "Auf diesem Computer gibt es kein Konto „{0}“. Wählen Sie das Konto Ihres Kindes aus der Liste oder legen Sie es zuerst an (Menü > Benutzer und Gruppen)."
+  },
+  "fix_account": {
+    "title": "Konto des Kindes korrigieren",
+    "explanation": "{0} ist mit dem Konto „{1}“ eingetragen, das auf diesem Computer nicht existiert. Wählen Sie das Konto, mit dem sich {0} wirklich anmeldet. Zeitpläne sowie gesperrte Websites und Apps bleiben erhalten."
   }
 }

@@ -30,6 +30,7 @@ from PyQt6.QtWidgets import (
 )
 
 from mintguard.backend.dns_health import system_resolver_uses_mintguard
+from mintguard.backend.system_users import account_exists
 from mintguard.backend.usage_tracker import UsageTracker
 from mintguard.db.database import get_session
 from mintguard.db.models import ActivityLog, BlockedSite, Child, TimeRule
@@ -152,6 +153,27 @@ class DashboardScreen(QWidget):
         self.dns_card.hide()
         layout.addWidget(self.dns_card)
 
+        # Carte "compte introuvable" : l'enfant sélectionné est enregistré avec un compte Linux
+        # qui n'existe pas sur l'ordinateur. Constaté en usage réel (nom saisi avec une faute de
+        # frappe avant la vérification à la création) : aucune de ses règles ne s'appliquait,
+        # sans le moindre signal pour le parent.
+        self.account_card = Card()
+        account_title_row = QHBoxLayout()
+        account_title_row.setSpacing(8)
+        account_title_row.addWidget(icon_badge("shield-alert", size=32, icon_size=18, color=colors["warning"]))
+        self.account_title = heading("", "h3")
+        account_title_row.addWidget(self.account_title)
+        account_title_row.addStretch(1)
+        self.account_card.add(wrap_layout(account_title_row))
+        self.account_body = QLabel("")
+        self.account_body.setWordWrap(True)
+        self.account_card.add(self.account_body)
+        self.account_fix_button = QPushButton(self.i18n("dashboard.account_missing_button"))
+        self.account_fix_button.clicked.connect(self.open_fix_account)
+        self.account_card.add(self.account_fix_button)
+        self.account_card.hide()
+        layout.addWidget(self.account_card)
+
         # Carte "héro" pleine largeur : statut de protection, le signal de confiance principal
         # de l'appli — icône + titre + sous-titre, comme la maquette. `status_icon` change de
         # couleur/icône selon l'état (bouclier vert coché / orange alerte) via set_icon_badge().
@@ -251,6 +273,7 @@ class DashboardScreen(QWidget):
 
     def _refresh(self) -> None:
         self._refresh_daemon_status()
+        self._refresh_account_status()
         child_id = self.selected_child_id
         if child_id is None:
             self.status_label.setText(self.i18n("dashboard.no_children"))
@@ -326,6 +349,40 @@ class DashboardScreen(QWidget):
 
         self.daemon_activate_button.setEnabled(True)
         self.daemon_activate_button.setText(self.i18n("dashboard.daemon_activate_button"))
+
+    def _selected_child_username(self) -> str | None:
+        child_id = self.selected_child_id
+        if child_id is None:
+            return None
+        session = get_session()
+        try:
+            child = session.query(Child).filter_by(id=child_id).first()
+            return child.username if child is not None else None
+        finally:
+            session.close()
+
+    def _refresh_account_status(self) -> None:
+        username = self._selected_child_username()
+        if username is None or account_exists(username) is not False:
+            self.account_card.hide()
+            return
+        child_name = self.child_combo.currentText()
+        self.account_title.setText(self.i18n("dashboard.account_missing_title").format(child_name))
+        self.account_body.setText(self.i18n("dashboard.account_missing_body").format(child_name, username))
+        self.account_card.show()
+
+    def open_fix_account(self) -> None:
+        from mintguard.gui.dialogs import PinDialog
+        from mintguard.gui.fix_account_dialog import FixAccountDialog
+
+        child_id = self.selected_child_id
+        username = self._selected_child_username()
+        if child_id is None or username is None:
+            return
+        if not PinDialog.prompt(self.i18n, self):
+            return
+        if FixAccountDialog.prompt(self.i18n, child_id, self.child_combo.currentText(), username, self):
+            self._refresh()
 
     def _repair_dns(self) -> None:
         self.dns_repair_button.setEnabled(False)

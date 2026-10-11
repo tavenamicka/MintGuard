@@ -36,6 +36,14 @@ def db(tmp_path):
 
 
 @pytest.fixture(autouse=True)
+def accounts_exist(monkeypatch):
+    """Les comptes des tests (alice, bob...) n'existent pas sur la machine de test."""
+    from mintguard.gui import dashboard
+
+    monkeypatch.setattr(dashboard, "account_exists", lambda username: True)
+
+
+@pytest.fixture(autouse=True)
 def resolver_ok(monkeypatch):
     """Isole les tests du vrai /etc/resolv.conf de la machine qui les exécute."""
     from mintguard.gui import dashboard
@@ -542,3 +550,36 @@ def test_forbidden_day_shows_no_access_and_hides_usage():
     screen = DashboardScreen(I18nLoader("fr"))
     assert screen.window_label.text() == I18nLoader("fr")("dashboard.day_forbidden")
     assert screen.usage_card.isHidden() is True
+
+
+# -- Carte "compte introuvable" ----------------------------------------------------------
+
+
+def test_account_card_shown_when_child_account_missing(monkeypatch):
+    """Cas réel : enfant enregistré avec le compte "elsia" (faute de frappe), aucune règle
+    ne s'appliquait, sans aucun signal pour le parent."""
+    from mintguard.gui import dashboard
+
+    make_child("Elisa", "elsia")
+    monkeypatch.setattr(dashboard, "account_exists", lambda username: username != "elsia")
+    screen = DashboardScreen(I18nLoader("fr"))
+    assert screen.account_card.isHidden() is False
+    assert "elsia" in screen.account_body.text()
+
+
+def test_account_card_hidden_when_account_exists():
+    make_child()
+    screen = DashboardScreen(I18nLoader("fr"))
+    assert screen.account_card.isHidden() is True
+
+
+def test_fix_account_requires_pin(monkeypatch):
+    from mintguard.gui import dashboard, dialogs, fix_account_dialog
+
+    make_child("Elisa", "elsia")
+    monkeypatch.setattr(dashboard, "account_exists", lambda username: False)
+    monkeypatch.setattr(dialogs.PinDialog, "prompt", staticmethod(lambda i18n, parent=None: False))
+    opened = []
+    monkeypatch.setattr(fix_account_dialog.FixAccountDialog, "prompt", staticmethod(lambda *a, **k: opened.append(a)))
+    DashboardScreen(I18nLoader("fr")).open_fix_account()
+    assert opened == []

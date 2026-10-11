@@ -88,7 +88,10 @@
     "dns_repairing": "Turning on...",
     "dns_repair_failed": "Activation was cancelled or did not work. The internet works as before; try again, or contact the person who installed MintGuard.",
     "dns_repair_unavailable": "Cannot turn it on automatically (missing component). Contact the person who installed MintGuard.",
-    "day_forbidden": "No access today"
+    "day_forbidden": "No access today",
+    "account_missing_title": "{0}'s account can't be found",
+    "account_missing_body": "MintGuard is watching the account \"{1}\", which doesn't exist on this computer: no rule applies to {0} right now. Pick their real account; their settings are kept.",
+    "account_missing_button": "Fix the account"
   },
   "settings": {
     "title": "Settings",
@@ -241,5 +244,9 @@
     "add_button": "Add",
     "error_duplicate": "This account is already managed by MintGuard.",
     "error_unknown_account": "No account \"{0}\" exists on this computer. Pick your child's account from the list, or create it first (Menu > Users and Groups)."
+  },
+  "fix_account": {
+    "title": "Fix the child's account",
+    "explanation": "{0} is registered with the account \"{1}\", which doesn't exist on this computer. Pick the account {0} actually uses to log in. Their schedules and blocked websites and apps are kept."
   }
 }

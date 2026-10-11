@@ -25,6 +25,7 @@ from datetime import time as dt_time
 from mintguard.backend.site_categories import AGE_PRESETS, category_for_domain
 from mintguard.db.database import get_session
 from mintguard.db.models import AppDailyUsage, BlockedApp, BlockedSite, Child, DailyUsage, SiteDailyUsage, TimeRule
+from mintguard.utils.validators import is_valid_username
 
 
 class DuplicateUsernameError(ValueError):
@@ -92,6 +93,31 @@ def delete_child(child_id: int) -> None:
         child = session.query(Child).filter_by(id=child_id).first()
         if child is not None:
             session.delete(child)
+        session.commit()
+    finally:
+        session.close()
+
+
+def rename_child_account(child_id: int, username: str) -> None:
+    """Change le compte Linux surveillé pour un enfant, sans toucher à ses réglages.
+
+    Constaté en usage réel : un enfant enregistré avec un nom de compte erroné (faute de
+    frappe, avant la vérification à la création) n'était jamais reconnu, et aucune de ses
+    règles ne s'appliquait. Le supprimer pour le recréer faisait perdre tous ses réglages.
+    Lève ValueError pour un nom invalide, DuplicateUsernameError s'il est déjà utilisé par
+    un autre enfant.
+    """
+    if not is_valid_username(username):
+        raise ValueError(username)
+    session = get_session()
+    try:
+        other = session.query(Child).filter(Child.username == username, Child.id != child_id).first()
+        if other is not None:
+            raise DuplicateUsernameError(username)
+        child = session.query(Child).filter_by(id=child_id).first()
+        if child is None:
+            return
+        child.username = username
         session.commit()
     finally:
         session.close()
