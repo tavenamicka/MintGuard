@@ -7,7 +7,7 @@ Français · [English](README.en.md) · [Deutsch](README.de.md) · [Español](RE
 
 Application de contrôle parental pour Linux Mint — simple et accessible pour des parents non-techniques, avec limitation du temps d'écran, blocage de sites et d'applications, multilingue (FR/EN/DE/ES).
 
-> Version **0.1.1**. Statut : Phase 3 (Sécurité & Intégration) terminée, Phase 4 (Testing & Release) en cours — bascule DNS, iptables, audit de sécurité, audit d'accessibilité et audit du code (2026-10-11) faits. Voir [PROJECT_BRIEF.md](PROJECT_BRIEF.md) pour les spécifications complètes et [CLAUDE_CODE_BRIEFING.md](CLAUDE_CODE_BRIEFING.md) pour le plan d'implémentation par phases.
+> Version **0.1.1**, publiée le 2026-10-11 sur la [page des versions](https://github.com/tavenamicka/MintGuard/releases) (nouveautés : [CHANGELOG.md](CHANGELOG.md)). Statut : Phase 3 (Sécurité & Intégration) terminée, Phase 4 (Testing & Release) en cours — bascule DNS, iptables, audit de sécurité, audit d'accessibilité et audit du code (2026-10-11) faits. Voir [PROJECT_BRIEF.md](PROJECT_BRIEF.md) pour les spécifications complètes et [CLAUDE_CODE_BRIEFING.md](CLAUDE_CODE_BRIEFING.md) pour le plan d'implémentation par phases.
 
 ## Aperçu
 
