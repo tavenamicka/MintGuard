@@ -2,7 +2,7 @@
   "app": {
     "name": "MintGuard",
     "tagline": "Help your children explore the internet safely",
-    "version": "0.1.0"
+    "version": "0.1.1"
   },
   "startup_error": {
     "permission_title": "One more step before you can use MintGuard",

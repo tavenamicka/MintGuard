@@ -18,7 +18,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="mintguard",
-    version="0.1.0",
+    version="0.1.1",
     description="Application de contrôle parental pour Linux Mint",
     author="Mickael Tavenart",
     license="GPL-3.0-or-later",

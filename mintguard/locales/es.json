@@ -2,7 +2,7 @@
   "app": {
     "name": "MintGuard",
     "tagline": "Para que sus hijos exploren Internet con seguridad",
-    "version": "0.1.0"
+    "version": "0.1.1"
   },
   "startup_error": {
     "permission_title": "Un último paso antes de usar MintGuard",
