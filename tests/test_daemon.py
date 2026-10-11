@@ -38,7 +38,8 @@ def no_active_child(monkeypatch):
     # machine executant les tests, non deterministe) - hors de propos pour ces tests, qui
     # portent sur le cadencement des appels, pas sur la resolution d'enfant actif elle-meme
     # (voir test_site_usage_tracker.py pour ca).
-    monkeypatch.setattr(daemon_module, "resolve_active_child_id", lambda usage_tracker: None)
+    monkeypatch.setattr(daemon_module, "resolve_active_child_id", lambda active_usernames: None)
+    monkeypatch.setattr(UsageTracker, "get_active_usernames", lambda self: set())
 
 
 def make_controllers(tmp_path):
@@ -60,7 +61,7 @@ def test_process_monitor_runs_every_cycle(tmp_path, monkeypatch):
     monkeypatch.setattr(process_monitor, "check_and_kill", lambda seconds: calls.append(1))
     monkeypatch.setattr(dns_controller, "apply", lambda active_child_id=None: False)
     monkeypatch.setattr(firewall_controller, "sync_child_dns_restriction", lambda: True)
-    monkeypatch.setattr(usage_tracker, "record_tick", lambda seconds: None)
+    monkeypatch.setattr(usage_tracker, "record_tick", lambda seconds, active_usernames=None: None)
     monkeypatch.setattr(site_usage_tracker, "poll", lambda seconds, active_child_id: None)
 
     state = {"last_session_check": 0.0, "last_dns_refresh": 0.0}
@@ -80,13 +81,13 @@ def test_usage_tracker_ticks_every_cycle(tmp_path, monkeypatch):
     process_monitor, scheduler, dns_controller, firewall_controller, usage_tracker, site_usage_tracker = (
         make_controllers(tmp_path)
     )
-    monkeypatch.setattr(process_monitor, "check_and_kill", lambda seconds: None)
+    monkeypatch.setattr(process_monitor, "check_and_kill", lambda seconds, active_usernames=None: None)
     monkeypatch.setattr(dns_controller, "apply", lambda active_child_id=None: False)
     monkeypatch.setattr(firewall_controller, "sync_child_dns_restriction", lambda: True)
     monkeypatch.setattr(site_usage_tracker, "poll", lambda seconds, active_child_id: None)
 
     ticks = []
-    monkeypatch.setattr(usage_tracker, "record_tick", lambda seconds: ticks.append(seconds))
+    monkeypatch.setattr(usage_tracker, "record_tick", lambda seconds, active_usernames=None: ticks.append(seconds))
 
     state = {"last_session_check": 0.0, "last_dns_refresh": 0.0}
     run_cycle(
@@ -105,10 +106,10 @@ def test_site_usage_tracker_polls_every_cycle(tmp_path, monkeypatch):
     process_monitor, scheduler, dns_controller, firewall_controller, usage_tracker, site_usage_tracker = (
         make_controllers(tmp_path)
     )
-    monkeypatch.setattr(process_monitor, "check_and_kill", lambda seconds: None)
+    monkeypatch.setattr(process_monitor, "check_and_kill", lambda seconds, active_usernames=None: None)
     monkeypatch.setattr(dns_controller, "apply", lambda active_child_id=None: False)
     monkeypatch.setattr(firewall_controller, "sync_child_dns_restriction", lambda: True)
-    monkeypatch.setattr(usage_tracker, "record_tick", lambda seconds: None)
+    monkeypatch.setattr(usage_tracker, "record_tick", lambda seconds, active_usernames=None: None)
 
     polls = []
     monkeypatch.setattr(site_usage_tracker, "poll", lambda seconds, active_child_id: polls.append(seconds))
@@ -130,10 +131,10 @@ def test_scheduler_runs_only_after_session_interval_elapsed(tmp_path, monkeypatc
     process_monitor, scheduler, dns_controller, firewall_controller, usage_tracker, site_usage_tracker = (
         make_controllers(tmp_path)
     )
-    monkeypatch.setattr(process_monitor, "check_and_kill", lambda seconds: None)
+    monkeypatch.setattr(process_monitor, "check_and_kill", lambda seconds, active_usernames=None: None)
     monkeypatch.setattr(dns_controller, "apply", lambda active_child_id=None: False)
     monkeypatch.setattr(firewall_controller, "sync_child_dns_restriction", lambda: True)
-    monkeypatch.setattr(usage_tracker, "record_tick", lambda seconds: None)
+    monkeypatch.setattr(usage_tracker, "record_tick", lambda seconds, active_usernames=None: None)
     monkeypatch.setattr(site_usage_tracker, "poll", lambda seconds, active_child_id: None)
 
     calls = []
@@ -166,9 +167,9 @@ def test_dns_and_firewall_refresh_only_after_interval_elapsed(tmp_path, monkeypa
     process_monitor, scheduler, dns_controller, firewall_controller, usage_tracker, site_usage_tracker = (
         make_controllers(tmp_path)
     )
-    monkeypatch.setattr(process_monitor, "check_and_kill", lambda seconds: None)
+    monkeypatch.setattr(process_monitor, "check_and_kill", lambda seconds, active_usernames=None: None)
     monkeypatch.setattr(scheduler, "check_all_children", lambda: None)
-    monkeypatch.setattr(usage_tracker, "record_tick", lambda seconds: None)
+    monkeypatch.setattr(usage_tracker, "record_tick", lambda seconds, active_usernames=None: None)
     monkeypatch.setattr(site_usage_tracker, "poll", lambda seconds, active_child_id: None)
 
     calls = []

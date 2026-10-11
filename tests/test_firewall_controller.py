@@ -15,6 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import subprocess
+from types import SimpleNamespace
 
 import pytest
 
@@ -28,13 +29,31 @@ def db(tmp_path):
     init_db(tmp_path / "test.db")
 
 
+TEST_UID = 1001
+
+
+@pytest.fixture(autouse=True)
+def fake_accounts(monkeypatch):
+    """Les comptes enfants des tests n'existent pas sur la machine : tout nom se résout en
+    TEST_UID, sauf ceux listés dans `missing` (compte supprimé du système)."""
+    missing: set[str] = set()
+
+    def getpwnam(name):
+        if name in missing:
+            raise KeyError(name)
+        return SimpleNamespace(pw_uid=TEST_UID)
+
+    monkeypatch.setattr("mintguard.backend.firewall_controller.pwd.getpwnam", getpwnam)
+    return missing
+
+
 class FakeIptables:
     """Simule `iptables`/`ip6tables` sans toucher au vrai système (nécessite root en réalité).
 
     `chain_exists`/`jump_exists` contrôlent la réponse aux commandes de vérification
     (-nL / -C), `fail_on` déclenche un CalledProcessError pour les commandes `check=True`
     dont les arguments contiennent tous les tokens de `fail_on`. `existing_rules` est le
-    nombre de règles que `-S` (état actuel de la chaîne) doit rapporter.
+    nombre de règles que `-S` (état actuel de la chaîne) doit rapporter, toutes pour TEST_UID.
     """
 
     def __init__(self, chain_exists=False, jump_exists=False, fail_on=None, existing_rules=0):
@@ -60,7 +79,8 @@ class FakeIptables:
         if "-C" in args_list:
             return subprocess.CompletedProcess(cmd, 0 if self.jump_exists else 1)
         if "-S" in args_list:
-            listing = "-N MINTGUARD\n" + "".join("-A MINTGUARD\n" for _ in range(self.existing_rules))
+            rule = f"-A MINTGUARD -m owner --uid-owner {TEST_UID} -j REJECT\n"
+            listing = "-N MINTGUARD\n" + rule * self.existing_rules
             return subprocess.CompletedProcess(cmd, 0, stdout=listing)
         return subprocess.CompletedProcess(cmd, 0)
 
@@ -170,3 +190,47 @@ def test_remove_flushes_and_deletes_chain(monkeypatch):
     assert ["-D", "OUTPUT", "-j", "MINTGUARD"] in fake.calls
     assert ["-F", "MINTGUARD"] in fake.calls
     assert ["-X", "MINTGUARD"] in fake.calls
+
+
+def _add_child(username):
+    session = get_session()
+    session.add(Child(name=username, username=username))
+    session.commit()
+    session.close()
+
+
+def test_sync_rebuilds_when_same_count_but_different_child(monkeypatch):
+    """Supprimer un enfant puis en ajouter un autre garde le même nombre de règles : la
+    chaîne doit quand même être reconstruite pour le nouveau compte."""
+    _add_child("nouvel-enfant")
+    fake = FakeIptables(chain_exists=True, jump_exists=True, existing_rules=2)
+    monkeypatch.setattr(
+        "mintguard.backend.firewall_controller.pwd.getpwnam", lambda name: SimpleNamespace(pw_uid=TEST_UID + 1)
+    )
+    monkeypatch.setattr("mintguard.backend.firewall_controller.subprocess.run", fake)
+
+    assert FirewallController().sync_child_dns_restriction() is True
+    assert ["-F", "MINTGUARD"] in fake.calls
+    assert [c for c in fake.args_for("iptables") if c[:2] == ["-A", "MINTGUARD"]]
+
+
+def test_sync_skips_deleted_linux_account_but_filters_the_others(monkeypatch, fake_accounts):
+    _add_child("compte-supprime")
+    _add_child("emma")
+    fake_accounts.add("compte-supprime")
+    fake = FakeIptables(chain_exists=True, jump_exists=True, existing_rules=0)
+    monkeypatch.setattr("mintguard.backend.firewall_controller.subprocess.run", fake)
+
+    assert FirewallController().sync_child_dns_restriction() is True
+    owners = {c[c.index("--uid-owner") + 1] for c in fake.args_for("iptables") if c[:2] == ["-A", "MINTGUARD"]}
+    assert owners == {"emma"}
+
+
+def test_sync_keeps_filtering_other_children_when_one_rule_fails(monkeypatch):
+    _add_child("alice")
+    _add_child("bob")
+    fake = FakeIptables(chain_exists=True, jump_exists=True, existing_rules=0, fail_on=["-A", "alice"])
+    monkeypatch.setattr("mintguard.backend.firewall_controller.subprocess.run", fake)
+
+    assert FirewallController().sync_child_dns_restriction() is False
+    assert [c for c in fake.args_for("iptables") if c[:2] == ["-A", "MINTGUARD"] and "bob" in c]

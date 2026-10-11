@@ -495,3 +495,53 @@ def test_settings_window_has_three_tabs():
     window = SettingsWindow(I18nLoader("fr"), child_id)
     assert window.tabs.count() == 3
     window.close()
+
+
+def test_time_tab_refuses_end_before_start():
+    """Une plage qui passe minuit (ou vide) ne correspond jamais à l'heure courante côté
+    Scheduler : l'enfant serait déconnecté à chaque connexion. Refusée à la sauvegarde."""
+    child_id = make_child()
+    tab = TimeTab(I18nLoader("fr"), child_id)
+    checkbox, start_edit, end_edit, _bc, _bs = tab._day_widgets[0]
+    checkbox.setChecked(True)
+    start_edit.setTime(QTime(22, 0))
+    end_edit.setTime(QTime(1, 0))
+    tab._save()
+
+    session = get_session()
+    try:
+        assert session.query(TimeRule).filter_by(child_id=child_id).count() == 0
+    finally:
+        session.close()
+    assert not tab.error_label.isHidden()
+    assert tab.saved_label.isHidden()
+
+
+def test_time_tab_ignores_invalid_range_on_unchecked_day():
+    child_id = make_child()
+    tab = TimeTab(I18nLoader("fr"), child_id)
+    _cb, start_edit, end_edit, _bc, _bs = tab._day_widgets[3]
+    start_edit.setTime(QTime(22, 0))
+    end_edit.setTime(QTime(1, 0))
+    tab._save()
+
+    assert tab.error_label.isHidden()
+    assert not tab.saved_label.isHidden()
+
+
+def test_sites_tab_rebuilding_custom_section_does_not_write_db(monkeypatch):
+    child_id = make_child()
+    session = get_session()
+    session.add(BlockedSite(domain="example.com", category="custom", blocked=True, child_id=child_id,
+                            daily_budget_minutes=45))
+    session.commit()
+    session.close()
+
+    writes = []
+    monkeypatch.setattr(SitesTab, "_toggle_domain", lambda self, *a: writes.append(a))
+    monkeypatch.setattr(SitesTab, "_set_site_budget", lambda self, *a: writes.append(a))
+    tab = SitesTab(I18nLoader("fr"), child_id)
+
+    assert writes == []
+    assert tab._custom_budget_spins["example.com"].value() == 45
+    assert tab._custom_budget_checkboxes["example.com"].isChecked() is True

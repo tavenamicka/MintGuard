@@ -15,6 +15,8 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging
+import pwd
+import re
 import subprocess
 
 from mintguard.db.database import get_session
@@ -22,6 +24,9 @@ from mintguard.db.models import Child
 from mintguard.utils.validators import is_valid_username
 
 logger = logging.getLogger("mintguard.backend.firewall")
+
+# `iptables -S` affiche toujours l'UID numérique, même si la règle a été posée par nom.
+_UID_OWNER_RE = re.compile(r"--uid-owner (\d+)")
 
 
 class FirewallController:
@@ -68,20 +73,30 @@ class FirewallController:
             return False
         return True
 
-    def _child_usernames(self) -> list[str]:
+    def _child_accounts(self) -> list[tuple[str, int]]:
+        """(nom, UID) de chaque enfant dont le compte Linux existe réellement.
+
+        Un enfant dont le compte a été supprimé du système (mais pas de MintGuard) est ignoré
+        ici : `iptables --uid-owner` refuse un nom inconnu, et cet échec interrompait
+        auparavant la reconstruction de la chaîne - laissant les enfants suivants sans
+        aucun filtrage DNS.
+        """
         session = get_session()
         try:
             usernames = [c.username for c in session.query(Child).all()]
         finally:
             session.close()
 
-        valid = []
+        accounts = []
         for username in usernames:
-            if is_valid_username(username):
-                valid.append(username)
-            else:
+            if not is_valid_username(username):
                 logger.warning("Nom d'utilisateur invalide ignoré (règles firewall): %r", username)
-        return valid
+                continue
+            try:
+                accounts.append((username, pwd.getpwnam(username).pw_uid))
+            except KeyError:
+                logger.warning("Compte Linux introuvable, ignoré (règles firewall): %r", username)
+        return accounts
 
     def _rules_for(self, username: str, local_resolver: str) -> list[list[str]]:
         return [
@@ -95,18 +110,24 @@ class FirewallController:
             for proto in ("udp", "tcp")
         ]
 
-    def _current_rule_count(self, command: str) -> int:
-        """Nombre de règles actuellement dans la chaîne (hors ligne de création `-N`)."""
+    def _current_uids(self, command: str) -> list[int] | None:
+        """UID ciblé par chaque règle actuellement dans la chaîne (trié), ou None si illisible."""
         result = subprocess.run([command, "-S", self.CHAIN], capture_output=True, text=True)
         if result.returncode != 0:
-            return -1
-        return sum(1 for line in (result.stdout or "").splitlines() if line.startswith("-A "))
+            return None
+        return sorted(
+            int(match.group(1))
+            for line in (result.stdout or "").splitlines()
+            if line.startswith("-A ") and (match := _UID_OWNER_RE.search(line))
+        )
 
     def sync_child_dns_restriction(self) -> bool:
         """Régénère les règles depuis la BD (liste actuelle des enfants), en IPv4 et IPv6.
 
         Idempotent : peut être rappelée à chaque cycle du daemon. La chaîne n'est vidée et
-        reconstruite que si le nombre de règles attendu ne correspond plus à l'existant —
+        reconstruite que si les comptes ciblés ne correspondent plus à l'existant (comparaison
+        par UID et non plus par simple nombre de règles : supprimer un enfant puis en ajouter
+        un autre laissait la chaîne inchangée, le nouvel enfant n'étant jamais filtré) —
         un `-F` systématique toutes les 30 s rouvrait à chaque fois une fenêtre (courte mais
         récurrente) pendant laquelle l'enfant n'était plus filtré du tout.
         """
@@ -120,17 +141,20 @@ class FirewallController:
         if not self._ensure_chain(command):
             return False
 
-        usernames = self._child_usernames()
-        rules = [rule for username in usernames for rule in self._rules_for(username, local_resolver)]
-        if self._current_rule_count(command) == len(rules):
+        accounts = self._child_accounts()
+        expected_uids = sorted(uid for _username, uid in accounts for _proto in ("udp", "tcp"))
+        if self._current_uids(command) == expected_uids:
             return True
 
         if not self._run(command, ["-F", self.CHAIN]):
             return False
-        for rule in rules:
-            if not self._run(command, rule):
-                return False
-        return True
+        ok = True
+        for username, _uid in accounts:
+            for rule in self._rules_for(username, local_resolver):
+                # Un échec isolé ne doit pas priver les enfants suivants de leur filtrage.
+                if not self._run(command, rule):
+                    ok = False
+        return ok
 
     def remove(self) -> bool:
         """Retire toutes les règles MintGuard (désinstallation), IPv4 et IPv6. Idempotent :

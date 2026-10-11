@@ -27,6 +27,7 @@ from mintguard.db.database import get_session, init_db  # noqa: E402
 from mintguard.db.models import ActivityLog, BlockedSite, Child, TimeRule  # noqa: E402
 from mintguard.gui.dashboard import DashboardScreen  # noqa: E402
 from mintguard.locales.loader import I18nLoader  # noqa: E402
+from mintguard.utils.formatters import format_duration  # noqa: E402
 
 
 @pytest.fixture(autouse=True)
@@ -441,3 +442,22 @@ def test_activate_daemon_missing_pkexec_shows_unavailable_message(monkeypatch):
     screen._activate_daemon()
 
     assert "composant manquant" in screen.daemon_body.text()
+
+
+def test_usage_limit_uses_daily_budget_when_shorter_than_window():
+    """Plage 16h-20h avec quota de 60 min : la session est coupée au bout d'une heure, la
+    barre doit donc afficher "sur 1h", pas "sur 4h"."""
+    child_id = make_child()
+    today = datetime.now().weekday()
+    session = get_session()
+    try:
+        session.add(
+            TimeRule(child_id=child_id, day_of_week=today, start_hour=dt_time(16, 0), end_hour=dt_time(20, 0),
+                     daily_budget_minutes=60)
+        )
+        session.commit()
+    finally:
+        session.close()
+
+    screen = DashboardScreen(I18nLoader("fr"))
+    assert screen.usage_value.text().endswith(format_duration(3600))

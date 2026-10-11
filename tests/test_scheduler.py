@@ -35,10 +35,16 @@ WEDNESDAY = datetime(2026, 7, 1)
 class FakeSessionManager:
     def __init__(self):
         self.terminated: list[str] = []
+        # None = loginctl indisponible : aucun filtre (tous les enfants sont vérifiés).
+        self.logged_in: set[str] | None = None
 
     def terminate_user_session(self, username: str) -> bool:
         self.terminated.append(username)
         return True
+
+    def logged_in_usernames(self):
+        return self.logged_in
+
 
 
 @pytest.fixture(autouse=True)
@@ -277,3 +283,29 @@ def test_child_back_within_window_during_grace_is_not_terminated(manager):
     assert scheduler.check_all_children(t0 + timedelta(seconds=90)) == []
     assert manager.terminated == []
     assert scheduler.get_grace_seconds_remaining(child_id, t0 + timedelta(seconds=90)) is None
+
+
+def test_child_not_logged_in_is_never_terminated(manager):
+    """Un enfant absent hors plage : ni grâce ouverte, ni `loginctl terminate-user` voué à
+    l'échec à chaque cycle."""
+    child_id = add_child()
+    manager.logged_in = {"someone-else"}
+    scheduler = Scheduler(manager, grace_period_seconds=0)
+
+    assert scheduler.check_all_children(WEDNESDAY.replace(hour=22)) == []
+    assert manager.terminated == []
+    assert scheduler.get_grace_seconds_remaining(child_id) is None
+
+
+def test_grace_starts_only_once_child_logs_in(manager):
+    """La grâce ne doit pas avoir commencé à s'écouler avant la connexion de l'enfant."""
+    child_id = add_child()
+    scheduler = Scheduler(manager, grace_period_seconds=90)
+    t0 = WEDNESDAY.replace(hour=22)
+
+    manager.logged_in = set()
+    scheduler.check_all_children(t0)
+    manager.logged_in = {"emma"}
+    scheduler.check_all_children(t0 + timedelta(seconds=80))
+
+    assert scheduler.get_grace_seconds_remaining(child_id, t0 + timedelta(seconds=80)) == 90

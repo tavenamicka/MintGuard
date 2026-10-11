@@ -161,3 +161,16 @@ def _fake_getpwuid(uid_to_username: dict[int, str]):
         return type("PwEntry", (), {"pw_name": uid_to_username[uid]})()
 
     return getpwuid
+
+
+def test_silent_client_does_not_block_handler_forever(monkeypatch):
+    """Un client qui se connecte sans rien envoyer ne doit pas immobiliser un thread du
+    daemon indéfiniment (le socket est accessible à tous les comptes)."""
+    monkeypatch.setattr("mintguard.backend.status_server._CLIENT_TIMEOUT_SECONDS", 0.2)
+    server_side, client_side = socket.socketpair(socket.AF_UNIX, socket.SOCK_STREAM)
+    try:
+        monkeypatch.setattr(StatusServer, "_peer_uid", staticmethod(lambda conn: FAKE_CHILD_UID))
+        StatusServer(Scheduler())._handle(server_side)  # doit rendre la main, pas bloquer
+        assert server_side.fileno() == -1  # connexion refermée
+    finally:
+        client_side.close()

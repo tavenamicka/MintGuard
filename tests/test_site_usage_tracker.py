@@ -53,7 +53,7 @@ def loginctl_matches_psutil(monkeypatch):
         sessions = [{"user": name, "state": "active"} for name in usernames]
         return _FakeCompletedProcess(stdout=json.dumps(sessions))
 
-    monkeypatch.setattr("mintguard.backend.usage_tracker.subprocess.run", fake_run)
+    monkeypatch.setattr("mintguard.backend.session_manager.subprocess.run", fake_run)
 
 
 def add_child(username: str) -> int:
@@ -196,7 +196,7 @@ def test_resolve_active_child_id_returns_none_when_nobody_logged_in(monkeypatch)
     add_child("alice")
     monkeypatch.setattr("mintguard.backend.usage_tracker.psutil.users", lambda: [])
 
-    assert resolve_active_child_id(UsageTracker()) is None
+    assert resolve_active_child_id(UsageTracker().get_active_usernames()) is None
 
 
 def test_resolve_active_child_id_returns_the_single_active_child(monkeypatch):
@@ -204,7 +204,7 @@ def test_resolve_active_child_id_returns_the_single_active_child(monkeypatch):
     sessions = [FakeSession("alice", "tty1", "", 0.0, 1)]
     monkeypatch.setattr("mintguard.backend.usage_tracker.psutil.users", lambda: sessions)
 
-    assert resolve_active_child_id(UsageTracker()) == child_id
+    assert resolve_active_child_id(UsageTracker().get_active_usernames()) == child_id
 
 
 def test_resolve_active_child_id_returns_none_when_multiple_children_active(monkeypatch):
@@ -213,12 +213,12 @@ def test_resolve_active_child_id_returns_none_when_multiple_children_active(monk
     sessions = [FakeSession("alice", "tty1", "", 0.0, 1), FakeSession("bob", "tty2", "", 0.0, 2)]
     monkeypatch.setattr("mintguard.backend.usage_tracker.psutil.users", lambda: sessions)
 
-    assert resolve_active_child_id(UsageTracker()) is None
+    assert resolve_active_child_id(UsageTracker().get_active_usernames()) is None
 
 
 def test_resolve_active_child_id_ignores_logged_in_non_child_account(monkeypatch):
     add_child("alice")
-    sessions = [FakeSession("latitude", "tty1", "", 0.0, 1)]  # compte parent, pas un enfant
+    sessions = [FakeSession("parentuser", "tty1", "", 0.0, 1)]  # compte parent, pas un enfant
     monkeypatch.setattr("mintguard.backend.usage_tracker.psutil.users", lambda: sessions)
 
-    assert resolve_active_child_id(UsageTracker()) is None
+    assert resolve_active_child_id(UsageTracker().get_active_usernames()) is None

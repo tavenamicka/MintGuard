@@ -319,7 +319,7 @@ class DashboardScreen(QWidget):
         finally:
             session.close()
 
-    def _today_rule_window(self, child_id: int) -> tuple[dt_time, dt_time] | None:
+    def _today_rule_window(self, child_id: int) -> tuple[dt_time, dt_time, int | None] | None:
         today = datetime.now().weekday()
         session = get_session()
         try:
@@ -331,25 +331,31 @@ class DashboardScreen(QWidget):
             # Extraire les valeurs pendant que la session est ouverte : après close(), les
             # attributs ne sont accessibles que par chance (tant qu'aucun commit ne les a
             # expirés) — mieux vaut ne pas dépendre de ce détail d'implémentation SQLAlchemy.
-            return (rule.start_hour, rule.end_hour) if rule is not None else None
+            return (rule.start_hour, rule.end_hour, rule.daily_budget_minutes) if rule is not None else None
         finally:
             session.close()
 
-    def _today_window_text(self, window: tuple[dt_time, dt_time] | None) -> str:
+    def _today_window_text(self, window: tuple[dt_time, dt_time, int | None] | None) -> str:
         if window is None:
             return self.i18n("dashboard.no_rule_today")
-        start_hour, end_hour = window
+        start_hour, end_hour, _daily_budget_minutes = window
         return self.i18n("dashboard.today_window").format(start_hour.strftime("%H:%M"), end_hour.strftime("%H:%M"))
 
-    def _refresh_usage(self, child_id: int, window: tuple[dt_time, dt_time] | None) -> None:
+    def _refresh_usage(self, child_id: int, window: tuple[dt_time, dt_time, int | None] | None) -> None:
         """Barre de progression du temps utilisé aujourd'hui — seulement quand une plage horaire
-        est définie pour aujourd'hui (sinon pas de "maximum" auquel comparer, cf. accès libre)."""
+        est définie pour aujourd'hui (sinon pas de "maximum" auquel comparer, cf. accès libre).
+
+        Le maximum est le plus petit de la durée de la plage et du quota quotidien s'il y en a
+        un, comme dans Scheduler : une plage 16h-20h avec un quota de 60 min affichait
+        auparavant "x sur 4h" alors que la session est coupée au bout d'une heure."""
         if window is None:
             self.usage_card.hide()
             return
 
-        start_hour, end_hour = window
+        start_hour, end_hour, daily_budget_minutes = window
         limit_seconds = self._seconds_since_midnight(end_hour) - self._seconds_since_midnight(start_hour)
+        if daily_budget_minutes is not None:
+            limit_seconds = min(limit_seconds, daily_budget_minutes * 60)
         used_seconds = self._usage_tracker.get_seconds_used_today(child_id)
 
         self.usage_card.show()

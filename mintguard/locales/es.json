@@ -108,7 +108,8 @@
     "limit_daily_time": "Limitar el tiempo de uso por día",
     "daily_budget_checkbox": "Límite diario",
     "minutes_per_day_suffix": " min/día",
-    "app_quota_checkbox": "Limitar el tiempo de uso por día (en lugar de un bloqueo total)"
+    "app_quota_checkbox": "Limitar el tiempo de uso por día (en lugar de un bloqueo total)",
+    "invalid_time_range_error": "La hora de fin debe ser posterior a la hora de inicio ({}). No se admiten franjas que pasen la medianoche."
   },
   "time": {
     "monday": "Lunes",

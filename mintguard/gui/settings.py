@@ -135,6 +135,12 @@ class TimeTab(QWidget):
         self.saved_label.hide()
         layout.addWidget(self.saved_label)
 
+        self.error_label = small_label("")
+        self.error_label.setObjectName("danger")
+        self.error_label.setWordWrap(True)
+        self.error_label.hide()
+        layout.addWidget(self.error_label)
+
         save_button = QPushButton(self.i18n("common.save"))
         save_button.clicked.connect(self._save)
         layout.addWidget(save_button)
@@ -223,9 +229,29 @@ class TimeTab(QWidget):
             else:
                 budget_checkbox.setChecked(False)
 
+    def _invalid_days(self) -> list[int]:
+        """Jours cochés dont la fin n'est pas après le début. Le Scheduler ne gère pas les
+        plages qui passent minuit (ex: 22:00-01:00) ni les plages vides : une telle règle ne
+        correspond jamais à l'heure courante, et la session de l'enfant était coupée à chaque
+        connexion, toute la journée, sans que le parent comprenne pourquoi."""
+        return [
+            day_index
+            for day_index, (checkbox, start_edit, end_edit, _bc, _bs) in enumerate(self._day_widgets)
+            if checkbox.isChecked() and end_edit.time() <= start_edit.time()
+        ]
+
     def _save(self) -> None:
         if self.child_id is None:
             return
+        invalid_days = self._invalid_days()
+        if invalid_days:
+            day_names = ", ".join(self.i18n(f"time.{weekday_key(d)}") for d in invalid_days)
+            self.error_label.setText(self.i18n("settings.invalid_time_range_error").format(day_names))
+            self.error_label.show()
+            self.saved_label.hide()
+            return
+        self.error_label.hide()
+
         session = get_session()
         try:
             session.query(TimeRule).filter_by(child_id=self.child_id).delete()
@@ -422,13 +448,20 @@ class SitesTab(QWidget):
         self._custom_budget_spins = {}
         for domain in sorted(custom_domains):
             checkbox, tile, budget_checkbox, budget_spin = self._build_site_tile(domain, "custom")
-            checkbox.setChecked(True)
             daily_budget_minutes = custom_domains[domain]
-            budget_checkbox.setEnabled(True)
+            # Signaux bloqués comme dans `_load()` : sinon chaque reconstruction réécrivait en BD
+            # l'état qu'on vient d'en lire (et brièvement le quota par défaut, 30 min, avant le
+            # vrai) - jusqu'à 3 écritures par site personnalisé à chaque ouverture de l'onglet.
+            for widget in (checkbox, budget_checkbox, budget_spin):
+                widget.blockSignals(True)
+            checkbox.setChecked(True)
             budget_checkbox.setChecked(daily_budget_minutes is not None)
-            budget_spin.setEnabled(daily_budget_minutes is not None)
             if daily_budget_minutes is not None:
                 budget_spin.setValue(daily_budget_minutes)
+            for widget in (checkbox, budget_checkbox, budget_spin):
+                widget.blockSignals(False)
+            budget_checkbox.setEnabled(True)
+            budget_spin.setEnabled(daily_budget_minutes is not None)
             self._custom_section.add_tile(checkbox, tile)
             self._custom_checkboxes[domain] = checkbox
             self._custom_budget_checkboxes[domain] = budget_checkbox

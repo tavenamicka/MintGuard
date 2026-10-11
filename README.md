@@ -41,14 +41,22 @@ Pour les parents : [Français](docs/USER_MANUAL_FR.md) · [English](docs/USER_MA
 ## Architecture
 
 ```
-Interface GUI (PyQt6, parent)
-        │  D-Bus / Socket
-Daemon backend (systemd, root)
-   ├── DNS Controller (dnsmasq)
-   ├── Firewall Controller (iptables)
-   ├── Process Monitor (psutil)
-   └── Session Manager (loginctl)
+Interface GUI (PyQt6, parent)      Icônes de notification (parent / enfant)
+        │                                   │
+        │ lecture/écriture                  │ lecture seule
+        ▼                                   ▼
+Base SQLite partagée ◄──────┐   Socket Unix /run/mintguard/status.sock
+(groupe mintguard-admin)    │   (statut, authentifié par SO_PEERCRED)
+                            │               │
+                    Daemon backend (systemd, root)
+                       ├── DNS Controller (dnsmasq, blocklist dynamique par enfant)
+                       ├── Site Usage Tracker (journal DNS, quota par site)
+                       ├── Firewall Controller (iptables)
+                       ├── Process Monitor (psutil)
+                       └── Session Manager (loginctl)
 ```
+
+La GUI et le daemon ne communiquent pas directement : la GUI écrit les règles dans la base SQLite, que le daemon relit à chaque cycle. Le socket `status.sock` est le seul canal exposé au compte enfant ; il ne fournit que le statut de l'appelant (temps restant, période de grâce).
 
 ## Installation (développement)
 

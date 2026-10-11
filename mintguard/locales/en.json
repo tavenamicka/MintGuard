@@ -108,7 +108,8 @@
     "limit_daily_time": "Limit usage time per day",
     "daily_budget_checkbox": "Daily limit",
     "minutes_per_day_suffix": " min/day",
-    "app_quota_checkbox": "Limit usage time per day (instead of a total block)"
+    "app_quota_checkbox": "Limit usage time per day (instead of a total block)",
+    "invalid_time_range_error": "The end time must be after the start time ({}). Time ranges that cross midnight are not supported."
   },
   "time": {
     "monday": "Monday",

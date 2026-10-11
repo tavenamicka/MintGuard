@@ -108,7 +108,8 @@
     "limit_daily_time": "Nutzungszeit pro Tag begrenzen",
     "daily_budget_checkbox": "Tageslimit",
     "minutes_per_day_suffix": " Min/Tag",
-    "app_quota_checkbox": "Nutzungszeit pro Tag begrenzen (statt vollständiger Sperre)"
+    "app_quota_checkbox": "Nutzungszeit pro Tag begrenzen (statt vollständiger Sperre)",
+    "invalid_time_range_error": "Die Endzeit muss nach der Startzeit liegen ({}). Zeiträume über Mitternacht werden nicht unterstützt."
   },
   "time": {
     "monday": "Montag",

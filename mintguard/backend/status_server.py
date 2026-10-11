@@ -31,6 +31,7 @@ logger = logging.getLogger("mintguard.backend.status_server")
 
 _SO_PEERCRED_FMT = "3i"  # pid, uid, gid (struct ucred, Linux)
 _RECENT_BLOCKS_WINDOW_SECONDS = 30
+_CLIENT_TIMEOUT_SECONDS = 2.0
 
 
 class StatusServer:
@@ -75,6 +76,10 @@ class StatusServer:
 
     def _handle(self, conn: socket.socket) -> None:
         try:
+            # Sans délai, un client qui se connecte sans jamais rien envoyer bloquait un thread
+            # indéfiniment : n'importe quel compte (le socket est en 0666) pouvait en ouvrir des
+            # milliers et épuiser les threads du daemon.
+            conn.settimeout(_CLIENT_TIMEOUT_SECONDS)
             uid = self._peer_uid(conn)
             raw = conn.recv(4096)
             if not raw:

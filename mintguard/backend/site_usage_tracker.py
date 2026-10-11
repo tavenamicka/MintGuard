@@ -20,7 +20,6 @@ from datetime import date
 from pathlib import Path
 
 from mintguard.backend.site_categories import domain_matches
-from mintguard.backend.usage_tracker import UsageTracker
 from mintguard.config import get_config
 from mintguard.db.database import session_scope
 from mintguard.db.models import BlockedSite, Child, SiteDailyUsage
@@ -35,13 +34,13 @@ logger = logging.getLogger("mintguard.backend.site_usage_tracker")
 _QUERY_LINE_RE = re.compile(r"query\[\S+\]\s+(\S+)\s+from\b")
 
 
-def resolve_active_child_id(usage_tracker: UsageTracker) -> int | None:
+def resolve_active_child_id(active_usernames: set[str]) -> int | None:
     """Determine l'unique enfant actuellement connecte, ou None si ambigu (aucun enfant actif,
     ou plusieurs simultanement - changement rapide d'utilisateur). Distinct de
     UsageTracker.record_tick(), qui credite TOUS les enfants actifs a la fois pour le temps
     d'ecran : ce choix ne convient pas au decompte du temps par site (voir SiteUsageTracker),
-    ou attribuer une visite au mauvais enfant serait plus genant qu'un cycle non compte."""
-    active_usernames = usage_tracker.get_active_usernames()
+    ou attribuer une visite au mauvais enfant serait plus genant qu'un cycle non compte.
+    `active_usernames` : UsageTracker.get_active_usernames(), calcule une fois par cycle."""
     if not active_usernames:
         return None
     with session_scope() as session:

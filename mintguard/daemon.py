@@ -59,12 +59,15 @@ def run_cycle(
     # Même cadence que check_and_kill() (un tick = process_interval secondes) : c'est cette
     # écriture périodique dans DailyUsage, relue par le Dashboard, qui tient lieu d'"IPC temps
     # réel" GUI<->daemon pour la barre de progression (cf. décision d'architecture ci-dessus).
-    usage_tracker.record_tick(process_interval)
+    # Comptes connectés calculés une seule fois par cycle (psutil + un appel `loginctl`), puis
+    # partagés entre le cumul du temps d'écran et la résolution de l'enfant actif - chacun
+    # relançait auparavant sa propre requête loginctl, soit deux sous-processus toutes les 5 s.
+    active_usernames = usage_tracker.get_active_usernames()
+    usage_tracker.record_tick(process_interval, active_usernames)
 
-    # Calculé une fois par cycle (même résolution que ci-dessus) et réutilisé à la fois par le
-    # suivi de temps par site (chaque cycle) et par la régénération DNS ci-dessous (seulement
-    # quand dns_refresh_interval le déclenche) - évite de la recalculer deux fois par cycle.
-    active_child_id = resolve_active_child_id(usage_tracker)
+    # Réutilisé à la fois par le suivi de temps par site (chaque cycle) et par la régénération
+    # DNS ci-dessous (seulement quand dns_refresh_interval le déclenche).
+    active_child_id = resolve_active_child_id(active_usernames)
     site_usage_tracker.poll(process_interval, active_child_id)
 
     if now - state["last_session_check"] >= session_interval:
@@ -113,19 +116,27 @@ def main() -> None:
 
     try:
         while True:
-            run_cycle(
-                process_monitor,
-                scheduler,
-                dns_controller,
-                firewall_controller,
-                usage_tracker,
-                site_usage_tracker,
-                state,
-                time.monotonic(),
-                session_interval,
-                dns_refresh_interval,
-                process_interval,
-            )
+            # Une erreur ponctuelle (BD verrouillée plus longtemps que le timeout SQLite, commande
+            # système qui échoue de façon inattendue...) ne doit pas tuer le daemon : systemd le
+            # relancerait, mais en perdant les périodes de grâce en cours (gardées en mémoire,
+            # voir Scheduler) - des erreurs répétées repousseraient alors indéfiniment la
+            # coupure de session. On journalise et on retente au cycle suivant.
+            try:
+                run_cycle(
+                    process_monitor,
+                    scheduler,
+                    dns_controller,
+                    firewall_controller,
+                    usage_tracker,
+                    site_usage_tracker,
+                    state,
+                    time.monotonic(),
+                    session_interval,
+                    dns_refresh_interval,
+                    process_interval,
+                )
+            except Exception:
+                logger.exception("Erreur pendant un cycle du daemon, nouvel essai au cycle suivant")
             time.sleep(process_interval)
     except KeyboardInterrupt:
         logger.info("MintGuard Daemon arrêté")

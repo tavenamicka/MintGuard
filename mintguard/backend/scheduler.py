@@ -160,9 +160,20 @@ class Scheduler:
         finally:
             db_session.close()
 
+        # Seuls les enfants réellement connectés sont concernés : sans ce filtre, un enfant
+        # absent hors de sa plage horaire ouvrait une grâce puis tentait `loginctl
+        # terminate-user` (en échec, "not logged in") toutes les 2-3 minutes, toute la nuit -
+        # et une grâce entamée avant sa connexion pouvait expirer quelques secondes après
+        # celle-ci, sans réel compte à rebours. `None` (loginctl indisponible) : aucun filtre,
+        # échec du côté restrictif.
+        logged_in = self.session_manager.logged_in_usernames()
+
         terminated = []
         current_time = now.time()
         for child_id, username in children:
+            if logged_in is not None and username not in logged_in:
+                self._grace_deadlines.pop(child_id, None)
+                continue
             rules = rules_today.get(child_id)
             if not rules:
                 # Aucune règle aujourd'hui = pas de restriction (accès libre), pas un blocage.
