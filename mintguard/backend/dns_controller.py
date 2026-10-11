@@ -56,7 +56,7 @@ class DNSController:
 
     # -- Contenu ----------------------------------------------------------
 
-    def _effective_blocked_domains(self, active_child_id: int | None) -> list[str]:
+    def _effective_blocked_domains(self, active_child_id: int | None, parent_only: bool = False) -> list[str]:
         """Domaines effectivement bloqués pour ce cycle, revalidés avant écriture.
 
         Il n'existe qu'un seul résolveur DNS pour toute la machine (contrairement aux
@@ -75,6 +75,11 @@ class DNSController:
           de la BD — échec du côté restrictif : bloque si n'importe lequel a déjà épuisé son
           quota aujourd'hui, jamais le contraire.
 
+        `parent_only` : des comptes sont connectés mais aucun n'est un enfant (le parent seul
+        sur la machine). Seuls les blocages totaux globaux (child_id None) s'appliquent :
+        auparavant le parent subissait les blocages de tous ses enfants dès qu'aucun n'était
+        connecté.
+
         Défense en profondeur, inchangée : la GUI valide déjà la saisie du parent
         (`is_valid_domain`), mais cette blocklist est injectée telle quelle dans la
         configuration d'un dnsmasq tournant en root — on revalide ici, au dernier moment.
@@ -88,6 +93,11 @@ class DNSController:
             domains = []
             for site in sites:
                 owner = site.child_id  # None = regle globale/compat, sinon un enfant precis
+
+                if parent_only:
+                    if owner is None and site.daily_budget_minutes is None:
+                        domains.append(site.domain)
+                    continue
 
                 if owner is not None and active_child_id is not None and owner != active_child_id:
                     continue
@@ -175,25 +185,25 @@ class DNSController:
 
     # -- API --------------------------------------------------------------
 
-    def generate_blocklist(self, active_child_id: int | None = None) -> int:
+    def generate_blocklist(self, active_child_id: int | None = None, parent_only: bool = False) -> int:
         """Régénère le fichier de blocklist depuis la BD. Retourne le nombre d'entrées écrites.
 
         `active_child_id=None` (défaut) : aucun enfant identifié comme actif, comportement le
         plus restrictif (voir `_effective_blocked_domains`) — utilisé notamment au démarrage
         du daemon, avant qu'un premier cycle n'ait pu déterminer qui est connecté.
         """
-        domains = self._effective_blocked_domains(active_child_id)
+        domains = self._effective_blocked_domains(active_child_id, parent_only)
         self._write(self._render(domains))
         return len(domains)
 
-    def apply(self, active_child_id: int | None = None) -> bool:
+    def apply(self, active_child_id: int | None = None, parent_only: bool = False) -> bool:
         """Régénère la blocklist et redémarre dnsmasq *uniquement* si son contenu a changé.
 
         Retourne True si un redémarrage a eu lieu. Appelée à chaque cycle DNS du daemon :
         sans cette comparaison, dnsmasq était redémarré toutes les 30 s en pure perte (cache
         DNS vidé, bruit dans les logs, coupure de résolution de quelques dizaines de ms).
         """
-        content = self._render(self._effective_blocked_domains(active_child_id))
+        content = self._render(self._effective_blocked_domains(active_child_id, parent_only))
         if content == self._current_content():
             return False
         self._write(content)

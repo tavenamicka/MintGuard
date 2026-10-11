@@ -21,7 +21,7 @@ from mintguard.backend.dns_health import system_resolver_uses_mintguard
 from mintguard.backend.firewall_controller import FirewallController
 from mintguard.backend.process_monitor import ProcessMonitor
 from mintguard.backend.scheduler import Scheduler
-from mintguard.backend.site_usage_tracker import SiteUsageTracker, resolve_active_child_id
+from mintguard.backend.site_usage_tracker import SiteUsageTracker, logged_in_child_ids, resolve_active_child_id
 from mintguard.backend.status_server import StatusServer
 from mintguard.backend.usage_tracker import UsageTracker
 from mintguard.config import get_config
@@ -68,19 +68,30 @@ def run_cycle(
 
     # Réutilisé à la fois par le suivi de temps par site (chaque cycle) et par la régénération
     # DNS ci-dessous (seulement quand dns_refresh_interval le déclenche).
-    active_child_id = resolve_active_child_id(active_usernames)
+    child_ids = logged_in_child_ids(active_usernames)
+    active_child_id = resolve_active_child_id(active_usernames, child_ids)
+    # Des comptes sont connectés mais aucun n'est un enfant (le parent seul) : seules les
+    # règles globales s'appliquent. Personne de connecté (écran de connexion) reste traité
+    # comme ambigu, donc restrictif - le prochain à se connecter peut être un enfant.
+    parent_only = bool(active_usernames) and not child_ids
     site_usage_tracker.poll(process_interval, active_child_id)
 
     if now - state["last_session_check"] >= session_interval:
         scheduler.check_all_children()
         state["last_session_check"] = now
 
-    if now - state["last_dns_refresh"] >= dns_refresh_interval:
+    # Changement de compte connecté (parent -> enfant, enfant A -> enfant B) : la blocklist
+    # dépend de qui est connecté, elle est régénérée tout de suite plutôt qu'au prochain
+    # rafraîchissement périodique (jusqu'à 30 s pendant lesquelles un enfant qui vient de se
+    # connecter aurait profité des règles du parent).
+    users_changed = active_usernames != state.get("active_usernames")
+    state["active_usernames"] = active_usernames
+    if users_changed or now - state["last_dns_refresh"] >= dns_refresh_interval:
         # `apply()` ne redémarre dnsmasq que si la blocklist a réellement changé, et
         # `sync_child_dns_restriction()` ne reconstruit la chaîne iptables que si elle ne
         # correspond plus à la BD : un cycle sans changement (le cas courant) ne touche
         # plus au système du tout.
-        dns_controller.apply(active_child_id)
+        dns_controller.apply(active_child_id, parent_only=parent_only)
         firewall_controller.sync_child_dns_restriction()
         _log_resolver_change(state)
         state["last_dns_refresh"] = now

@@ -217,3 +217,29 @@ def test_per_child_always_blocked_site_does_not_block_other_active_child(control
 
     controller.generate_blocklist(active_child_id=bob)
     assert "roblox.com" not in controller.blocklist_path.read_text(encoding="utf-8")
+
+
+def test_parent_alone_is_not_subject_to_childrens_rules(controller):
+    """Le parent seul sur la machine : ni les blocages propres à un enfant, ni les quotas ne
+    s'appliquent - seuls les blocages totaux globaux restent."""
+    alice = make_child("alice")
+    add_sites("tiktok.com", child_id=alice)
+    add_sites("youtube.com", child_id=alice, daily_budget_minutes=30)
+    set_usage(alice, "youtube.com", 3600)
+    add_sites("global-block.com")
+    add_sites("global-quota.com", daily_budget_minutes=1)
+
+    controller.generate_blocklist(parent_only=True)
+    content = controller.blocklist_path.read_text(encoding="utf-8")
+    assert "global-block.com" in content
+    assert "tiktok.com" not in content
+    assert "youtube.com" not in content
+    assert "global-quota.com" not in content
+
+
+def test_nobody_logged_in_stays_restrictive(controller):
+    alice = make_child("alice")
+    add_sites("tiktok.com", child_id=alice)
+
+    controller.generate_blocklist()
+    assert "tiktok.com" in controller.blocklist_path.read_text(encoding="utf-8")

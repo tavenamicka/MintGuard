@@ -34,18 +34,26 @@ logger = logging.getLogger("mintguard.backend.site_usage_tracker")
 _QUERY_LINE_RE = re.compile(r"query\[\S+\]\s+(\S+)\s+from\b")
 
 
-def resolve_active_child_id(active_usernames: set[str]) -> int | None:
+def logged_in_child_ids(active_usernames: set[str]) -> list[int]:
+    """Ids des enfants parmi les comptes actuellement connectes (UsageTracker.get_active_usernames(),
+    calcule une fois par cycle)."""
+    if not active_usernames:
+        return []
+    with session_scope() as session:
+        return [c.id for c in session.query(Child.id).filter(Child.username.in_(active_usernames)).all()]
+
+
+def resolve_active_child_id(active_usernames: set[str], child_ids: list[int] | None = None) -> int | None:
     """Determine l'unique enfant actuellement connecte, ou None si ambigu (aucun enfant actif,
     ou plusieurs simultanement - changement rapide d'utilisateur). Distinct de
     UsageTracker.record_tick(), qui credite TOUS les enfants actifs a la fois pour le temps
     d'ecran : ce choix ne convient pas au decompte du temps par site (voir SiteUsageTracker),
     ou attribuer une visite au mauvais enfant serait plus genant qu'un cycle non compte.
-    `active_usernames` : UsageTracker.get_active_usernames(), calcule une fois par cycle."""
-    if not active_usernames:
-        return None
-    with session_scope() as session:
-        matched = session.query(Child).filter(Child.username.in_(active_usernames)).all()
-    return matched[0].id if len(matched) == 1 else None
+    `child_ids` : resultat de logged_in_child_ids() s'il est deja connu, pour eviter une
+    seconde requete."""
+    if child_ids is None:
+        child_ids = logged_in_child_ids(active_usernames)
+    return child_ids[0] if len(child_ids) == 1 else None
 
 
 class SiteUsageTracker:
