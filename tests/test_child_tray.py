@@ -278,3 +278,81 @@ def test_warnings_rearm_when_parent_extends_time(monkeypatch, qapp):
     tray._warn_if_threshold_crossed(30)  # le parent rallonge
     tray._warn_if_threshold_crossed(9)   # le palier 10 doit de nouveau prévenir
     assert len(shown) == 3
+
+
+def _status_with_site(remaining, budget=30):
+    return {
+        "is_child": True,
+        "minutes_remaining": None,
+        "recent_blocks": [],
+        "blocked_apps": [],
+        "blocked_sites": [{"name": "youtube.com", "budget_minutes": budget, "remaining_minutes": remaining}],
+    }
+
+
+def test_site_quota_warns_at_5_then_1_minutes(monkeypatch, qapp):
+    tray = ChildTray(qapp)
+    shown = []
+    monkeypatch.setattr(tray.tray, "showMessage", lambda title, msg, icon: shown.append(msg))
+    monkeypatch.setattr(tray.banner, "show_message", lambda msg: None)
+
+    for remaining in (20, 6):
+        monkeypatch.setattr(child_tray, "query_status", lambda r=remaining: _status_with_site(r))
+        tray.poll()
+    assert shown == []
+
+    for remaining in (5, 4, 1):
+        monkeypatch.setattr(child_tray, "query_status", lambda r=remaining: _status_with_site(r))
+        tray.poll()
+    assert len(shown) == 2
+    assert "youtube.com" in shown[0] and "5" in shown[0]
+    assert "1" in shown[1]
+
+
+def test_site_quota_already_used_up_does_not_warn(monkeypatch, qapp):
+    tray = ChildTray(qapp)
+    shown = []
+    monkeypatch.setattr(tray.tray, "showMessage", lambda title, msg, icon: shown.append(msg))
+    monkeypatch.setattr(tray.banner, "show_message", lambda msg: None)
+    monkeypatch.setattr(child_tray, "query_status", lambda: _status_with_site(0))
+
+    tray.poll()
+
+    assert shown == []
+
+
+def test_site_without_budget_never_warns(monkeypatch, qapp):
+    tray = ChildTray(qapp)
+    shown = []
+    monkeypatch.setattr(tray.tray, "showMessage", lambda title, msg, icon: shown.append(msg))
+    monkeypatch.setattr(tray.banner, "show_message", lambda msg: None)
+    status = _status_with_site(None, budget=None)
+    monkeypatch.setattr(child_tray, "query_status", lambda: status)
+
+    tray.poll()
+
+    assert shown == []
+
+
+def test_warning_repeats_after_suspend_or_lock(monkeypatch, qapp):
+    tray = ChildTray(qapp)
+    tray.thresholds = [5, 1]
+    shown = []
+    monkeypatch.setattr(tray.tray, "showMessage", lambda title, msg, icon: shown.append(msg))
+    monkeypatch.setattr(tray.banner, "show_message", lambda msg: None)
+    clock = [1000.0]
+    monkeypatch.setattr(child_tray.time, "time", lambda: clock[0])
+    monkeypatch.setattr(
+        child_tray, "query_status", lambda: {"is_child": True, "minutes_remaining": 5, "recent_blocks": []}
+    )
+
+    tray.poll()
+    assert len(shown) == 1
+
+    clock[0] += 15  # sondage normal : rien de plus
+    tray.poll()
+    assert len(shown) == 1
+
+    clock[0] += 600  # l'enfant revient apres une veille
+    tray.poll()
+    assert len(shown) == 2

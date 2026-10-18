@@ -11,6 +11,8 @@
   "child_tray": {
     "tooltip_minutes": "MintGuard: noch {0} Min.",
     "warning_minutes_left": "Noch {0} Minute(n) bis zum Ende deiner Sitzung.",
+    "quota_warning_app": "Noch {1} Minute(n) für {0} heute.",
+    "quota_warning_site": "Noch {1} Minute(n) auf {0} heute.",
     "app_blocked": "{0} wurde geschlossen: diese Anwendung ist nicht erlaubt.",
     "session_ending_title": "Deine Zeit ist für heute vorbei",
     "session_ending_body": "Denk daran, deine Arbeit zu speichern. Schließt in {0} Sekunden.",

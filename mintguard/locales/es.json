@@ -11,6 +11,8 @@
   "child_tray": {
     "tooltip_minutes": "MintGuard: quedan {0} min",
     "warning_minutes_left": "Quedan {0} minuto(s) antes de que termine tu sesión.",
+    "quota_warning_app": "Quedan {1} minuto(s) para {0} hoy.",
+    "quota_warning_site": "Quedan {1} minuto(s) en {0} hoy.",
     "app_blocked": "{0} se cerró: esta aplicación no está permitida.",
     "session_ending_title": "Tu tiempo ha terminado por hoy",
     "session_ending_body": "Recuerda guardar tu trabajo. Se cerrará en {0} segundos.",

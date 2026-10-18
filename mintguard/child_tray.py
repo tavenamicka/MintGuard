@@ -18,6 +18,7 @@ import json
 import logging
 import socket
 import sys
+import time
 from pathlib import Path
 
 from PyQt6.QtCore import Qt, QTimer
@@ -252,6 +253,16 @@ class ChildTray:
         self.poll_interval_ms = int(config.get("child_tray.poll_interval_seconds", 15)) * 1000
         self.thresholds = sorted(config.get("child_tray.warning_thresholds_minutes", [10, 5, 1]), reverse=True)
         self._warned_thresholds: set[int] = set()
+        # Paliers du quota d'une appli ou d'un site (budget quotidien propre, distinct du temps
+        # de session) : memes paliers pour chaque cible, clef = ("app"|"site", nom).
+        self.quota_thresholds = sorted(
+            config.get("child_tray.quota_warning_thresholds_minutes", [5, 1]), reverse=True
+        )
+        self._quota_warned: dict[tuple[str, str], set[int]] = {}
+        self._quota_last_seen: dict[tuple[str, str], int] = {}
+        # Instant (horloge murale) du dernier sondage : un ecart bien superieur a l'intervalle
+        # signale une mise en veille / reprise, pendant laquelle l'enfant a pu rater l'alerte.
+        self._last_poll_at: float | None = None
         self._seen_blocks: set[str] = set()
         # Dernier statut connu (voir poll()) : reutilise par le clic sur l'icone pour afficher
         # une notification a la demande, sans redemander le socket (deja rafraichi au plus
@@ -298,8 +309,12 @@ class ChildTray:
             self.tray.show()
 
         self._last_status = status
+        resumed = self._detect_resume()
         self._update_tooltip(status.get("minutes_remaining"))
         self._warn_if_threshold_crossed(status.get("minutes_remaining"))
+        self._warn_quotas(status, resumed)
+        if resumed:
+            self._repeat_warning_after_resume(status.get("minutes_remaining"))
         self._notify_new_blocks(status.get("recent_blocks") or [])
         self._update_grace(status.get("grace_seconds_remaining"))
 
@@ -362,6 +377,52 @@ class ChildTray:
                 # bureau, voir USER_MANUAL_*.md) : le bandeau est une fenêtre Qt ordinaire,
                 # toujours affichée, en plus - pas à la place.
                 self.banner.show_message(message)
+
+    def _announce(self, message: str) -> None:
+        self.tray.showMessage(self._("app.name"), message, QSystemTrayIcon.MessageIcon.Warning)
+        # Voir _warn_if_threshold_crossed : le bandeau double le popup systray, il ne le remplace pas.
+        self.banner.show_message(message)
+
+    def _detect_resume(self) -> bool:
+        now = time.time()
+        previous, self._last_poll_at = self._last_poll_at, now
+        return previous is not None and now - previous > 3 * self.poll_interval_ms / 1000
+
+    def _repeat_warning_after_resume(self, minutes_remaining: int | None) -> None:
+        """Veille ou écran verrouillé au moment du palier : l'enfant qui revient n'a pas vu
+        l'alerte (déjà marquée comme émise), on répète donc le palier le plus proche."""
+        if minutes_remaining is None or minutes_remaining <= 0:
+            return
+        crossed = [t for t in self.thresholds if minutes_remaining <= t]
+        if crossed:
+            self._announce(self._("child_tray.warning_minutes_left").format(min(crossed)))
+
+    def _warn_quotas(self, status: dict, resumed: bool) -> None:
+        """Avertit quand le budget quotidien d'une appli ou d'un site (affiché au clic sur
+        l'icône) approche de l'épuisement - ce temps-là ne passe que pendant l'usage, donc
+        l'alerte tombe pendant que l'enfant est dessus. Un quota déjà épuisé au premier
+        constat n'avertit pas (rien à anticiper, et ce serait répété à chaque connexion)."""
+        for kind, rules in (("app", status.get("blocked_apps") or []), ("site", status.get("blocked_sites") or [])):
+            for rule in rules:
+                remaining = rule.get("remaining_minutes")
+                if rule.get("budget_minutes") is None or remaining is None:
+                    continue
+                key = (kind, str(rule.get("name", "?")))
+                previous = self._quota_last_seen.get(key)
+                self._quota_last_seen[key] = remaining
+                warned = self._quota_warned.setdefault(key, set())
+                # Budget rallongé par le parent : les paliers repassés au-dessus se réarment.
+                warned &= {t for t in warned if t >= remaining}
+                if remaining == 0 and previous is None:
+                    warned.update(self.quota_thresholds)
+                    continue
+                crossed = [t for t in self.quota_thresholds if remaining <= t]
+                new = [t for t in crossed if t not in warned]
+                # Tous les paliers franchis d'un coup ne donnent qu'un message : le plus serré.
+                if new or (resumed and crossed and remaining > 0):
+                    warned.update(crossed)
+                    label = "child_tray.quota_warning_app" if kind == "app" else "child_tray.quota_warning_site"
+                    self._announce(self._(label).format(key[1], min(crossed)))
 
     def _notify_new_blocks(self, recent_blocks: list[str]) -> None:
         for details in recent_blocks:

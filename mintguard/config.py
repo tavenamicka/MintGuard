@@ -65,6 +65,8 @@ DEFAULT_CONFIG: dict[str, Any] = {
         # un par session (voir child_tray.py) - pas de compte a rebours seconde par seconde,
         # juste des paliers, coherent avec le polling (pas un besoin temps reel).
         "warning_thresholds_minutes": [10, 5, 1],
+        # Memes paliers pour le quota quotidien d'une application ou d'un site.
+        "quota_warning_thresholds_minutes": [5, 1],
     },
     "logging": {
         "level": "INFO",

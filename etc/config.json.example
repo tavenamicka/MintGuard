@@ -21,7 +21,8 @@
   },
   "child_tray": {
     "poll_interval_seconds": 15,
-    "warning_thresholds_minutes": [10, 5, 1]
+    "warning_thresholds_minutes": [10, 5, 1],
+    "quota_warning_thresholds_minutes": [5, 1]
   },
   "logging": {
     "level": "INFO",
