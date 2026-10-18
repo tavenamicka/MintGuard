@@ -4,10 +4,9 @@ Français · [English](CHANGELOG.en.md)
 
 Chaque version de MintGuard est décrite ici, la plus récente en premier. Pour savoir quelle version vous avez, regardez le titre de la fenêtre MintGuard. Pour mettre à jour, voir « Mettre à jour MintGuard » dans le [README](README.md).
 
-## Non publié
+## 0.1.3 — 2026-10-18
 
-Changements présents dans le code mais pas encore dans une version téléchargeable ; ils seront inclus dans la prochaine.
-
+- **Alerte de fin de quota** : l'enfant est prévenu 5 minutes puis 1 minute avant la fin du temps autorisé d'une application ou d'un site, et l'alerte est répétée s'il revient après une mise en veille.
 - **Compte d'enfant introuvable** : le Tableau de bord signale un enfant enregistré avec un compte qui n'existe pas sur l'ordinateur (aucune règle ne s'applique alors à lui), et propose « Corriger le compte » sans perdre ses réglages.
 
 ## 0.1.2 — 2026-10-11

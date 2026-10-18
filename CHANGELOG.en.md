@@ -4,10 +4,9 @@
 
 Each MintGuard version is described here, newest first. To see which version you have, look at the title of the MintGuard window. To update, see "Updating MintGuard" in the [README](README.en.md).
 
-## Unreleased
+## 0.1.3 — 2026-10-18
 
-Changes already in the code but not yet in a downloadable version; they will be included in the next one.
-
+- **End-of-quota alert**: the child is warned 5 minutes, then 1 minute, before the allowed time for an application or a website runs out, and the alert is repeated if they come back after the computer was asleep.
 - **Child account not found**: the Dashboard flags a child registered with an account that doesn't exist on the computer (no rule applies to them then), and offers "Fix the account" without losing their settings.
 
 ## 0.1.2 — 2026-10-11
