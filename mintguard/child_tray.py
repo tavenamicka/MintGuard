@@ -257,7 +257,7 @@ class ChildTray:
         # Paliers du quota d'une appli ou d'un site (budget quotidien propre, distinct du temps
         # de session) : memes paliers pour chaque cible, clef = ("app"|"site", nom).
         self.quota_thresholds = sorted(
-            config.get("child_tray.quota_warning_thresholds_minutes", [5, 1]), reverse=True
+            config.get("child_tray.quota_warning_thresholds_minutes", [10, 5, 1]), reverse=True
         )
         self._quota_warned: dict[tuple[str, str], set[int]] = {}
         self._quota_last_seen: dict[tuple[str, str], int] = {}

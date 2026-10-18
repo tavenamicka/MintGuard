@@ -290,23 +290,24 @@ def _status_with_site(remaining, budget=30):
     }
 
 
-def test_site_quota_warns_at_5_then_1_minutes(monkeypatch, qapp):
+def test_site_quota_warns_at_10_5_then_1_minutes(monkeypatch, qapp):
     tray = ChildTray(qapp)
     shown = []
     monkeypatch.setattr(tray.tray, "showMessage", lambda title, msg, icon: shown.append(msg))
     monkeypatch.setattr(tray.banner, "show_message", lambda msg: None)
 
-    for remaining in (20, 6):
+    for remaining in (20, 11):
         monkeypatch.setattr(child_tray, "query_status", lambda r=remaining: _status_with_site(r))
         tray.poll()
     assert shown == []
 
-    for remaining in (5, 4, 1):
+    for remaining in (10, 7, 5, 4, 1):
         monkeypatch.setattr(child_tray, "query_status", lambda r=remaining: _status_with_site(r))
         tray.poll()
-    assert len(shown) == 2
-    assert "youtube.com" in shown[0] and "5" in shown[0]
-    assert "1" in shown[1]
+    assert len(shown) == 3
+    assert "youtube.com" in shown[0] and "10" in shown[0]
+    assert "5" in shown[1]
+    assert "1" in shown[2]
 
 
 def test_site_quota_already_used_up_does_not_warn(monkeypatch, qapp):

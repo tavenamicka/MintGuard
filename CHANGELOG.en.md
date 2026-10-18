@@ -4,13 +4,17 @@
 
 Each MintGuard version is described here, newest first. To see which version you have, look at the title of the MintGuard window. To update, see "Updating MintGuard" in the [README](README.en.md).
 
+## 0.1.5 — 2026-10-18
+
+- **Quota alert**: warnings for an application or a website now come at 10, 5 and 1 minute, like those for the session time.
+
 ## 0.1.4 — 2026-10-18
 
 - **Child icon: demo mode and log**: running `mintguard-child-tray --demo` simulates the end of the allowed time (warnings at 5 then 1 minute, then the closing countdown) without cutting anything. The icon also writes a log to `~/.cache/mintguard/child-tray.log`.
 
 ## 0.1.3 — 2026-10-18
 
-- **End-of-quota alert**: the child is warned 5 minutes, then 1 minute, before the allowed time for an application or a website runs out, and the alert is repeated if they come back after the computer was asleep.
+- **End-of-quota alert**: the child is warned 10, 5, then 1 minute before the allowed time for an application or a website runs out, and the alert is repeated if they come back after the computer was asleep.
 - **Child account not found**: the Dashboard flags a child registered with an account that doesn't exist on the computer (no rule applies to them then), and offers "Fix the account" without losing their settings.
 
 ## 0.1.2 — 2026-10-11
