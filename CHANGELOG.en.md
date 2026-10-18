@@ -4,6 +4,10 @@
 
 Each MintGuard version is described here, newest first. To see which version you have, look at the title of the MintGuard window. To update, see "Updating MintGuard" in the [README](README.en.md).
 
+## 0.1.4 — 2026-10-18
+
+- **Child icon: demo mode and log**: running `mintguard-child-tray --demo` simulates the end of the allowed time (warnings at 5 then 1 minute, then the closing countdown) without cutting anything. The icon also writes a log to `~/.cache/mintguard/child-tray.log`.
+
 ## 0.1.3 — 2026-10-18
 
 - **End-of-quota alert**: the child is warned 5 minutes, then 1 minute, before the allowed time for an application or a website runs out, and the alert is repeated if they come back after the computer was asleep.

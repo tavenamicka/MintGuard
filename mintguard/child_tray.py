@@ -16,6 +16,7 @@
 
 import json
 import logging
+import os
 import socket
 import sys
 import time
@@ -329,6 +330,7 @@ class ChildTray:
             return
 
         self._grace_seconds_left = grace_seconds_remaining
+        logger.info("Période de grâce en cours : %s s avant la fermeture", grace_seconds_remaining)
         self.grace_overlay.update_seconds(self._grace_seconds_left)
         if not self.grace_overlay.isVisible():
             self.grace_overlay.show_centered()
@@ -372,6 +374,7 @@ class ChildTray:
             if minutes_remaining <= threshold and threshold not in self._warned_thresholds:
                 self._warned_thresholds.add(threshold)
                 message = self._("child_tray.warning_minutes_left").format(threshold)
+                logger.info("Palier des %d min franchi (%s min restantes)", threshold, minutes_remaining)
                 self.tray.showMessage(self._("app.name"), message, QSystemTrayIcon.MessageIcon.Warning)
                 # Le popup systray ci-dessus n'est pas garanti visible (dépend du support du
                 # bureau, voir USER_MANUAL_*.md) : le bandeau est une fenêtre Qt ordinaire,
@@ -379,6 +382,7 @@ class ChildTray:
                 self.banner.show_message(message)
 
     def _announce(self, message: str) -> None:
+        logger.info("Avertissement affiché : %s", message)
         self.tray.showMessage(self._("app.name"), message, QSystemTrayIcon.MessageIcon.Warning)
         # Voir _warn_if_threshold_crossed : le bandeau double le popup systray, il ne le remplace pas.
         self.banner.show_message(message)
@@ -436,11 +440,45 @@ class ChildTray:
             )
 
 
+def _setup_logging() -> None:
+    """Journal dans ~/.cache (lancée par l'autostart, l'icône n'a sinon aucune sortie visible) :
+    permet de savoir, après coup, si les avertissements ont bien été déclenchés."""
+    handlers: list[logging.Handler] = [logging.StreamHandler()]
+    try:
+        cache_dir = Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")) / "mintguard"
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        handlers.append(logging.FileHandler(cache_dir / "child-tray.log"))
+    except OSError:
+        pass
+    logging.basicConfig(
+        level=logging.INFO, handlers=handlers, format="%(asctime)s %(name)s %(levelname)s %(message)s"
+    )
+
+
+def _demo_statuses():
+    """Fin de temps simulée (une étape par sondage) : 6 min, 5 min, 1 min, puis les 90 s de
+    grâce - de quoi voir à l'écran, sans attendre l'heure réelle, ce que verrait l'enfant."""
+    base = {"is_child": True, "recent_blocks": [], "blocked_apps": [], "blocked_sites": []}
+    for minutes in (6, 6, 5, 5, 4, 3, 2, 1, 1):
+        yield {**base, "minutes_remaining": minutes, "grace_seconds_remaining": None}
+    for seconds in range(90, 0, -4):
+        yield {**base, "minutes_remaining": 0, "grace_seconds_remaining": seconds}
+    while True:
+        yield {**base, "minutes_remaining": 0, "grace_seconds_remaining": 0}
+
+
 def main() -> None:
-    logging.basicConfig(level=logging.INFO)
+    _setup_logging()
     app = QApplication(sys.argv)
     app.setQuitOnLastWindowClosed(False)
     tray = ChildTray(app)
+    if "--demo" in sys.argv:
+        # Aucun lien avec le daemon : ne coupe rien, ne touche à aucune règle.
+        global query_status
+        steps = _demo_statuses()
+        query_status = lambda: next(steps)  # noqa: E731
+        tray.timer.start(3000)
+        logger.info("Mode démo : fin de temps simulée, sondage toutes les 3 s")
     tray.start()
     sys.exit(app.exec())
 

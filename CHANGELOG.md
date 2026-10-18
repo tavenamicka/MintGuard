@@ -4,6 +4,10 @@ Français · [English](CHANGELOG.en.md)
 
 Chaque version de MintGuard est décrite ici, la plus récente en premier. Pour savoir quelle version vous avez, regardez le titre de la fenêtre MintGuard. Pour mettre à jour, voir « Mettre à jour MintGuard » dans le [README](README.md).
 
+## 0.1.4 — 2026-10-18
+
+- **Icône de l'enfant : mode démonstration et journal** : lancer `mintguard-child-tray --demo` simule la fin du temps (avertissements à 5 puis 1 minute, puis compte à rebours de fermeture) sans rien couper. L'icône écrit aussi un journal dans `~/.cache/mintguard/child-tray.log`.
+
 ## 0.1.3 — 2026-10-18
 
 - **Alerte de fin de quota** : l'enfant est prévenu 5 minutes puis 1 minute avant la fin du temps autorisé d'une application ou d'un site, et l'alerte est répétée s'il revient après une mise en veille.

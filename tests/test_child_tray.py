@@ -356,3 +356,15 @@ def test_warning_repeats_after_suspend_or_lock(monkeypatch, qapp):
     clock[0] += 600  # l'enfant revient apres une veille
     tray.poll()
     assert len(shown) == 2
+
+
+def test_demo_sequence_goes_through_both_warnings_then_grace():
+    steps = []
+    gen = child_tray._demo_statuses()
+    for _ in range(40):
+        steps.append(next(gen))
+
+    minutes = [s["minutes_remaining"] for s in steps if s["grace_seconds_remaining"] is None]
+    assert 5 in minutes and 1 in minutes
+    assert any(s["grace_seconds_remaining"] for s in steps)
+    assert all(s["is_child"] for s in steps)
