@@ -198,16 +198,51 @@ def test_dns_and_firewall_refresh_only_after_interval_elapsed(tmp_path, monkeypa
 
 
 def test_resolver_bypass_is_logged_once_per_change(monkeypatch, caplog):
+    # Hors cooldown à chaque appel (espacés de plus de 300s) : une tentative de réparation par
+    # appel, qu'on fait échouer ici pour isoler le comportement de journalisation testé par ce
+    # cas (voir test_resolver_repair_* ci-dessous pour la réparation elle-même).
     states = iter([False, False, True])
     monkeypatch.setattr(daemon_module, "system_resolver_uses_mintguard", lambda: next(states))
+    monkeypatch.setattr(daemon_module, "repair_resolver", lambda: False)
     state: dict = {}
     with caplog.at_level("INFO", logger="mintguard-daemon"):
-        for _ in range(3):
-            daemon_module._log_resolver_change(state)
+        for i in range(3):
+            daemon_module._check_and_repair_resolver(state, now=i * 1000.0)
     warnings = [r for r in caplog.records if "AUCUN site" in r.getMessage()]
     infos = [r for r in caplog.records if "blocage des sites actif" in r.getMessage()]
     assert len(warnings) == 1
     assert len(infos) == 1
+
+
+def test_resolver_repair_is_attempted_and_fixes_it(monkeypatch, caplog):
+    """Panne détectée -> réparation automatique tentée -> succès vérifié dans le même appel :
+    la coupure n'est jamais journalisée comme un blocage persistant."""
+    states = iter([False, True])
+    monkeypatch.setattr(daemon_module, "system_resolver_uses_mintguard", lambda: next(states))
+    repair_calls = []
+    monkeypatch.setattr(daemon_module, "repair_resolver", lambda: (repair_calls.append(1), True)[1])
+    state: dict = {}
+    with caplog.at_level("INFO", logger="mintguard-daemon"):
+        daemon_module._check_and_repair_resolver(state, now=0.0)
+    assert repair_calls == [1]
+    assert state["resolver_ok"] is True
+    assert any("blocage des sites actif" in r.getMessage() for r in caplog.records)
+    assert not any("AUCUN site" in r.getMessage() for r in caplog.records)
+
+
+def test_resolver_repair_respects_cooldown(monkeypatch):
+    """Pas de réparation à chaque cycle (30s) tant que la précédente tentative est récente :
+    switch-dns.sh redémarre dnsmasq/NetworkManager, inutile de le marteler."""
+    monkeypatch.setattr(daemon_module, "system_resolver_uses_mintguard", lambda: False)
+    repair_calls = []
+    monkeypatch.setattr(daemon_module, "repair_resolver", lambda: (repair_calls.append(1), False)[1])
+    state: dict = {}
+    daemon_module._check_and_repair_resolver(state, now=0.0)
+    daemon_module._check_and_repair_resolver(state, now=30.0)  # dns_refresh_interval par défaut
+    assert repair_calls == [1]  # un seul essai, le second est dans le cooldown de 300s
+
+    daemon_module._check_and_repair_resolver(state, now=301.0)
+    assert repair_calls == [1, 1]  # cooldown écoulé : nouvel essai
 
 
 def _run_dns_cycles(tmp_path, monkeypatch, usernames_per_cycle, child_ids_for):

@@ -17,7 +17,7 @@
 import time
 
 from mintguard.backend.dns_controller import DNSController
-from mintguard.backend.dns_health import system_resolver_uses_mintguard
+from mintguard.backend.dns_health import repair_resolver, system_resolver_uses_mintguard
 from mintguard.backend.firewall_controller import FirewallController
 from mintguard.backend.process_monitor import ProcessMonitor
 from mintguard.backend.scheduler import Scheduler
@@ -29,6 +29,11 @@ from mintguard.db.database import init_db
 from mintguard.logger import setup_logging
 
 logger = setup_logging("mintguard-daemon")
+
+# Cooldown entre deux tentatives de réparation DNS automatique, pas à chaque cycle (30 s par
+# défaut) : switch-dns.sh redémarre dnsmasq et potentiellement systemd-resolved/NetworkManager,
+# inutile de le marteler si la cause de la dérive n'est pas transitoire.
+_RESOLVER_REPAIR_COOLDOWN_SECONDS = 300
 
 
 def run_cycle(
@@ -104,7 +109,7 @@ def run_cycle(
         # plus au système du tout.
         _step("blocklist DNS", dns_controller.apply, active_child_id, parent_only)
         _step("pare-feu", firewall_controller.sync_child_dns_restriction)
-        _step("vérification du résolveur", _log_resolver_change, state)
+        _step("vérification du résolveur", _check_and_repair_resolver, state, now)
         state["last_dns_refresh"] = now
 
 
@@ -117,18 +122,32 @@ def _step(name: str, func, *args):
         return None
 
 
-def _log_resolver_change(state: dict) -> None:
-    """Journalise (une fois par changement, pas à chaque cycle) quand le système cesse ou
-    recommence d'interroger dnsmasq - sans ce signal, un blocage inopérant passait inaperçu."""
+def _check_and_repair_resolver(state: dict, now: float) -> None:
+    """Détecte quand le système cesse d'interroger dnsmasq et tente de réparer automatiquement
+    (voir `dns_health.repair_resolver`) avant de journaliser - une fois par changement d'état,
+    pas à chaque cycle. Sans l'auto-réparation, un blocage inopérant passait inaperçu tant que
+    personne ne pensait à ouvrir le Tableau de bord."""
     resolver_ok = system_resolver_uses_mintguard()
-    if resolver_ok is None or resolver_ok == state.get("resolver_ok"):
+    if resolver_ok is None:
+        return
+
+    # `-inf` par défaut (jamais tenté) : garantit une première tentative immédiate quel que
+    # soit `now` (y compris tout petit, en tout début de boucle du daemon).
+    if not resolver_ok and now - state.get("last_repair_attempt", float("-inf")) >= _RESOLVER_REPAIR_COOLDOWN_SECONDS:
+        state["last_repair_attempt"] = now
+        if repair_resolver():
+            resolver_ok = system_resolver_uses_mintguard()
+
+    if resolver_ok == state.get("resolver_ok"):
         return
     if resolver_ok:
         logger.info("/etc/resolv.conf désigne dnsmasq : blocage des sites actif")
     else:
         logger.warning(
             "/etc/resolv.conf ne désigne pas dnsmasq (127.0.0.1) : AUCUN site n'est bloqué. "
-            "Réparer depuis le Tableau de bord, ou /usr/lib/mintguard/switch-dns.sh"
+            "Réparation automatique tentée sans succès, nouvel essai dans %d s. "
+            "Ou réparer depuis le Tableau de bord, ou /usr/lib/mintguard/switch-dns.sh",
+            _RESOLVER_REPAIR_COOLDOWN_SECONDS,
         )
     state["resolver_ok"] = resolver_ok
 

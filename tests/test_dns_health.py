@@ -17,7 +17,10 @@
 """dns_health : détecte un /etc/resolv.conf qui ne passe pas par dnsmasq - cas réel où le
 blocage des sites était inopérant sans aucun signal."""
 
-from mintguard.backend.dns_health import system_resolver_uses_mintguard
+import subprocess
+
+import mintguard.backend.dns_health as dns_health_module
+from mintguard.backend.dns_health import repair_resolver, system_resolver_uses_mintguard
 
 
 def write(tmp_path, content):
@@ -50,3 +53,32 @@ def test_no_nameserver_is_not_ok(tmp_path):
 
 def test_unreadable_file_is_unknown(tmp_path):
     assert system_resolver_uses_mintguard(tmp_path / "absent") is None
+
+
+def test_repair_resolver_missing_script_is_not_ok(monkeypatch, tmp_path):
+    monkeypatch.setattr(dns_health_module, "SWITCH_DNS_SCRIPT", tmp_path / "absent.sh")
+    assert repair_resolver() is False
+
+
+def test_repair_resolver_runs_the_script(monkeypatch, tmp_path):
+    script = tmp_path / "switch-dns.sh"
+    script.write_text("#!/bin/sh\n")
+    monkeypatch.setattr(dns_health_module, "SWITCH_DNS_SCRIPT", script)
+    calls = []
+    monkeypatch.setattr(
+        subprocess, "run", lambda args, **kwargs: calls.append(args) or subprocess.CompletedProcess(args, 0)
+    )
+    assert repair_resolver() is True
+    assert calls == [[str(script)]]
+
+
+def test_repair_resolver_script_failure_is_not_ok(monkeypatch, tmp_path):
+    script = tmp_path / "switch-dns.sh"
+    script.write_text("#!/bin/sh\n")
+    monkeypatch.setattr(dns_health_module, "SWITCH_DNS_SCRIPT", script)
+
+    def _raise(args, **kwargs):
+        raise subprocess.CalledProcessError(2, args)
+
+    monkeypatch.setattr(subprocess, "run", _raise)
+    assert repair_resolver() is False
