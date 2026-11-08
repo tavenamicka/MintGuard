@@ -4,6 +4,10 @@
 
 Each MintGuard version is described here, newest first. To see which version you have, look at the title of the MintGuard window. To update, see "Updating MintGuard" in the [README](README.en.md).
 
+## 0.1.6 — 2026-11-08
+
+- **Site blocking now repairs itself**: when the computer stops going through MintGuard to look up websites (e.g. after a reboot, or a conflict with the system's own network management), it now fixes itself automatically, instead of waiting for someone to open the Dashboard and click "Repair".
+
 ## 0.1.5 — 2026-10-18
 
 - **Quota alert**: warnings for an application or a website now come at 10, 5 and 1 minute, like those for the session time.

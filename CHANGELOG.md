@@ -4,6 +4,10 @@ Français · [English](CHANGELOG.en.md)
 
 Chaque version de MintGuard est décrite ici, la plus récente en premier. Pour savoir quelle version vous avez, regardez le titre de la fenêtre MintGuard. Pour mettre à jour, voir « Mettre à jour MintGuard » dans le [README](README.md).
 
+## 0.1.6 — 2026-11-08
+
+- **Blocage des sites réparé automatiquement** : quand l'ordinateur arrête de passer par MintGuard pour trouver les sites (ex: après un démarrage, conflit avec la gestion réseau du système), la réparation se fait maintenant d'elle-même, sans attendre que quelqu'un ouvre le Tableau de bord et clique sur « Réparer ».
+
 ## 0.1.5 — 2026-10-18
 
 - **Alerte de quota** : les avertissements d'une application ou d'un site passent à 10, 5 et 1 minute, comme ceux du temps de session.
